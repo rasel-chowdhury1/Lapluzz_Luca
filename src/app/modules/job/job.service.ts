@@ -1,0 +1,408 @@
+import httpStatus from 'http-status';
+import AppError from '../../error/AppError';
+import Job from './job.model';
+import { IJob } from './job.interface';
+import QueryBuilder from '../../builder/QueryBuilder';
+import mongoose from 'mongoose';
+import JobProfileViews from '../jobProfileViews/jobProfileViews.model';
+import JobReview from '../jobReview/jobReview.model';
+import JobEngagementStats from '../jobEngagementStats/jobEngagementStats.model';
+
+const createJob = async (payload: IJob) => {
+  const result = await Job.create(payload);
+  if (!result) throw new AppError(httpStatus.BAD_REQUEST, 'Failed to create job');
+  return result;
+};
+
+const getAllJobs = async (query: Record<string, any>) => {
+  query['isDeleted'] = false;
+  const queryBuilder = new QueryBuilder(Job.find(), query)
+    .search(['title', 'email', 'phoneNumber', 'category', 'address'])
+    .filter()
+    .paginate()
+    .sort()
+    .fields();
+
+  const data = await queryBuilder.modelQuery;
+  const meta = await queryBuilder.countTotal();
+
+  return { data, meta };
+};
+
+const getSubscriptionJobs = async (userId: string, query: Record<string, any>) => {
+  query['isDeleted'] = false;
+
+  const baseQuery = Job.find({ author: { $ne: userId },  isSubscription: true});
+
+  const jobModel = new QueryBuilder(baseQuery, query)
+    .search(['title', 'email', 'phoneNumber', 'category', 'address'])
+    .filter()
+    .paginate()
+    .sort()
+    .fields();
+
+  let data = await jobModel.modelQuery;
+  const meta = await jobModel.countTotal();
+
+  if (!data || data.length === 0) return { data, meta };
+
+  // 🟢 Add any future job-related aggregation logic here (e.g., applications, views, etc.)
+
+  // 🔽 Sort by subscriptionType priority then latest
+  const subscriptionOrder = ['visualTop', 'visualMedia', 'visualBase', 'none'];
+  data = data.sort((a, b) => {
+    const posA = subscriptionOrder.indexOf(a.subscriptionType ?? 'none');
+    const posB = subscriptionOrder.indexOf(b.subscriptionType ?? 'none');
+    if (posA !== posB) return posA - posB;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+
+  return { data, meta };
+};
+
+const getUnsubscriptionJobs = async (userId: string, query: Record<string, any>) => {
+  query['isDeleted'] = false;
+
+  const baseQuery = Job.find({ author: { $ne: userId }, isSubscription: false });
+
+  console.log("get unsubscription query ->>> ", query);
+  // console.log("get unsubscription base query ->>> ", baseQuery);
+  console.log("get unsubscription userId ->>> ", userId);
+
+  const jobModel = new QueryBuilder(baseQuery, query)
+    .search(['title', 'email', 'phoneNumber', 'category', 'address'])
+    .filter()
+    .paginate()
+    .sort()
+    .fields();
+  
+  
+
+  const data = await jobModel.modelQuery;
+  const meta = await jobModel.countTotal();
+
+  console.log({data,meta})
+
+  // 🟢 You can enrich the data here if needed (e.g., job views, applicant stats)
+
+  return { data, meta };
+};
+
+
+
+// const getJobById = async (id: string) => {
+//   const result = await Job.findById(id);
+//   if (!result || result.isDeleted) throw new AppError(httpStatus.NOT_FOUND, 'Job not found');
+//   return result;
+// };
+const getJobById = async (userId: string, id: string) => {
+  const job = await Job.findById(id);
+
+  if (!job || job.isDeleted) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Job not found');
+  }
+
+  const jobId = job._id;
+
+  // 🔄 Log view in background
+  JobProfileViews.findOneAndUpdate(
+    { jobId },
+    {
+      $push: {
+        viewUsers: {
+          user: userId,
+          viewedAt: new Date()
+        }
+      }
+    },
+    { upsert: true, new: true }
+  ).exec();
+
+  // ⭐ Get Rating
+  const ratingAgg = await JobReview.aggregate([
+    { $match: { jobId } },
+    {
+      $group: {
+        _id: '$jobId',
+        averageRating: { $avg: '$rating' },
+        totalReviews: { $sum: 1 }
+      }
+    }
+  ]);
+
+  const rating = ratingAgg[0] || {
+    averageRating: 0,
+    totalReviews: 0
+  };
+
+  // ⭐ Get Engagement Stats + Comments
+  const engagement = await JobEngagementStats.findOne({ jobId })
+    .populate('comments.user', 'name profileImage')
+    .select('likes comments');
+
+  const engagementInfo = {
+    totalComments: engagement?.comments?.length || 0,
+    comments: (engagement?.comments || []).map(comment => ({
+      // _id: comment._id,
+      text: comment.text,
+      createdAt: comment.createdAt,
+      user: comment.user// already populated with name and profileImage
+    }))
+  };
+
+  // ⭐ Related Jobs (same category, not deleted, active)
+  const relatedJobsRaw = await Job.find({
+    _id: { $ne: jobId },
+    categoryId: job.categoryId,
+    isDeleted: false,
+    // isActive: true,
+  })
+    .select('title logo category address coverImage')
+    .limit(10);
+  
+  console.log({relatedJobsRaw})
+
+  const relatedJobIds = relatedJobsRaw.map((j) => j._id);
+
+  // ⭐ Get ratings for sorting only
+  const ratings = await JobReview.aggregate([
+    { $match: { jobId: { $in: relatedJobIds } } },
+    {
+      $group: {
+        _id: '$jobId',
+        averageRating: { $avg: '$rating' },
+      },
+    },
+  ]);
+
+  const ratingMap: Record<string, number> = {};
+  ratings.forEach((r) => {
+    ratingMap[r._id.toString()] = r.averageRating;
+  });
+
+  // 🔁 Sort related jobs by rating (but don’t return the rating)
+  const relatedJobs = relatedJobsRaw
+    .map((job) => ({
+      ...job.toObject(),
+      __rating: ratingMap[job._id.toString()] || 0, // temp field for sorting
+    }))
+    .sort((a, b) => b.__rating - a.__rating)
+    .slice(0, 5) // top 5
+    .map(({ __rating, ...job }) => job); // remove __rating before returning
+  // ✅ Final enriched object
+  return {
+    ...job.toObject(),
+    averageRating: parseFloat(rating.averageRating?.toFixed(1)) || 0,
+    totalReviews: rating.totalReviews || 0,
+    totalComments: engagementInfo.totalComments,
+    comments: engagementInfo.comments,
+    relatedJobs
+  };
+};
+
+const getMyJobs = async (userId: string) => {
+
+
+  const jobs = await Job.find({ author: userId, isDeleted: false });
+
+  if (!jobs.length) {
+    throw new AppError(httpStatus.NOT_FOUND, 'No jobs found for this user');
+  }
+
+  const enrichedJobs = await Promise.all(
+    jobs.map(async (job) => {
+      const jobId = job._id;
+
+      // 🔄 Log view in background
+      JobProfileViews.findOneAndUpdate(
+        { jobId },
+        {
+          $push: {
+            viewUsers: {
+              user: new mongoose.Types.ObjectId(userId),
+              viewedAt: new Date(),
+            },
+          },
+        },
+        { upsert: true, new: true }
+      ).exec();
+
+      // ⭐ Get Rating
+      const ratingAgg = await JobReview.aggregate([
+        { $match: { jobId } },
+        {
+          $group: {
+            _id: '$jobId',
+            averageRating: { $avg: '$rating' },
+            totalReviews: { $sum: 1 },
+          },
+        },
+      ]);
+
+      const rating = ratingAgg[0] || {
+        averageRating: 0,
+        totalReviews: 0,
+      };
+
+      // ⭐ Engagement Stats + Comments
+      const engagement = await JobEngagementStats.findOne({ jobId })
+        .populate('comments.user', 'name profileImage')
+        .select('likes comments');
+
+      const engagementInfo = {
+        totalComments: engagement?.comments?.length || 0,
+        comments: (engagement?.comments || []).map((comment) => ({
+          text: comment.text,
+          createdAt: comment.createdAt,
+          user: comment.user,
+        })),
+      };
+
+      // ⭐ Related Jobs (same category, not deleted, not same job)
+      const relatedJobsRaw = await Job.find({
+        _id: { $ne: jobId },
+        categoryId: job.categoryId,
+        isDeleted: false,
+        // isActive: true,
+      })
+        .select('title logo category address coverImage')
+        .limit(10);
+
+      const relatedJobIds = relatedJobsRaw.map((j) => j._id);
+
+      // ⭐ Ratings for related jobs
+      const ratings = await JobReview.aggregate([
+        { $match: { jobId: { $in: relatedJobIds } } },
+        {
+          $group: {
+            _id: '$jobId',
+            averageRating: { $avg: '$rating' },
+          },
+        },
+      ]);
+
+      const ratingMap: Record<string, number> = {};
+      ratings.forEach((r) => {
+        ratingMap[r._id.toString()] = r.averageRating;
+      });
+
+      // 🔁 Sort related jobs by rating
+      const relatedJobs = relatedJobsRaw
+        .map((job) => ({
+          ...job.toObject(),
+          __rating: ratingMap[job._id.toString()] || 0,
+        }))
+        .sort((a, b) => b.__rating - a.__rating)
+        .slice(0, 5)
+        .map(({ __rating, ...job }) => job);
+
+      // ✅ Return enriched job
+      return {
+        ...job.toObject(),
+        averageRating: parseFloat(rating.averageRating?.toFixed(1)) || 0,
+        totalReviews: rating.totalReviews || 0,
+        totalComments: engagementInfo.totalComments,
+        comments: engagementInfo.comments,
+        relatedJobs,
+      };
+    })
+  );
+
+  return enrichedJobs;
+};
+
+
+const updateJob = async (id: string, payload: Partial<IJob>) => {
+  const result = await Job.findByIdAndUpdate(id, payload, { new: true });
+  if (!result) throw new AppError(httpStatus.BAD_REQUEST, 'Failed to update job');
+  return result;
+};
+
+const deleteJob = async (id: string) => {
+  const result = await Job.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
+  if (!result) throw new AppError(httpStatus.BAD_REQUEST, 'Failed to delete job');
+  return result;
+};
+
+const getLatestJobs = async (userId: string, limit: number = 10) => {
+  const jobs = await Job.aggregate([
+    {
+      $match: {
+        author: { $ne: new mongoose.Types.ObjectId(userId) },
+        isDeleted: false,
+        // isActive: true
+      }
+    },
+    { $sort: { createdAt: -1 } },
+    { $limit: limit },
+    {
+      $lookup: {
+        from: 'jobengagementstats',
+        localField: '_id',
+        foreignField: 'jobId',
+        as: 'engagement'
+      }
+    },
+    {
+      $addFields: {
+        engagementStats: { $arrayElemAt: ['$engagement', 0] }
+      }
+    },
+    {
+      $addFields: {
+        totalComments: {
+          $size: { $ifNull: ['$engagementStats.comments', []] }
+        }
+      }
+    },
+    {
+      $lookup: {
+        from: 'users',
+        let: { authorId: '$author' },
+        pipeline: [
+          {
+            $match: {
+              $expr: { $eq: ['$_id', '$$authorId'] }
+            }
+          },
+          {
+            $project: {
+              name: 1,
+              sureName: 1,
+              profileImage: 1
+            }
+          }
+        ],
+        as: 'author'
+      }
+    },
+    {
+      $unwind: {
+        path: '$author',
+        preserveNullAndEmptyArrays: true
+      }
+    },
+    {
+      $project: {
+        engagement: 0,
+        engagementStats: 0
+      }
+    }
+  ]);
+
+
+  console.log("jobs ->>> ", jobs)
+  return jobs;
+};
+
+export const jobService = {
+  createJob,
+  getAllJobs,
+  getJobById,
+  getMyJobs,
+  updateJob,
+  deleteJob,
+  getLatestJobs,
+  getSubscriptionJobs,
+  getUnsubscriptionJobs
+};

@@ -1,0 +1,40 @@
+{
+    "name": "Chowdhury Traders",
+    "shortDescription": "This is short description",
+    "description": "This is description",
+    "email": "business@gmail.com",
+    "phoneNumber": "+8801855859847",
+    "website": "http://website.com",
+    "socialLinks": {
+      "facebook": "http://facebook.com",
+      "instagram": "http://instagram.com",
+      "twitter": "http://twitter.com",
+      "tiktok": "http://tiktok.com"
+    },
+    "availabilities": {
+      "day": ["Sunday", "Monday"],
+      "startTime": "10:00 AM",
+      "endTime": "8:00 PM"
+    },
+    "address": "Dhaka, Bangladesh",
+    "longitude": "90.4125",
+    "latitude": "23.8103",
+    "providerType": "685e909bf074a7c5476e1d6e",
+    "notFoundProvideType": "asdfjloasjdf",
+    "supportedServices": ["Photography", "Cinematography"],
+    "notFoundSupported": "asdfjloasjdf",
+    "additionalServices": ["Drone Coverage", "Photo Booth"],
+    "notFoundAdditional": "asdfjloasjdf",
+    "priceRange": "medium",
+    "maxGuest": 100,
+    "faq": [
+      {
+        "question": "What services do you offer?",
+        "answer": "We provide photography and video coverage for events."
+      },
+      {
+        "question": "Do you travel outside Dhaka?",
+        "answer": "Yes, additional travel charges apply."
+      }
+    ]
+  }

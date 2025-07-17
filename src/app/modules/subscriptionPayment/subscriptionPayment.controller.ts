@@ -1,0 +1,251 @@
+import { Request, Response } from 'express';
+import httpStatus from 'http-status';
+import catchAsync from '../../utils/catchAsync';
+import sendResponse from '../../utils/sendResponse';
+import Subcription from '../subscription/subcription.model';
+import { SubcriptionPaymentService } from './subscriptionPayment.service';
+// import AppError from '../../error/AppError';
+// import { PaypalUtils } from '../../utils/paypal';
+
+
+
+// // paypal implement for payment === >>>>>> start -----
+
+// const createPaymentSubscriptionByPaypal = catchAsync( 
+//   async (req: Request, res: Response) => {
+//     // console.log('==== req user === >>>>> ', req.user);
+//     const { userId } = req.user;
+
+//     req.body._id = userId;
+
+//     const { _id, subcriptionId } = req.body;
+
+//     if (!_id || !subcriptionId) {
+//       throw new Error(
+//         'Invalid request body. userId and subcriptionId are required.',
+//       );
+//     }
+
+//     // Check if subsciption exists
+//     const isExist = await Subcription.findById(subcriptionId);
+
+//     if (!isExist) {
+//       throw new Error(`Subscription with ID ${subcriptionId} does not exist.`);
+//     }
+
+//     req.body.subcriptionName = isExist.name;
+//     req.body.amount = isExist.price;
+//     req.body.duration = isExist.duration;
+
+//     const {amount, duration} = req.body;
+
+
+//     console.log("+++++ req body data = >>> ", req.body);
+
+    
+
+//     // Check if required fields are present
+//     if (!_id || !subcriptionId || !amount || !duration) {
+//       return sendResponse(res, {
+//         statusCode: 400,
+//         success: false,
+//         message: 'Missing required userId subcriptionId amount and duration of payment details.',
+//         data: null,
+//       });
+//     }
+
+    
+//     const paymentResult = await SubcriptionPaymentService.createPaymentByPaypal(req.body);
+//     sendResponse(res, {
+//         statusCode: httpStatus.OK,
+//         success: true,
+//         message: 'Successfully Paypal payment instant',
+//         data:paymentResult,
+//       });
+
+//   },
+// );
+
+// const confirmPaymentByPaypal = catchAsync(async (req: Request, res: Response) => {
+//   console.log('====== before confirm payment ====>>> ', req.query);
+  
+//   const { paymentId, userId, subcriptionId, amount, duration, token, PayerID } = req.query;
+
+//   const data = {
+//     paymentIntentId: paymentId,
+//     userId,
+//     subcriptionId,
+//     amount,
+//     duration,
+//     token,
+//     PayerID
+//   };
+
+//   const paymentResult = await SubcriptionPaymentService.confirmPaymentByPaypal(data) || "";
+
+//   if (paymentResult) {
+//     sendResponse(res, {
+//       statusCode: httpStatus.OK,
+//       success: true,
+//       message: 'thank you for payment',
+//       data: paymentResult,
+//     });
+//   }
+// });
+// // paypal implement for payment === >>>>>> end -----
+
+// const confirmPaymentSubcription = catchAsync(async (req: Request, res: Response) => {
+//   console.log('====== before confirm payment ====>>> ', req.body);
+
+//   const {userId} = req.user;
+//   const { paymentId,subcriptionId, paymentType } = req.body;
+
+//   const isSubcription = await Subcription.findById(subcriptionId) as any;
+
+//   console.log({isSubcription})
+  
+//   if(!isSubcription){
+//     sendResponse(res, {
+//       statusCode: httpStatus.NOT_FOUND,
+//       success: false,
+//       message: 'Subcription is not found',
+//       data: "",
+//     });
+//   }
+
+//   const data = {
+//     paymentIntentId: paymentId,
+//     userId,
+//     subcriptionId,
+//     amount: isSubcription.price,
+//     duration: isSubcription.duration,
+//     paymentMethod: paymentType
+//   };
+
+//   const paymentResult = await SubcriptionPaymentService.confirmPaymentSubcription(data) || "";
+
+//   console.log({paymentResult})
+
+//   if (paymentResult) {
+//     sendResponse(res, {
+//       statusCode: httpStatus.OK,
+//       success: true,
+//       message: 'thank you for subcrption',
+//       data: paymentResult,
+//     });
+//   }
+// });
+
+
+
+
+// stripe implement for payment === >>>>>> start -----
+
+const createPaymentSubscription = catchAsync(
+  async (req: Request, res: Response) => {
+    console.log('==== req user === >>>>> ', req.user);
+    const { userId } = req.user;
+
+    req.body._id = userId;
+
+    const { _id,subscriptionFor, subcriptionId, amount, optionIndex } = req.body;
+    console.log('==== req body data =====>>>>>> ', {
+      _id,
+      subcriptionId,
+      amount,
+    });
+
+    if (!_id || !subscriptionFor || !subcriptionId) {
+      console.log('=== this is if conditaions is exist ====>>>> ');
+      throw new Error(
+        'Invalid request body. userId and subcriptionId are required.',
+      );
+    }
+
+    // Check if subsciption exists
+    const isExist = await Subcription.findById(subcriptionId);
+
+    if (!isExist) {
+      throw new Error(`Subscription with ID ${subcriptionId} does not exist.`);
+    }
+    
+    req.body.subscriptionFor = subscriptionFor;
+    req.body.subscriptionForType = isExist.type;
+    req.body.subcriptionTitle = isExist.title;
+    req.body.amount = isExist.options[optionIndex].price;
+    req.body.duration = isExist.options[optionIndex].expirationDays;
+    console.log('=== is exist subcription ===>>>> ', isExist);
+    req.body.subsciptionData = isExist;
+
+    const paymentResult = await SubcriptionPaymentService.createPayment(
+      res,
+      req.body,
+    );
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'payment successfull',
+      data: paymentResult,
+    });
+  },
+);
+
+const confirmPayment = catchAsync(async (req: Request, res: Response) => {
+  console.log('====== before confirm payment ====>>> ', req.query);
+  
+  const { paymentId, userId, subcriptionId, amount, duration } = req.query;
+
+  const data = {
+    paymentIntentId: paymentId,
+    userId,
+    subcriptionId,
+    amount,
+    duration,
+  };
+
+  const paymentResult = await SubcriptionPaymentService.confirmPayment(data);
+
+  if (paymentResult) {
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'thank you for payment',
+      data: paymentResult,
+    });
+  }
+});
+// stripe implement for payment === >>>>>> end -----
+
+
+
+const buySubscription = catchAsync(async (req: Request, res: Response) => {
+  
+  req.body.userId = req.user.userId;
+  const paymentResult = await SubcriptionPaymentService.buySubscription(req.body);
+
+  if (paymentResult) {
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'thank you for payment',
+      data: paymentResult,
+    });
+  }
+});
+
+
+
+
+export const SubcriptionPaymentController = {
+  // createPaymentSubscriptionByPaypal,
+  // confirmPaymentByPaypal,
+  // confirmPaymentSubcription
+
+   // stripe implement for payment start
+   createPaymentSubscription,
+  confirmPayment,
+   buySubscription
+   // stripe implement for payment end 
+  
+};

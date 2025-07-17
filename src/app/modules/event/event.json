@@ -1,0 +1,32 @@
+{
+  "name": "Sample Event",
+  "description": "Short summary of the event",
+  "detailDescription": "Detailed event information",
+  "phoneNumber": "+8801712345678",
+  "email": "event@example.com",
+  "bookingAndPaymentLink": "https://pay.example.com/event123",
+  "address": "123 Event Street, Dhaka",
+   "longitude": "90.4125",
+   "latitude": "23.8103",
+  "category": "Conference",
+  "type": "Tech",
+  "startDate": "2025-07-15T00:00:00.000Z",
+  "endDate": "2025-07-17T00:00:00.000Z",
+  "startTime": "10:00 AM",
+  "endTime": "6:00 PM",
+  "supportedServices": ["Parking", "Wi-Fi"],
+  "additionalServices": ["Catering", "Live Streaming"],
+  "maxParticipants": 500,
+  "entranceFee": 300,
+  "additionalNotes": "Please bring your ID card.",
+  "faq": [
+    {
+      "question": "Is food included?",
+      "answer": "Yes, lunch and snacks are provided."
+    },
+    {
+      "question": "Can I transfer my ticket?",
+      "answer": "Yes, with prior notice."
+    }
+  ]
+}
