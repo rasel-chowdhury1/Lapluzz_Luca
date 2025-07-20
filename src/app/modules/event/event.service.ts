@@ -436,25 +436,13 @@ const getMyEvents = async (userId: string) => {
 };
 
 const updateEvent = async (
-  id: string,
-  updatePayload: Partial<IEvent>,
-  userId: string
+  eventId: string,
+  updateData: Partial<IEvent>
 ) => {
-  const existingEvent = await Event.findById(id);
+ 
+ const updatedEvent = await Event.findByIdAndUpdate( eventId, updateData, {new: true})
 
-  if (!existingEvent || existingEvent.isDeleted) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Event not found');
-  }
-
-  // Optional: enforce that only the author can update
-  if (existingEvent.author.toString() !== userId) {
-    throw new AppError(httpStatus.FORBIDDEN, 'Unauthorized to update this event');
-  }
-
-  Object.assign(existingEvent, updatePayload);
-  await existingEvent.save();
-
-  return existingEvent;
+  return updatedEvent;
 };
 
 const getExtraEventDataById = async (

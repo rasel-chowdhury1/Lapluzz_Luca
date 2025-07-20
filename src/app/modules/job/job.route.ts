@@ -52,8 +52,14 @@ router.post(
     jobController.getJobById
   )
   .patch(
-    '/update/:id', 
+    '/update/:jobId', 
     auth(USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
+    upload.fields([
+      { name: 'logo', maxCount: 1 },
+      { name: 'cover', maxCount: 1 },
+      { name: 'gallery', maxCount: 10 }
+    ]),
+    parseData(),
     jobController.updateJob
   )
   .delete(

@@ -3,7 +3,7 @@ import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import { eventService } from './event.service';
 import { storeFiles } from '../../utils/fileHelper';
-import mongoose from 'mongoose';
+import httpStatus from 'http-status';
 import { eventEngagementStatsService } from '../eventEngagementStats/eventEngagementStats.service';
 
 const createEvent = catchAsync(async (req: Request, res: Response) => {
@@ -40,24 +40,7 @@ const createEvent = catchAsync(async (req: Request, res: Response) => {
 });
 
 const updateEvent = catchAsync(async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const { userId, email: userEmail } = req.user;
-
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return sendResponse(res, {
-      statusCode: httpStatus.BAD_REQUEST,
-      success: false,
-      message: 'Invalid event ID',
-      data: null,
-    });
-  }
-
-  req.body.author = userId;
-
-  // Fallback to user's email if not manually provided
-  if (!req.body.email) {
-    req.body.email = userEmail;
-  }
+  const { eventId } = req.params;
 
   // Handle file uploads
   if (req.files) {
@@ -73,7 +56,7 @@ const updateEvent = catchAsync(async (req: Request, res: Response) => {
   }
 
   // Call update service
-  const result = await eventService.updateEvent(id, req.body, userId);
+  const result = await eventService.updateEvent(eventId, req.body);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,

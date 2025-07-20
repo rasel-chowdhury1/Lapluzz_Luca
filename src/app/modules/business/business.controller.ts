@@ -3,7 +3,7 @@ import catchAsync from '../../utils/catchAsync';
 import { businessService } from './business.service';
 import sendResponse from '../../utils/sendResponse';
 import { storeFiles } from '../../utils/fileHelper';
-import mongoose from 'mongoose';
+import httpStatus from 'http-status';
 
 const createBusiness = catchAsync(async (req: Request, res: Response) => {
   const {userId, email} = req.user;
@@ -60,20 +60,7 @@ const createBusiness = catchAsync(async (req: Request, res: Response) => {
 });
 
 const updateBusiness = catchAsync(async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const { userId, email } = req.user;
-
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return sendResponse(res, {
-      statusCode: httpStatus.BAD_REQUEST,
-      success: false,
-      message: 'Invalid business ID',
-      data: null,
-    });
-  }
-
-  req.body.author = userId;
-  req.body.email = email;
+  const { businessId } = req.params;
 
   if (req.files) {
     try {
@@ -109,9 +96,8 @@ const updateBusiness = catchAsync(async (req: Request, res: Response) => {
     }
   }
 
-  console.log("update business ->>> ", req.body);
 
-  const updatedBusiness = await businessService.updateBusiness(id, req.body, userId);
+  const updatedBusiness = await businessService.updateBusiness(businessId, req.body );
 
   sendResponse(res, {
     statusCode: httpStatus.OK,

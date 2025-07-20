@@ -5,6 +5,7 @@ import auth from '../../middleware/auth';
 import { USER_ROLE } from '../user/user.constants';
 import fileUpload from '../../middleware/fileUpload';
 import parseData from '../../middleware/parseData';
+import { verifyBusinessOwnership } from './business.utils';
 const upload = fileUpload('./public/uploads/business');
 const router = Router();
 
@@ -23,8 +24,9 @@ router.post(
 
 
 .patch(
-  '/update/:id', 
-  auth(USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
+  '/update/:businessId', 
+  auth(USER_ROLE.ORGANIZER),
+  verifyBusinessOwnership(),
    upload.fields([
       { name: 'logo', maxCount: 1 },
       { name: 'cover', maxCount: 1 },

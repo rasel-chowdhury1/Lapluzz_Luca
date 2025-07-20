@@ -1,27 +1,26 @@
-import { Request, Response, NextFunction } from "express";
-import httpStatus from "http-status";
+import { NextFunction, Request, Response } from "express";
 import catchAsync from "../../utils/catchAsync";
+import Job from "./job.model";
 import sendResponse from "../../utils/sendResponse";
-import Business from "./business.model";
 
-export const verifyBusinessOwnership = () => {
+export const verifyJobOwnership = () => {
   return catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const { businessId } = req.params;
+    const { JobId } = req.params;
     const userId = req.user?.userId; // Ensure this is coming from your JWT payload
 
-    // Check if the business exists
-    const business = await Business.findById(businessId);
-    if (!business) {
+    // Check if the Job exists
+    const isExistJob = await Job.findById(JobId)
+    if (!isExistJob) {
       return sendResponse(res, {
         statusCode: httpStatus.NOT_FOUND,
         success: false,
-        message: "Business not found.",
+        message: "Job not found.",
         data: null,
       });
     }
 
     // Check if the authenticated user is the owner
-    if (String(business.author) !== String(userId)) {
+    if (String(isExistJob.author) !== String(userId)) {
       return sendResponse(res, {
         statusCode: httpStatus.FORBIDDEN,
         success: false,

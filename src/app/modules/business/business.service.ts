@@ -12,7 +12,6 @@ import BusinessProfileViews from '../businessProfileViews/businessProfileViews.m
 import Event from '../event/event.model';
 import Category from '../category/category.model';
 import SearchRecord from '../searchRecord/searchRecord.model';
-import mongoose, { Mongoose } from 'mongoose';
 import { enrichEvent } from '../event/event.utils';
 import { Inspiration } from '../inspiration/inspiration.model';
 
@@ -626,22 +625,17 @@ const getExtraBusinessDataById = async (userId: string, id: string) => {
 //   return result;
 // };
 
-const updateBusiness = async (id: string, updateData: Partial<IBusiness>, userId: string) => {
+const updateBusiness = async (
+  businessId: string,
+  updateData: Partial<IBusiness>
+) => {
+  const updatedBusiness = await Business.findByIdAndUpdate(
+    businessId,
+    updateData,
+    { new: true }
+  );
 
-  const business = await Business.findById(id);
-
-  if (!business || business.isDeleted) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Business not found');
-  }
-
-  // Optional: restrict update to owner
-  if (business.author.toString() !== userId) {
-    throw new AppError(httpStatus.FORBIDDEN, 'Unauthorized to update this business');
-  }
-
-  Object.assign(business, updateData);
-  await business.save();
-  return business;
+  return updatedBusiness;
 };
 
 const deleteBusiness = async (id: string) => {

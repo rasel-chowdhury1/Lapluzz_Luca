@@ -30,7 +30,7 @@ const createJob = catchAsync(async (req: Request, res: Response) => {
 });
 
 const updateJob = catchAsync(async (req: Request, res: Response) => {
-  const result = await jobService.updateJob(req.params.id, req.body);
+  const result = await jobService.updateJob(req.params.jobId, req.body);
   sendResponse(res, {
     statusCode: 200,
     success: true,

@@ -4,6 +4,7 @@ import auth from '../../middleware/auth';
 import { USER_ROLE } from '../user/user.constants';
 import fileUpload from '../../middleware/fileUpload';
 import parseData from '../../middleware/parseData';
+import { verifyEventOwnership } from './event.utils';
 
 const upload = fileUpload('./public/uploads/events');
 const router = Router();
@@ -22,8 +23,9 @@ router.post(
 )
 
 .patch(
-  '/update/:id', 
+  '/update/:eventId', 
   auth(USER_ROLE.ORGANIZER),
+  verifyEventOwnership(),
   upload.fields([
     { name: 'logo', maxCount: 1 },
     { name: 'cover', maxCount: 1 },

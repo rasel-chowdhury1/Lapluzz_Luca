@@ -1,6 +1,41 @@
+import { NextFunction, Request, Response } from "express";
+import catchAsync from "../../utils/catchAsync";
 import EventEngagementStats from "../eventEngagementStats/eventEngagementStats.model";
 import EventReview from "../eventReview/eventReview.model";
+import Event from "./event.model";
+import sendResponse from "../../utils/sendResponse";
 
+
+export const verifyEventOwnership = () => {
+  return catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const { eventId } = req.params;
+    const userId = req.user?.userId; // Ensure this is coming from your JWT payload
+
+    // Check if the event exists
+    const event = await Event.findById(eventId)
+    if (!event) {
+      return sendResponse(res, {
+        statusCode: httpStatus.NOT_FOUND,
+        success: false,
+        message: "event not found.",
+        data: null,
+      });
+    }
+
+    // Check if the authenticated user is the owner
+    if (String(event.author) !== String(userId)) {
+      return sendResponse(res, {
+        statusCode: httpStatus.FORBIDDEN,
+        success: false,
+        message: "You are not authorized to perform this action.",
+        data: null,
+      });
+    }
+
+    // All good, proceed to the next middleware
+    next();
+  });
+};
 export const enrichEvent = async (event: any, userId: string) => {
   const eventId = event._id;
 
