@@ -176,7 +176,7 @@ const getBusinessAndEventsForMap = catchAsync(async (req: Request, res: Response
 });
 
 const getMyBusiness = catchAsync(async (req: Request, res: Response) => {
-  const result = await businessService.getMyBusiness(req.user.userId);
+  const result = await businessService.getMyBusinesses(req.user.userId);
   sendResponse(res, {
     statusCode: 200,
     success: true,

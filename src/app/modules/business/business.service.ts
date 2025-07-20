@@ -435,81 +435,84 @@ const getBusinessById = async (userId:string, id: string) => {
   };
 };
 
-const getMyBusiness = async (userId: string) => {
-  const business = await Business.findOne({ author: userId })
+const getMyBusinesses = async (userId: string) => {
+  const businesses = await Business.find({ author: userId, isDeleted: false })
     .populate('providerType', 'name');
 
-  if (!business || business.isDeleted) {
-    throw new Error('Business not found!');
+  if (!businesses.length) {
+    throw new Error('No businesses found!');
   }
 
-  const businessId = business._id;
+  const results = await Promise.all(
+    businesses.map(async (business) => {
+      const businessId = business._id;
 
-  // ⭐ Update profile views
-  await BusinessProfileViews.findOneAndUpdate(
-    { businessId },
-    {
-      $push: {
-        viewUsers: {
-          user: userId,
-          viewedAt: new Date(),
+      // 🔄 Update profile views (background)
+      BusinessProfileViews.findOneAndUpdate(
+        { businessId },
+        {
+          $push: {
+            viewUsers: {
+              user: userId,
+              viewedAt: new Date(),
+            },
+          },
         },
-      },
-    },
-    { upsert: true, new: true }
-  ).exec();
+        { upsert: true, new: true }
+      ).exec();
 
-  // ⭐ Get rating
-  const ratingAgg = await BusinessReview.aggregate([
-    { $match: { businessId } },
-    {
-      $group: {
-        _id: '$businessId',
-        averageRating: { $avg: '$rating' },
-        totalReviews: { $sum: 1 },
-      },
-    },
-  ]);
+      // ⭐ Get rating
+      const ratingAgg = await BusinessReview.aggregate([
+        { $match: { businessId } },
+        {
+          $group: {
+            _id: '$businessId',
+            averageRating: { $avg: '$rating' },
+            totalReviews: { $sum: 1 },
+          },
+        },
+      ]);
+      const rating = ratingAgg[0] || {
+        averageRating: 0,
+        totalReviews: 0,
+      };
 
-  const rating = ratingAgg[0] || {
-    averageRating: 0,
-    totalReviews: 0,
-  };
+      // ⭐ Get engagement
+      const engagement = await BusinessEngagementStats.findOne({ businessId })
+        .select('followers likes comments');
+      const engagementInfo = {
+        totalFollowers: engagement?.followers?.length || 0,
+        totalLikes: engagement?.likes?.length || 0,
+        totalComments: engagement?.comments?.length || 0,
+        isLiked: engagement?.likes?.some((u) => u.toString() === userId) || false,
+        isFollowed: engagement?.followers?.some((u) => u.toString() === userId) || false,
+      };
 
-  // ⭐ Get engagement
-  const engagement = await BusinessEngagementStats.findOne({ businessId })
-    .select('followers likes comments');
+      // ⭐ Get reviews
+      const reviews = await BusinessReview.find({ businessId })
+        .populate('userId', 'name profileImage')
+        .select('rating comment')
+        .sort({ createdAt: -1 });
 
-  const engagementInfo = {
-    totalFollowers: engagement?.followers?.length || 0,
-    totalLikes: engagement?.likes?.length || 0,
-    totalComments: engagement?.comments?.length || 0,
-    isLiked: engagement?.likes?.some((u) => u.toString() === userId) || false,
-    isFollowed: engagement?.followers?.some((u) => u.toString() === userId) || false,
-  };
+      // 🔚 Return enriched business object
+      return {
+        ...business.toObject(),
+        averageRating: parseFloat(rating.averageRating?.toFixed(1)) || 0,
+        totalReviews: rating.totalReviews || 0,
+        totalFollowers: engagementInfo.totalFollowers,
+        totalLikes: engagementInfo.totalLikes,
+        totalComments: engagementInfo.totalComments,
+        isLiked: engagementInfo.isLiked,
+        isFollowed: engagementInfo.isFollowed,
+        blueVerifiedBadge: business.subscriptionType === 'exclusive',
+        categoryName: business.providerType?.name || null,
+        reviews,
+      };
+    })
+  );
 
-  // ⭐ Get all reviews
-  const reviews = await BusinessReview.find({ businessId })
-    .populate('userId', 'name profileImage')
-    .select('rating comment')
-    .sort({ createdAt: -1 });
-
-  // 👑 Final enriched result
-  return {
-    ...business.toObject(),
-    averageRating: parseFloat(rating.averageRating?.toFixed(1)) || 0,
-    totalReviews: rating.totalReviews || 0,
-    totalFollowers: engagementInfo.totalFollowers,
-    totalLikes: engagementInfo.totalLikes,
-    totalComments: engagementInfo.totalComments,
-    isLiked: engagementInfo.isLiked,
-    isFollowed: engagementInfo.isFollowed,
-    blueVerifiedBadge: business.subscriptionType === 'exclusive',
-    categoryName: business.providerType?.name || null,
-    reviews,
-  };
+  return results;
 };
-
 const getExtraBusinessDataById = async (userId: string, id: string) => {
   const business = await Business.findById(id)
     .populate('providerType', 'name')
@@ -726,7 +729,7 @@ export const businessService = {
   updateBusiness,
   deleteBusiness,
   getBusinessAndEventsForMap,
-  getMyBusiness,
+  getMyBusinesses,
   searchBusinesses,
   getExtraBusinessDataById
 };

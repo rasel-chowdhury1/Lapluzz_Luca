@@ -24,7 +24,14 @@ router.post(
 
 .patch(
   '/update/:id', 
-  auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
+  auth(USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
+   upload.fields([
+      { name: 'logo', maxCount: 1 },
+      { name: 'cover', maxCount: 1 },
+      { name: 'gallery', maxCount: 10 },
+      { name: 'promotion', maxCount: 1 },
+    ]),
+    parseData(),
   businessController.updateBusiness
 )
 

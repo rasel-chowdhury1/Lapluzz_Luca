@@ -61,6 +61,18 @@ const getAllInspirations = catchAsync(
   }
 );
 
+const getMyInspirations = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await InspirationService.getAllInspirations(req.query);
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'My inspirations fetched successfully',
+      data: result,
+    });
+  }
+);
+
 const getAllInspirationsGroupedByCategory = catchAsync(
   async (req: Request, res: Response) => {
     const result = await InspirationService.getAllInspirationsGroupedByCategory();
@@ -123,7 +135,8 @@ const deleteInspiration = catchAsync(
 );
 
 export const inspirationController = {
-    createInspiration,
+  createInspiration,
+  getMyInspirations,
   getAllInspirations,
     getAllInspirationsGroupedByCategory,
     getInspirationById,

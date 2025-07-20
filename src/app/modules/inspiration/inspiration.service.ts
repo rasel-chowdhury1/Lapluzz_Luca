@@ -13,7 +13,27 @@ const createInspiration = async (payload: IInspiration) => {
 
 const getAllInspirations = async (query: Record<string, any>) => {
   const inspirationQuery = new QueryBuilder(
-    Inspiration.find().populate('category', 'name description'),
+    Inspiration.find({isBlocked: false, isDeleted: true}).populate('category', 'name description'),
+    query
+  )
+    .search(['title']) // searchable fields
+    .filter()
+    .paginate()
+    .sort()
+    .fields();
+
+  const data = await inspirationQuery.modelQuery;
+  const meta = await inspirationQuery.countTotal();
+
+  return {
+    data,
+    meta,
+  };
+};
+
+const getMyInspirations = async (userId: string, query: Record<string, any>) => {
+  const inspirationQuery = new QueryBuilder(
+    Inspiration.find({author: userId, isBlocked: false, isDeleted: true}).populate('category', 'name description'),
     query
   )
     .search(['title']) // searchable fields
@@ -122,6 +142,7 @@ const deleteInspiration = async (id: string) => {
 
 export const InspirationService = {
   createInspiration,
+  getMyInspirations,
   getAllInspirations,
   getSpecificCategoryInspiration,
   getInspirationById,

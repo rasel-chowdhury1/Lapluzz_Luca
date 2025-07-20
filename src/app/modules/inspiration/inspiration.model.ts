@@ -17,7 +17,9 @@ const inspirationSchema = new Schema<IInspiration>(
     },
     description: { type: String, default: null },
     coverImage: { type: String, required: true },
-    imageGallery: { type: [String], default: null }
+    imageGallery: { type: [String], default: null },
+    isBlocked: {type: Boolean, default: false},
+    isDeleted: {type: Boolean, default: false}
   },
   { timestamps: true }
 );

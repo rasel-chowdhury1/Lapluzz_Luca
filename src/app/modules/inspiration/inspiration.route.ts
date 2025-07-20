@@ -18,20 +18,43 @@ router.post(
     ]),
     parseData(),
     inspirationController.createInspiration
-);
-router.get('/', inspirationController.getAllInspirations);
-// ✅ New Route: Grouped by category
-router.get(
-  '/group-by/category',
-  inspirationController.getAllInspirationsGroupedByCategory
-);
+)
+  
+  .get(
+    '/',
+    inspirationController.getAllInspirations
+  )
+  .get(
+    '/my',
+    auth(USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
+    inspirationController.getMyInspirations)
 
-router.get(
-    '/category/:categoryId', 
-    inspirationController.getSpecificCategoryInspiration
-);
-router.get('/:id', inspirationController.getInspirationById);
-router.put('/:id', inspirationController.updateInspiration);
-router.delete('/:id', inspirationController.deleteInspiration);
+
+  // ✅ New Route: Grouped by category
+  .get(
+    '/group-by/category',
+    inspirationController.getAllInspirationsGroupedByCategory
+  )
+
+  .get(
+      '/category/:categoryId', 
+      inspirationController.getSpecificCategoryInspiration
+  )
+
+
+  .get(
+    '/:id',
+    inspirationController.getInspirationById
+  )
+
+  .put(
+    '/:id',
+    inspirationController.updateInspiration
+)
+  
+  .delete(
+    '/:id',
+    inspirationController.deleteInspiration
+  )
 
 export const InspirationRoutes = router;

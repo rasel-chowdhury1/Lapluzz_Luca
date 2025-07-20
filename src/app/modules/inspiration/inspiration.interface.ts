@@ -10,6 +10,8 @@ export interface IInspiration {
   description?: string | null;
   coverImage: string;
   imageGallery?: string[] | null;
+  isBlocked: boolean;
+  isDeleted: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }
