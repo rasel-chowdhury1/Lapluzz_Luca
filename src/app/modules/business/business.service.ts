@@ -15,6 +15,7 @@ import SearchRecord from '../searchRecord/searchRecord.model';
 import { enrichEvent } from '../event/event.utils';
 import { Inspiration } from '../inspiration/inspiration.model';
 import { Types } from 'mongoose';
+import { monthNames } from './business.utils';
 
 const createBusiness = async (payload: IBusiness) => {
   const { longitude, latitude, ...rest } = payload;
@@ -649,9 +650,24 @@ const getSpecificBusinessStats = async (businessId: string) => {
   const totalLikes = engagement?.likes?.length || 0;
   const totalComments = engagement?.comments?.length || 0;
 
-  // 3️⃣ Get profile views
+  // 3️⃣ Get profile views & monthly breakdown
   const viewsDoc = await BusinessProfileViews.findOne({ businessId: id }).lean();
-  const profileViews = viewsDoc?.viewUsers?.length || 0;
+  const viewUsers = viewsDoc?.viewUsers || [];
+  const profileViews = viewUsers.length;
+
+    const monthlyCounts = Array(12).fill(0);
+  viewUsers.forEach((view: { viewedAt: Date }) => {
+    const date = new Date(view.viewedAt);
+    if (!isNaN(date.getTime())) {
+      const month = date.getMonth(); // 0 to 11
+      monthlyCounts[month]++;
+    }
+  });
+
+  const monthlyViews = monthNames.map((month, index) => ({
+    month,
+    totalViews: monthlyCounts[index]
+  }));
 
   // 4️⃣ Get average rating & total reviews
   const ratingAgg = await BusinessReview.aggregate([
@@ -686,6 +702,7 @@ const getSpecificBusinessStats = async (businessId: string) => {
     totalLikes,
     totalComments,
     profileViews,
+    monthlyViews,
     averageRating: parseFloat(ratingStats.averageRating?.toFixed(1)) || 0,
     totalReviews: ratingStats.totalReviews,
     activeSubscription: activeSubscription

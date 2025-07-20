@@ -4,6 +4,11 @@ import catchAsync from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
 import Business from "./business.model";
 
+export const monthNames = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
+
 export const verifyBusinessOwnership = () => {
   return catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const { businessId } = req.params;
