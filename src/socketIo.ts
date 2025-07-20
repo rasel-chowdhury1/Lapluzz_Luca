@@ -52,7 +52,6 @@ export const onlineFriendshipUser = new Map<
 console.log('connectedUsers ---->>> ', connectedUsers);
 
 export const initSocketIO = async (server: HttpServer): Promise<void> => {
-  console.log('🔧 Initializing Socket.IO server 🔧');
 
   const { Server } = await import('socket.io');
 
@@ -64,12 +63,12 @@ export const initSocketIO = async (server: HttpServer): Promise<void> => {
       credentials: true,
     },
   });
-
-  console.log('🎉 Socket.IO server initialized! 🎉');
   // Start the HTTP server on the specified port
   server.listen(socketPort, () => {
     console.log(
-      colors.green(`Socket is listening on ${config.ip}:${socketPort}`).bold,
+      //@ts-ignore
+      `---> Socket server is listening on : http://${config.ip}:${config.socket_port}`.yellow
+        .bold,
     );
   });
 

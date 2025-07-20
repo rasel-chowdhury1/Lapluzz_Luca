@@ -26,9 +26,8 @@ async function main() {
 
     server.listen(Number(config.port), () => {
       console.log(
-        colors.green(`App is listening on ${config.ip}:${config.port}`).bold,
+        colors.green(`---> Lapluzz server is listening on  : http://${config.ip}:${config.port}`).bold,
       );
-
     // Initialize Socket.IO
     initSocketIO(socketServer);
 

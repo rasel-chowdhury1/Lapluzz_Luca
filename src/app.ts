@@ -10,7 +10,9 @@ import globalErrorHandler from './app/middleware/globalErrorhandler';
 import router from './app/routes';
 import notFound from './app/middleware/notfound';
 import serverHomePage from './app/helpers/serverHomePage';
+import { logHttpRequests } from './app/utils/logger';
 const app: Application = express();
+app.use(logHttpRequests);
 app.use(express.static('public'));
 app.use(express.urlencoded({ extended: true }));
 
