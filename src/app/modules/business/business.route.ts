@@ -54,6 +54,12 @@ router.post(
   businessController.getMyBusiness
 )
 
+  .get(
+  '/stats/:businessId', 
+  auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
+  businessController.getSpecificBusinessStats
+)
+
 .get(
   '/category/:categoryId', 
   auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),

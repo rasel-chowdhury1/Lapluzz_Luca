@@ -171,6 +171,17 @@ const getMyBusiness = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getSpecificBusinessStats = catchAsync(async (req: Request, res: Response) => {
+  const {businessId} = req.params;
+  const result = await businessService.getSpecificBusinessStats(businessId);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Specific business stats fetched successfully',
+    data: result,
+  });
+});
+
 const getBusinessById = catchAsync(async (req: Request, res: Response) => {
   const result = await businessService.getBusinessById(req.user.userId, req.params.id);
   sendResponse(res, {
@@ -237,5 +248,6 @@ export const businessController = {
   getMyBusiness,
   updateBusiness,
   getExtraBusinessDataById,
-  searchBusinessController
+  searchBusinessController,
+  getSpecificBusinessStats
 };

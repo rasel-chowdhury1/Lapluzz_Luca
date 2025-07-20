@@ -14,6 +14,7 @@ import Category from '../category/category.model';
 import SearchRecord from '../searchRecord/searchRecord.model';
 import { enrichEvent } from '../event/event.utils';
 import { Inspiration } from '../inspiration/inspiration.model';
+import { Types } from 'mongoose';
 
 const createBusiness = async (payload: IBusiness) => {
   const { longitude, latitude, ...rest } = payload;
@@ -625,6 +626,80 @@ const getExtraBusinessDataById = async (userId: string, id: string) => {
 //   return result;
 // };
 
+
+
+const getSpecificBusinessStats = async (businessId: string) => {
+  const id = new Types.ObjectId(businessId);
+
+  // 1️⃣ Check business existence and status
+  const business = await Business.findOne({ _id: id, isDeleted: false }).lean();
+  if (!business) {
+    throw new Error('Business not found');
+  }
+
+  const authorId = business.author;
+
+  // ⭐ Get totalCredits of the author
+  const author = await User.findById(authorId).select('totalCredits').lean();
+  const totalCredits = author?.totalCredits || 0;
+
+  // 2️⃣ Get engagement stats (followers, likes, comments)
+  const engagement = await BusinessEngagementStats.findOne({ businessId: id }).lean();
+  const totalFollowers = engagement?.followers?.length || 0;
+  const totalLikes = engagement?.likes?.length || 0;
+  const totalComments = engagement?.comments?.length || 0;
+
+  // 3️⃣ Get profile views
+  const viewsDoc = await BusinessProfileViews.findOne({ businessId: id }).lean();
+  const profileViews = viewsDoc?.viewUsers?.length || 0;
+
+  // 4️⃣ Get average rating & total reviews
+  const ratingAgg = await BusinessReview.aggregate([
+    { $match: { businessId: id } },
+    {
+      $group: {
+        _id: '$businessId',
+        averageRating: { $avg: '$rating' },
+        totalReviews: { $sum: 1 }
+      }
+    }
+  ]);
+
+  const ratingStats = ratingAgg[0] || {
+    averageRating: 0,
+    totalReviews: 0
+  };
+
+  // 5️⃣ Get active subscription info
+  const now = new Date();
+  const activeSubscriptions = business.subcriptionList?.filter(
+    (sub) => sub.expireDate && new Date(sub.expireDate) > now
+  ) || [];
+
+  const activeSubscription = activeSubscriptions[0] || null;
+  const totalActiveSub = activeSubscriptions.length;
+
+  // ✅ Final return object
+  return {
+    businessId,
+    totalFollowers,
+    totalLikes,
+    totalComments,
+    profileViews,
+    averageRating: parseFloat(ratingStats.averageRating?.toFixed(1)) || 0,
+    totalReviews: ratingStats.totalReviews,
+    activeSubscription: activeSubscription
+      ? {
+          type: activeSubscription.type,
+          expireDate: activeSubscription.expireDate
+        }
+      : null,
+    totalActiveSub,
+    totalCredits
+  };
+};
+
+
 const updateBusiness = async (
   businessId: string,
   updateData: Partial<IBusiness>
@@ -725,5 +800,6 @@ export const businessService = {
   getBusinessAndEventsForMap,
   getMyBusinesses,
   searchBusinesses,
-  getExtraBusinessDataById
+  getExtraBusinessDataById,
+  getSpecificBusinessStats
 };
