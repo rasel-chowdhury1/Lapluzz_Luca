@@ -51,6 +51,12 @@ router.post(
   auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
   eventController.getMyEvents
 )
+  
+.get(
+  '/myList', 
+  auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
+  eventController.getMyEventList
+)
 
 .get(
     '/sub', 

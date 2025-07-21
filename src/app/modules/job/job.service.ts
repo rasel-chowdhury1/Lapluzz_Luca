@@ -311,6 +311,17 @@ const getMyJobs = async (userId: string) => {
   return enrichedJobs;
 };
 
+const getMyJobsList = async (userId: string) => {
+
+
+  const jobs = await Job.find({ author: userId, isDeleted: false }).select("title");
+
+  if (!jobs.length) {
+    throw new AppError(httpStatus.NOT_FOUND, 'No jobs found for this user');
+  }
+
+  return jobs;
+};
 
 const updateJob = async (id: string, payload: Partial<IJob>) => {
   const result = await Job.findByIdAndUpdate(id, payload, { new: true });
@@ -404,5 +415,6 @@ export const jobService = {
   deleteJob,
   getLatestJobs,
   getSubscriptionJobs,
-  getUnsubscriptionJobs
+  getUnsubscriptionJobs,
+  getMyJobsList
 };

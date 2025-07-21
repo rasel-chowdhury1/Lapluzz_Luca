@@ -49,7 +49,7 @@ export const onlineFriendshipUser = new Map<
   }
 >();
 
-console.log('connectedUsers ---->>> ', connectedUsers);
+// console.log('connectedUsers ---->>> ', connectedUsers);
 
 export const initSocketIO = async (server: HttpServer): Promise<void> => {
 
@@ -89,7 +89,7 @@ export const initSocketIO = async (server: HttpServer): Promise<void> => {
       );
     }
 
-    console.log(token, 'token from socket ========================>');
+    // console.log(token, 'token from socket ========================>');
 
     const userDetails = verifyToken({
       token,
@@ -121,15 +121,15 @@ export const initSocketIO = async (server: HttpServer): Promise<void> => {
       if (socket.user && socket.user._id) {
         connectedUsers.set(socket.user._id.toString(), { socketID: socket.id });
         // emitOnlineUser(socket.user?._id);
-        console.log(
-          `Registered user testing ${socket.user._id.toString()} with socket ID: ${socket.id}`,
-        );
+        // console.log(
+        //   `Registered user testing ${socket.user._id.toString()} with socket ID: ${socket.id}`,
+        // );
       }
 
       // (Optional) In addition to auto-registering, you can still listen for a "userConnected" event if needed.
       socket.on('userConnected', ({ userId }: { userId: string }) => {
         connectedUsers.set(userId, { socketID: socket.id });
-        console.log(`User ${userId} connected with socket ID: ${socket.id}`);
+        // console.log(`User ${userId} connected with socket ID: ${socket.id}`);
       });
 
      

@@ -30,6 +30,11 @@ router.post(
     auth(USER_ROLE.USER, USER_ROLE.ORGANIZER),
     jobController.getMyJobs
 )
+  .get(
+    '/myList', 
+    auth(USER_ROLE.USER, USER_ROLE.ORGANIZER),
+    jobController.getMyJobsList
+)
   
   .get(
     '/latest', 

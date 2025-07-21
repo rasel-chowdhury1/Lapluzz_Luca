@@ -206,7 +206,7 @@ const getUnsubscriptionEvent = async (userId: string, query: Record<string, any>
   let data = await eventModel.modelQuery;
   const meta = await eventModel.countTotal();
 
-  console.log("event body data ->>> ")
+  // console.log("event body data ->>> ")
   console.log({data,meta})
 
   if (!data || data.length === 0) return { data, meta };
@@ -435,6 +435,18 @@ const getMyEvents = async (userId: string) => {
   return enrichedEvents;
 };
 
+const getMyEventList = async (userId: string) => {
+  console.log({userId})
+  const events = await Event.find({ author: userId, isDeleted: false }).select("name");
+
+  if (!events.length) {
+    throw new AppError(httpStatus.NOT_FOUND, 'No events found for this user');
+  }
+  
+  return events;
+  
+};
+
 const updateEvent = async (
   eventId: string,
   updateData: Partial<IEvent>
@@ -479,5 +491,6 @@ export const eventService = {
   updateEvent,
   deleteEvent,
   getMyEvents,
-  getExtraEventDataById
+  getExtraEventDataById,
+  getMyEventList
 };

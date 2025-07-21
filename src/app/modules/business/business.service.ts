@@ -448,19 +448,19 @@ const getMyBusinesses = async (userId: string) => {
     businesses.map(async (business) => {
       const businessId = business._id;
 
-      // 🔄 Update profile views (background)
-      BusinessProfileViews.findOneAndUpdate(
-        { businessId },
-        {
-          $push: {
-            viewUsers: {
-              user: userId,
-              viewedAt: new Date(),
-            },
-          },
-        },
-        { upsert: true, new: true }
-      ).exec();
+      // // 🔄 Update profile views (background)
+      // BusinessProfileViews.findOneAndUpdate(
+      //   { businessId },
+      //   {
+      //     $push: {
+      //       viewUsers: {
+      //         user: userId,
+      //         viewedAt: new Date(),
+      //       },
+      //     },
+      //   },
+      //   { upsert: true, new: true }
+      // ).exec();
 
       // ⭐ Get rating
       const ratingAgg = await BusinessReview.aggregate([
@@ -513,6 +513,17 @@ const getMyBusinesses = async (userId: string) => {
   );
 
   return results;
+};
+
+const getMyBusinessesList = async (userId: string) => {
+  const businesses = await Business.find({ author: userId, isDeleted: false }).select("name")
+
+  if (!businesses.length) {
+    throw new Error('No businesses found!');
+  }
+
+  return businesses;
+
 };
 const getExtraBusinessDataById = async (userId: string, id: string) => {
   const business = await Business.findById(id)
@@ -818,5 +829,6 @@ export const businessService = {
   getMyBusinesses,
   searchBusinesses,
   getExtraBusinessDataById,
-  getSpecificBusinessStats
+  getSpecificBusinessStats,
+  getMyBusinessesList
 };

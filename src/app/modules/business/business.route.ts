@@ -53,6 +53,12 @@ router.post(
   auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
   businessController.getMyBusiness
 )
+  
+    .get(
+  '/myList', 
+  auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
+  businessController.getMyBusinessList
+)
 
   .get(
   '/stats/:businessId', 

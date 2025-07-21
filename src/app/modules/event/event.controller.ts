@@ -116,6 +116,19 @@ const getMyEvents = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getMyEventList = catchAsync(async (req: Request, res: Response) => {
+
+  const { userId } = req.user;
+  
+  const result = await eventService.getMyEventList(userId);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'My event list fetched successfully',
+    data: result,
+  });
+});
+
 
 const getEventById = catchAsync(async (req: Request, res: Response) => {
 
@@ -160,5 +173,6 @@ export const eventController = {
   updateEvent,
   deleteEvent,
   getMyEvents,
-  getExtraDataEventById
+  getExtraDataEventById,
+  getMyEventList
 };
