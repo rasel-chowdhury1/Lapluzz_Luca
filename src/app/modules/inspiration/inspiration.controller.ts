@@ -63,6 +63,7 @@ const getAllInspirations = catchAsync(
 
 const getMyInspirations = catchAsync(
   async (req: Request, res: Response) => {
+    console.log(req.user)
     const { userId } = req.user;
     const result = await InspirationService.getMyInspirations(userId,req.query);
     sendResponse(res, {

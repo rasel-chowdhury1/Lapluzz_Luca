@@ -33,7 +33,7 @@ const getAllInspirations = async (query: Record<string, any>) => {
 
 const getMyInspirations = async (userId: string, query: Record<string, any>) => {
   const inspirationQuery = new QueryBuilder(
-    Inspiration.find({author: userId, isBlocked: false, isDeleted: true}).populate('category', 'name description'),
+    Inspiration.find({author: userId, isBlocked: false, isDeleted: false}).populate('category', 'name description'),
     query
   )
     .search(['title']) // searchable fields

@@ -27,7 +27,8 @@ router.post(
   .get(
     '/my',
     auth(USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
-    inspirationController.getMyInspirations)
+    inspirationController.getMyInspirations
+  )
 
 
   // ✅ New Route: Grouped by category
