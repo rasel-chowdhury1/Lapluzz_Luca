@@ -31,6 +31,7 @@ import { JobApplicantRoutes } from "../modules/jobApplicant/jobApplicant.route";
 import { messageRoutes } from "../modules/message/message.route";
 import { searchRecord } from "../modules/searchRecord/searchRecord.route";
 import { EventInterestRoutes } from "../modules/eventInterest/eventInterest.route";
+import { subcriptionPaymentRoutes } from "../modules/subscriptionPayment/subscriptionPayment.route";
 
 const router = Router();
 
@@ -187,6 +188,10 @@ const moduleRoutes = [
   {
     path: "/subscription",
     route: SubscriptionRoutes
+  },
+  {
+    path: "/subscriptionPayment",
+    route: subcriptionPaymentRoutes
   },
 
   // search record

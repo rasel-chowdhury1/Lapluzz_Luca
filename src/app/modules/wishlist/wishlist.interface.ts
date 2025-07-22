@@ -5,6 +5,7 @@ export interface IFolder {
   businesses: ObjectId[];
   events: ObjectId[];
   jobs: ObjectId[];
+  isActive: boolean;
 }
 
 export interface IWishList {

@@ -6,9 +6,14 @@ import {
 
 const JobApplicantSchema = new Schema<IJobApplicantDocument>(
   {
-    jobId: { type: Schema.Types.ObjectId, ref: 'Job', required: true },
-    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    viewCvImage: { type: String, required: true }
+    jobId: { type: Schema.Types.ObjectId, ref: 'Job', required: true, unique: true },
+    applicantUsers: [
+      {
+        user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+        viewCvImage: { type: String, required: true },
+        applicantTime: { type: Date, default: Date.now },
+      }
+    ],
   },
   { timestamps: true }
 );

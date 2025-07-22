@@ -2,6 +2,9 @@ import httpStatus from 'http-status';
 import AppError from '../../error/AppError';
 import WishList from './wishlist.model';
 import { User } from '../user/user.models';
+import Business from '../business/business.model';
+import Job from '../job/job.model';
+import Event from '../event/event.model';
 
 // const createOrUpdateFolder = async (
 //   userId: string,
@@ -108,58 +111,110 @@ const createOrUpdateFolder = async (
 
 
 const getWishlistByUser = async (userId: string) => {
-  const wishlist = await WishList.findOne({ userId })
-    .populate({
-      path: 'folders.businesses',
-      model: 'Business',
-      select: 'name coverImage',
-    })
-    .populate({
-      path: 'folders.events',
-      model: 'Event',
-      select: 'name coverImage',
-    })
-    // .populate({
-    //   path: 'folders.jobs',
-    //   model: 'Job',
-    //   select: 'title companyName',
-    // });
+  const wishlist = await WishList.findOne({ userId }).lean();
 
   if (!wishlist) {
     throw new AppError(httpStatus.NOT_FOUND, 'No wishlist found for user');
   }
 
-  return wishlist;
+  console.log({wishlist})
+  // Manually populate each folder's references
+  const populatedFolders = await Promise.all(
+    wishlist.folders.map(async (folder) => {
+      const [businesses, events, jobs] = await Promise.all([
+        Business.find({ _id: { $in: folder.businesses } }).select('name coverImage'),
+        Event.find({ _id: { $in: folder.events } }).select('name coverImage'),
+        Job.find({ _id: { $in: folder.jobs } }).select('title companyName'),
+      ]);
+
+      return {
+        ...folder,
+        businesses,
+        events,
+        jobs,
+      };
+    })
+  );
+
+  console.log({populatedFolders})
+
+  return {
+    ...wishlist,
+    folders: populatedFolders,
+  };
+};
+
+const updateFolderIsActive = async (
+  userId: string,
+  folderName: string,
+  isActive: boolean
+) => {
+  const updatedWishlist = await WishList.findOneAndUpdate(
+    { userId, 'folders.folderName': folderName },
+    {
+      $set: {
+        'folders.$.isActive': isActive,
+      },
+    },
+    { new: true }
+  ).lean();
+
+  if (!updatedWishlist) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Folder or user not found');
+  }
+
+  return updatedWishlist;
 };
 
 const getCheckWishlistByUser = async (userId: string) => {
-  const wishlist = await WishList.findOne({ userId });
+  const wishlist = await WishList.findOne({ userId }).lean();
 
   if (!wishlist) {
     throw new AppError(httpStatus.NOT_FOUND, 'No wishlist found for user');
   }
 
-  const updatedFolders = wishlist.folders.map((folder) => {
-    const totalItems =
-      (folder.businesses?.length || 0) +
-      (folder.events?.length || 0) +
-      (folder.jobs?.length || 0);
+  const updatedFolders = await Promise.all(
+    wishlist.folders.map(async (folder) => {
+      const totalItems =
+        (folder.businesses?.length || 0) +
+        (folder.events?.length || 0) +
+        (folder.jobs?.length || 0);
 
-    return {
-      folderName: folder.folderName,
-      totalItems,
-    };
-  });
+      let coverImage = null;
 
-  return {
-    ...wishlist.toObject(),
-    folders: updatedFolders,
-  };
+      if (folder.businesses?.[0]) {
+        const business = await Business.findById(folder.businesses[0])
+          .select('coverImage')
+          .lean();
+        coverImage = business?.coverImage || null;
+      } else if (folder.events?.[0]) {
+        const event = await Event.findById(folder.events[0])
+          .select('coverImage')
+          .lean();
+        coverImage = event?.coverImage || null;
+      } else if (folder.jobs?.[0]) {
+        const job = await Job.findById(folder.jobs[0])
+          .select('coverImage')
+          .lean();
+        coverImage = job?.coverImage || null;
+      }
+
+      return {
+        folderName: folder.folderName,
+        isActive: folder.isActive, // fallback to default true
+        totalItems,
+        coverImage,
+      };
+    })
+  );
+
+  return updatedFolders;
 };
 
 
 export const wishListService = {
   createOrUpdateFolder,
   getWishlistByUser,
-  getCheckWishlistByUser
+  getCheckWishlistByUser,
+  updateFolderIsActive
 };

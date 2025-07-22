@@ -307,6 +307,7 @@ const confirmPayment = async (data: any) => {
   return paymentData;
 };
 
+
 // =======  stripe implement for payment end =====
 
 const buySubscription = async (data: any) => {
@@ -332,8 +333,8 @@ const buySubscription = async (data: any) => {
     subscription: subcriptionId,
     subscriptionOptionIndex: optionIndex,
     paymentType: paymentType,
-    expiryDate: 
-  };
+    // expiryDate:
+  }
 
   const isExistPaymentId = await SubscriptionPayment.findOne({
     paymentId,

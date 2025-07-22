@@ -7,6 +7,9 @@ import mongoose from 'mongoose';
 import JobProfileViews from '../jobProfileViews/jobProfileViews.model';
 import JobReview from '../jobReview/jobReview.model';
 import JobEngagementStats from '../jobEngagementStats/jobEngagementStats.model';
+import { Types } from 'mongoose';
+import { monthNames } from '../business/business.utils';
+import JobApplicant from '../jobApplicant/jobApplicant.model';
 
 const createJob = async (payload: IJob) => {
   const result = await Job.create(payload);
@@ -406,6 +409,75 @@ const getLatestJobs = async (userId: string, limit: number = 10) => {
   return jobs;
 };
 
+const getSpecificJobStats = async (jobId: string) => {
+  const id = new Types.ObjectId(jobId);
+
+  // 1️⃣ Check job existence and status
+  const job = await Job.findOne({ _id: id, isDeleted: false }).lean();
+  if (!job) {
+    throw new Error('job not found');
+  }
+
+
+  // // ⭐ Get totalCredits of the author
+  // const author = await User.findById(authorId).select('totalCredits').lean();
+ 
+
+  // 2️⃣ Get engagement stats (followers, likes, comments)
+  const engagement = await JobEngagementStats.findOne({ jobId: id }).lean();
+  const totalComments = engagement?.comments?.length || 0;
+
+  // 3️⃣ Get profile views & monthly breakdown
+  const viewsDoc = await JobProfileViews.findOne({ jobId: id }).lean();
+  const viewUsers = viewsDoc?.viewUsers || [];
+  const profileViews = viewUsers.length;
+
+    const monthlyCounts = Array(12).fill(0);
+  viewUsers.forEach((view: { viewedAt: Date }) => {
+    const date = new Date(view.viewedAt);
+    if (!isNaN(date.getTime())) {
+      const month = date.getMonth(); // 0 to 11
+      monthlyCounts[month]++;
+    }
+  });
+
+  const monthlyViews = monthNames.map((month, index) => ({
+    month,
+    totalViews: monthlyCounts[index]
+  }));
+
+
+
+  // 5️⃣ Get active subscription info
+  const now = new Date();
+  const activeSubscriptions = job.subscriptionList?.filter(
+    (sub) => sub.expireDate && new Date(sub.expireDate) > now
+  ) || [];
+
+  const activeSubscription = activeSubscriptions[0] || null;
+  const totalActiveSub = activeSubscriptions.length;
+
+  const applicantsDoc = await JobApplicant.findOne({ jobId: jobId }).lean();
+  const jobApplicants = applicantsDoc?.applicantUsers.length || 0;
+
+
+  // ✅ Final return object
+  return {
+    jobId,
+    totalComments,
+    jobViews: profileViews,
+    monthlyViews,
+    activeSubscription: activeSubscription
+      ? {
+          type: activeSubscription.type,
+          expireDate: activeSubscription.expireDate
+        }
+      : null,
+    totalActiveSub,
+    jobApplicants
+  };
+};
+
 export const jobService = {
   createJob,
   getAllJobs,
@@ -416,5 +488,6 @@ export const jobService = {
   getLatestJobs,
   getSubscriptionJobs,
   getUnsubscriptionJobs,
-  getMyJobsList
+  getMyJobsList,
+  getSpecificJobStats
 };

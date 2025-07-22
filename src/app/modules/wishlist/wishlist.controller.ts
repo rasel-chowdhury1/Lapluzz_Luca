@@ -49,21 +49,24 @@ const getWishlistWithTotals = catchAsync(async (req: Request, res: Response) => 
   });
 });
 
-const getUsersAndVenuesOverview = catchAsync(async (req: Request, res: Response) => {
-  const { userId } = req.user;
 
-  const result = await wishListService.getWishlistByUser(userId);
+const updateFolderIsActive = catchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.user;
+  const { folderName, isActive } = req.body;
+
+  const wishlist = await wishListService.updateFolderIsActive(userId, folderName, isActive);
 
   sendResponse(res, {
     statusCode: 200,
     success: true,
-    message: 'Wishlist fetched successfully',
-    data: result
+    message: `Folder "${folderName}" has been successfully ${isActive ? 'activated' : 'deactivated'}`,
+    data: wishlist,
   });
 });
 
 export const wishListController = {
   createOrUpdateFolder,
   getWishlist,
-  getWishlistWithTotals
+  getWishlistWithTotals,
+  updateFolderIsActive
 };

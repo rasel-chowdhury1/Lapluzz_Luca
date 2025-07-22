@@ -52,6 +52,11 @@ router.post(
     jobController.getUnsubscriptionJobs
 )
   .get(
+    '/stats/:jobId', 
+    auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
+    jobController.getSpecificJobStats
+  )
+  .get(
     '/:id', 
     auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
     jobController.getJobById

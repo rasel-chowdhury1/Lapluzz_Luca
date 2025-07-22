@@ -41,6 +41,14 @@ router.get(
   auth(USER_ROLE.ORGANIZER),
   SubcriptionPaymentController.buySubscription
 )
+
+// routes/subscriptionPayment.routes.ts
+router.post(
+  '/initiate',
+  auth(USER_ROLE.ORGANIZER),
+  SubcriptionPaymentController.initiateSubscriptionPayment
+);
+router.post('/woo-webhook', SubcriptionPaymentController.handleWooPaymentWebhook);
 // == stripe implement for payment route --- end 
 
 export const subcriptionPaymentRoutes = router;

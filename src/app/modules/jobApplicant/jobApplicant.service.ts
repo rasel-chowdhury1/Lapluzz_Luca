@@ -1,33 +1,39 @@
 import JobApplicant from './jobApplicant.model';
-import { IJobApplicant } from './jobApplicant.interface';
-import AppError from '../../error/AppError';
-import httpStatus from 'http-status';
+import { IApplicantUser } from './jobApplicant.interface';
+import { Types } from 'mongoose';
 
-const createJobApplicant = async (data: IJobApplicant) => {
-  const alreadyExists = await JobApplicant.findOne({
-    jobId: data.jobId,
-    userId: data.userId,
-  });
+const addJobApplicant = async (
+  jobId: string,
+  applicant: IApplicantUser
+) => {
+  const existing = await JobApplicant.findOne({ jobId });
 
-  if (alreadyExists) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'You have already applied for this job');
+  if (existing) {
+    const alreadyApplied = existing.applicantUsers.some(user =>
+      user.user.toString() === applicant.user.toString()
+    );
+
+    if (alreadyApplied) {
+      throw new Error('User has already applied for this job');
+    }
+
+    existing.applicantUsers.push(applicant);
+    return await existing.save();
   }
 
-  return await JobApplicant.create(data);
+  return await JobApplicant.create({
+    jobId: new Types.ObjectId(jobId),
+    applicantUsers: [applicant],
+  });
 };
 
-const getApplicantsByJob = async (jobId: string) => {
-  return await JobApplicant.find({ jobId })
-    .populate('userId', 'name sureName profileImage email')
-    .sort({ createdAt: -1 });
-};
-
-const getApplicant = async (jobId: string, userId: string) => {
-  return await JobApplicant.findOne({ jobId, userId });
+const getJobApplicants = async (jobId: string) => {
+  return await JobApplicant.findOne({ jobId })
+    .populate('applicantUsers.user', 'name email profileImage')
+    .lean();
 };
 
 export const JobApplicantService = {
-  createJobApplicant,
-  getApplicantsByJob,
-  getApplicant
-};
+  addJobApplicant,
+  getJobApplicants
+}

@@ -103,6 +103,17 @@ const getMyJobs = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getSpecificJobStats = catchAsync(async (req: Request, res: Response) => {
+  const { jobId } = req.params;
+  const result = await jobService.getSpecificJobStats(jobId);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Specifice Job stats fetched successfully',
+    data: result,
+  });
+});
+
 
 
 const deleteJob = catchAsync(async (req: Request, res: Response) => {
@@ -143,5 +154,6 @@ export const jobController = {
   getLatestJobs,
   getSubscriptionJobs,
   getUnsubscriptionJobs,
-  getMyJobsList
+  getMyJobsList,
+  getSpecificJobStats
 };

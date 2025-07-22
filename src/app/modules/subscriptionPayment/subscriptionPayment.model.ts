@@ -37,13 +37,13 @@ const subscriptionPaymentSchema: Schema = new Schema<ISubscriptionPayment>(
     },
     paymentType: {
       type: String,
-      enum: ['Card', 'Paypal', 'Bank', 'Stripe', "Credit"],
+      enum: ['Card', 'Paypal', 'Klarna', 'Bank', "Credit"],
       default: 'Card',
     },
     status: {
       type: String,
-      enum: ["notActivate", "activate", "stop", "gotCredits"],
-      default: "notActivate"
+      enum: ["pending","notActivate", "activate", "stop", "gotCredits"],
+      default: "pending"
     },
     expireDate: {
       type: Date,

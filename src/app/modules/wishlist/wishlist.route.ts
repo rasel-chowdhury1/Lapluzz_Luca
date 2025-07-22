@@ -9,7 +9,13 @@ router.post(
   '/add',
   auth(USER_ROLE.USER),
   wishListController.createOrUpdateFolder
-);
+)
+
+.patch(
+  '/update',
+  auth(USER_ROLE.USER),
+  wishListController.updateFolderIsActive
+)
 
 router.get(
   '/',

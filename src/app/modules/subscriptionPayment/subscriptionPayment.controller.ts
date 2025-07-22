@@ -4,6 +4,17 @@ import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import Subcription from '../subscription/subcription.model';
 import { SubcriptionPaymentService } from './subscriptionPayment.service';
+import Subscription from '../subscription/subcription.model';
+import AppError from '../../error/AppError';
+import SubscriptionPayment from './subscriptionPayment.model';
+
+const paymentTypeMap: Record<string, string> = {
+  'stripe': 'Card',
+  'klarna': 'Klarna',
+  'paypal': 'Paypal',
+  'bank_transfer': 'Bank',
+};
+
 // import AppError from '../../error/AppError';
 // import { PaypalUtils } from '../../utils/paypal';
 
@@ -235,6 +246,92 @@ const buySubscription = catchAsync(async (req: Request, res: Response) => {
 });
 
 
+const initiateSubscriptionPayment = catchAsync(async (req: Request, res: Response) => {
+  const { subscriptionId, subscriptionOptionIndex, subscriptionFor, subscriptionForType } = req.body;
+  const { userId } = req.user;
+
+  // 🔍 Validate subscription existence
+  const subscription = await Subscription.findById(subscriptionId);
+  if (!subscription) throw new AppError(404, 'Subscription not found');
+
+  // 🔍 Validate subscription option index
+  const selectedOption = subscription.options[subscriptionOptionIndex];
+  if (!selectedOption) throw new AppError(400, 'Invalid subscription option selected');
+
+  // 📆 Calculate expire date
+  const expireDate = new Date();
+  expireDate.setDate(expireDate.getDate() + (selectedOption.expirationDays || 30));
+
+  // 💳 Create temporary subscription payment entry
+  const payment = await SubscriptionPayment.create({
+    paymentId: `woo-${Date.now()}`, // temporary ID
+    amount: selectedOption.price,
+    userId,
+    subscriptionFor,
+    subscriptionForType,
+    subscription: subscription._id,
+    subscriptionOptionIndex,
+    paymentType: 'Card', // default; will be updated via webhook
+    status: 'pending', // initial status
+    expireDate,
+  });
+
+  // 🌐 Build WooCommerce redirect URL
+  const redirectUrl = `https://your-wordpress-site.com/checkout?subscription_payment_id=${payment._id}&amount=${payment.amount}`;
+
+  // 📤 Send response
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Redirect to WooCommerce payment UI',
+    data: { redirectUrl },
+  });
+});
+
+
+
+// subscriptionPayment.controller.ts
+
+const handleWooPaymentWebhook = catchAsync(async (req: Request, res: Response) => {
+  const { subscription_payment_id, status,payment_method, woo_order_id } = req.body;
+
+  // 🔴 Handle failed or incomplete payment
+  if (status !== 'success') {
+    return sendResponse(res, {
+      statusCode: 400,
+      success: false,
+      message: 'Payment not successful',
+      data: null,
+    });
+  }
+
+  const paymentType = paymentTypeMap[payment_method] || 'Card'; // fallback
+  // ✅ Update subscription status
+  const updated = await SubscriptionPayment.findByIdAndUpdate(
+    subscription_payment_id,
+    {
+      status: 'notActivate',
+      paymentId: woo_order_id, // replace temporary paymentId
+      paymentType
+    },
+    { new: true }
+  );
+
+  if (!updated) {
+    throw new AppError(404, 'Subscription payment record not found');
+  }
+
+  // ✅ Send success response
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Subscription payment successfully',
+    data: updated,
+  });
+});
+
+
+
 
 
 export const SubcriptionPaymentController = {
@@ -245,7 +342,9 @@ export const SubcriptionPaymentController = {
    // stripe implement for payment start
    createPaymentSubscription,
   confirmPayment,
-   buySubscription
+  buySubscription,
+  initiateSubscriptionPayment,
+   handleWooPaymentWebhook
    // stripe implement for payment end 
   
 };

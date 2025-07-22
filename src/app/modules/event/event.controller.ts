@@ -129,6 +129,17 @@ const getMyEventList = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getSpecificEventStats = catchAsync(async (req: Request, res: Response) => {
+  const {eventId} = req.params;
+  const result = await eventService.getSpecificEventStats(eventId);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Specific event stats fetched successfully',
+    data: result,
+  });
+});
+
 
 const getEventById = catchAsync(async (req: Request, res: Response) => {
 
@@ -174,5 +185,6 @@ export const eventController = {
   deleteEvent,
   getMyEvents,
   getExtraDataEventById,
-  getMyEventList
+  getMyEventList,
+  getSpecificEventStats
 };

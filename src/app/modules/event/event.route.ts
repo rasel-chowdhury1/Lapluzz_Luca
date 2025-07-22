@@ -57,6 +57,12 @@ router.post(
   auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
   eventController.getMyEventList
 )
+  
+.get(
+  '/stats/:eventId', 
+  auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
+  eventController.getSpecificEventStats
+)
 
 .get(
     '/sub', 

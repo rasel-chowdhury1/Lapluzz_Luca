@@ -9,21 +9,21 @@ const router = express.Router();
 
 router
     .post(
-    '/',
+    '/:jobId',
     auth(USER_ROLE.USER, USER_ROLE.ORGANIZER),
     upload.single('viewCvImage'),
     parseData(),
-    JobApplicantController.createJobApplicant
+    JobApplicantController.addApplicant
     )
 
     .get(
-        '/job/:jobId',
-        JobApplicantController.getApplicantsByJob
+        '/applicants/:jobId',
+        JobApplicantController.getApplicants
     )
     
     .get(
         '/:jobId/user/:userId',
-        JobApplicantController.getApplicant
+        JobApplicantController.getApplicants
     );
 
 export const JobApplicantRoutes = router;

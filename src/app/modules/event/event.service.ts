@@ -7,7 +7,10 @@ import { buildLocation } from '../../utils/buildLocation';
 import EventReview from '../eventReview/eventReview.model';
 import EventEngagementStats from '../eventEngagementStats/eventEngagementStats.model';
 import EventProfileViews from '../eventProfileViews/eventProfileViews.model';
-import mongoose from 'mongoose';
+import mongoose, { Types } from 'mongoose';
+import { User } from '../user/user.models';
+import { monthNames } from '../business/business.utils';
+import { EventInterestUserList } from '../eventInterest/eventInterest.model';
 
 const createEvent = async (payload: IEvent) => {
   const { longitude, latitude, ...rest } = payload;
@@ -435,6 +438,95 @@ const getMyEvents = async (userId: string) => {
   return enrichedEvents;
 };
 
+const getSpecificEventStats = async (eventId: string) => {
+  const id = new Types.ObjectId(eventId);
+
+  // 1️⃣ Check event existence and status
+  const event = await Event.findOne({ _id: id, isDeleted: false }).lean();
+  if (!event) {
+    throw new Error('event not found');
+  }
+
+  const authorId = event.author;
+
+  // // ⭐ Get totalCredits of the author
+  // const author = await User.findById(authorId).select('totalCredits').lean();
+ 
+
+  // 2️⃣ Get engagement stats (followers, likes, comments)
+  const engagement = await EventEngagementStats.findOne({ eventId: id }).lean();
+  const totalLikes = engagement?.likes?.length || 0;
+  const totalComments = engagement?.comments?.length || 0;
+
+  // 3️⃣ Get profile views & monthly breakdown
+  const viewsDoc = await EventProfileViews.findOne({ eventId: id }).lean();
+  const viewUsers = viewsDoc?.viewUsers || [];
+  const profileViews = viewUsers.length;
+
+    const monthlyCounts = Array(12).fill(0);
+  viewUsers.forEach((view: { viewedAt: Date }) => {
+    const date = new Date(view.viewedAt);
+    if (!isNaN(date.getTime())) {
+      const month = date.getMonth(); // 0 to 11
+      monthlyCounts[month]++;
+    }
+  });
+
+  const monthlyViews = monthNames.map((month, index) => ({
+    month,
+    totalViews: monthlyCounts[index]
+  }));
+
+  // 4️⃣ Get average rating & total reviews
+  const ratingAgg = await EventReview.aggregate([
+    { $match: { eventId: id } },
+    {
+      $group: {
+        _id: '$eventId',
+        averageRating: { $avg: '$rating' },
+        totalReviews: { $sum: 1 }
+      }
+    }
+  ]);
+
+  const ratingStats = ratingAgg[0] || {
+    averageRating: 0,
+    totalReviews: 0
+  };
+
+  // 5️⃣ Get active subscription info
+  const now = new Date();
+  const activeSubscriptions = Event.subscriptionList?.filter(
+    (sub) => sub.expireDate && new Date(sub.expireDate) > now
+  ) || [];
+
+  const activeSubscription = activeSubscriptions[0] || null;
+  const totalActiveSub = activeSubscriptions.length;
+
+    // 3️⃣ Get profile views & monthly breakdown
+  const interestsDoc = await EventInterestUserList.findOne({ eventId: id }).lean();
+  const interestsUsers = interestsDoc?.interestUsers.length || 0;
+
+  // ✅ Final return object
+  return {
+    eventId,
+    totalLikes,
+    totalComments,
+    eventViews: profileViews,
+    monthlyViews,
+    averageRating: parseFloat(ratingStats.averageRating?.toFixed(1)) || 0,
+    totalReviews: ratingStats.totalReviews,
+    activeSubscription: activeSubscription
+      ? {
+          type: activeSubscription.type,
+          expireDate: activeSubscription.expireDate
+        }
+      : null,
+    totalActiveSub,
+    interestsUsers
+  };
+};
+
 const getMyEventList = async (userId: string) => {
   console.log({userId})
   const events = await Event.find({ author: userId, isDeleted: false }).select("name");
@@ -492,5 +584,6 @@ export const eventService = {
   deleteEvent,
   getMyEvents,
   getExtraEventDataById,
-  getMyEventList
+  getMyEventList,
+  getSpecificEventStats
 };

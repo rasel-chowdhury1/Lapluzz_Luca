@@ -6,7 +6,8 @@ const FolderSchema = new Schema(
     folderName: { type: String, required: true },
     businesses: [{ type: Schema.Types.ObjectId, ref: 'Business' }],
     events: [{ type: Schema.Types.ObjectId, ref: 'Event' }],
-    jobs: [{ type: Schema.Types.ObjectId, ref: 'Job' }]
+    jobs: [{ type: Schema.Types.ObjectId, ref: 'Job' }],
+    isActive:{ type: Boolean, default: true }
   },
   { _id: false }
 );
