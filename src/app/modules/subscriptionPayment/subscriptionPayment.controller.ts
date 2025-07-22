@@ -9,7 +9,7 @@ import AppError from '../../error/AppError';
 import SubscriptionPayment from './subscriptionPayment.model';
 
 const paymentTypeMap: Record<string, string> = {
-  'stripe': 'Card',
+  'card': 'Card',
   'klarna': 'Klarna',
   'paypal': 'Paypal',
   'bank_transfer': 'Bank',
@@ -277,7 +277,7 @@ const initiateSubscriptionPayment = catchAsync(async (req: Request, res: Respons
   });
 
   // 🌐 Build WooCommerce redirect URL
-  const redirectUrl = `https://your-wordpress-site.com/checkout?subscription_payment_id=${payment._id}&amount=${payment.amount}`;
+  const redirectUrl = `https://pianofesta.it/pagamento/checkout?subscription_payment_id=${payment._id}&amount=${payment.amount}`;
 
   // 📤 Send response
   sendResponse(res, {
@@ -330,6 +330,21 @@ const handleWooPaymentWebhook = catchAsync(async (req: Request, res: Response) =
   });
 });
 
+const getMySubscription = catchAsync(async (req: Request, res: Response) => {
+
+
+  const { userId } = req.user;
+
+  const result = await SubcriptionPaymentService.mySubscription(userId)
+  // ✅ Send success response
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'My subscription fetched successfully',
+    data: result,
+  });
+});
+
 
 
 
@@ -344,7 +359,8 @@ export const SubcriptionPaymentController = {
   confirmPayment,
   buySubscription,
   initiateSubscriptionPayment,
-   handleWooPaymentWebhook
+  handleWooPaymentWebhook,
+   getMySubscription
    // stripe implement for payment end 
   
 };

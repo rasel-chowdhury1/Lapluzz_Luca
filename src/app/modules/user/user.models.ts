@@ -1,8 +1,8 @@
 import bcrypt from 'bcrypt';
 import { Error, model, Schema } from 'mongoose';
 import config from '../../config';
-import { TUser, UserModel } from './user.interface';
 import { Login_With, USER_ROLE } from './user.constants';
+import { TUser, UserModel } from './user.interface';
 
 const userSchema = new Schema<TUser>(
   {
@@ -20,10 +20,10 @@ const userSchema = new Schema<TUser>(
       unique: true,
     },
     customId: {
-  type: String,
-  unique: true,
-  index: true,
-},
+      type: String,
+      unique: true,
+      index: true,
+    },
     password: {
       type: String,
       required: true,
@@ -107,7 +107,7 @@ const userSchema = new Schema<TUser>(
       type: Boolean,
       default: false,
     },
-    termsAndConditions:{
+    termsAndConditions: {
       type: Boolean,
       default: false
     },
@@ -189,11 +189,11 @@ userSchema.pre('aggregate', function (next) {
 
 userSchema.statics.isUserExist = async function (email: string) {
   console.log({ email });
-  return await User.findOne({ email: email }).select('+password');
+  return await this.findOne({ email: email }).select('+password');
 };
 
 userSchema.statics.isUserActive = async function (email: string) {
-  return await User.findOne({
+  return await this.findOne({
     email: email,
     isBlocked: false,
     isDeleted: false
@@ -201,7 +201,7 @@ userSchema.statics.isUserActive = async function (email: string) {
 };
 
 userSchema.statics.IsUserExistById = async function (id: string) {
-  return await User.findById(id).select('+password');
+  return await this.findById(id).select('+password');
 };
 
 userSchema.statics.isPasswordMatched = async function (

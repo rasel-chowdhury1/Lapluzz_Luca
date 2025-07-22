@@ -402,6 +402,14 @@ const buySubscription = async (data: any) => {
 
 
 
+const mySubscription = async (userId: string) => {
+  const result = await SubscriptionPayment.find({ userId })
+    .populate('subscription') // Static reference
+    .populate('subscriptionFor'); // Uses dynamic refPath
+
+  return result || [];
+};
+
 export const SubcriptionPaymentService = {
   addPaymentData,
   // createPaymentByPaypal,
@@ -411,6 +419,7 @@ export const SubcriptionPaymentService = {
   //=== stripe start === 
   createPayment,
   confirmPayment,
-  buySubscription
+  buySubscription,
+  mySubscription
   //=== stripe end === 
 };

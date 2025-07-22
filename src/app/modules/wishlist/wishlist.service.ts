@@ -124,7 +124,7 @@ const getWishlistByUser = async (userId: string) => {
       const [businesses, events, jobs] = await Promise.all([
         Business.find({ _id: { $in: folder.businesses } }).select('name coverImage'),
         Event.find({ _id: { $in: folder.events } }).select('name coverImage'),
-        Job.find({ _id: { $in: folder.jobs } }).select('title companyName'),
+        Job.find({ _id: { $in: folder.jobs } }).select('title coverImage'),
       ]);
 
       return {

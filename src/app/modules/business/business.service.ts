@@ -652,7 +652,7 @@ const getSpecificBusinessStats = async (businessId: string) => {
   const authorId = business.author;
 
   // ⭐ Get totalCredits of the author
-  const author = await User.findById(authorId).select('totalCredits').lean();
+  const author = await User.findById(authorId).select('totalCredits customId').lean();
   const totalCredits = author?.totalCredits || 0;
 
   // 2️⃣ Get engagement stats (followers, likes, comments)
@@ -723,7 +723,8 @@ const getSpecificBusinessStats = async (businessId: string) => {
         }
       : null,
     totalActiveSub,
-    totalCredits
+    totalCredits,
+    customId: author?.customId
   };
 };
 

@@ -32,7 +32,7 @@ export interface OTPVerifyAndCreateUserProps {
 const createUserToken = async (payload: TUserCreate) => {
   console.log('payload service user');
 
-  const { role, email, sureName, name, password, dateOfBirth, address, longitude, latitude, enableNotification } =
+  const { role, email, sureName, name, password, dateOfBirth, gender, customId, address, longitude, latitude, enableNotification } =
     payload;
 
   // user exist check
@@ -74,6 +74,8 @@ const createUserToken = async (payload: TUserCreate) => {
     name,
     password,
     role,
+    gender,
+    customId,
     dateOfBirth,
     address,
     longitude,
@@ -125,8 +127,8 @@ const otpVerifyAndCreateUser = async ({
   if (!decodeData) {
     throw new AppError(httpStatus.BAD_REQUEST, 'You are not authorised');
   }
-
-  const { password, email, role, sureName, name, address, longitude, latitude, enableNotification } =
+  console.log("decode dota ->> ", { decodeData })
+  const { password, email, role, sureName, name, gender, customId, address, longitude, latitude, enableNotification } =
     decodeData;
 
   console.log({ otp })
@@ -164,6 +166,7 @@ const otpVerifyAndCreateUser = async ({
     password,
     email,
     role,
+    gender,
     // address,
     // location,
     // enableNotification
@@ -178,6 +181,30 @@ const otpVerifyAndCreateUser = async ({
     throw new AppError(httpStatus.BAD_REQUEST, 'User creation failed');
   }
 
+  if (customId) {
+    const referringUser = await User.findOne({ customId });
+
+    if (referringUser) {
+      const updatePayload: any = {
+        $push: { referralsUserList: user._id },
+        $inc: { totalCredits: 1 },
+      };
+
+      const referralsCount = referringUser.referralsUserList.length + 1; // since we're about to push
+
+      if (referralsCount % 3 === 0) {
+        updatePayload.$inc!.totalCredits += 2; // add 2 bonus credits
+      }
+
+      // Update user in background (non-blocking)
+      process.nextTick(() => {
+        User.updateOne(
+          { _id: referringUser._id },
+          updatePayload
+        ).catch(err => console.error('Referral update failed:', err));
+      });
+    }
+  }
   // Create user profile
   // const profileData: IProfile = {
   //     user: user._id as any,
