@@ -17,16 +17,22 @@ router.post(
   wishListController.updateFolderIsActive
 )
 
-router.get(
+.get(
   '/',
   auth(USER_ROLE.USER),
   wishListController.getWishlist
-);
+)
 
-router.get(
+.get(
   '/checklist',
   auth(USER_ROLE.USER),
   wishListController.getWishlistWithTotals
-);
+)
+
+.get(
+  '/:folderName',
+  auth(USER_ROLE.USER),
+  wishListController.getWishlistFolderDetailsByName
+)
 
 export const wishListRoutes = router;

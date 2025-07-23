@@ -5,6 +5,10 @@ import { User } from '../user/user.models';
 import Business from '../business/business.model';
 import Job from '../job/job.model';
 import Event from '../event/event.model';
+import BusinessReview from '../businessReview/businessReview.model';
+import BusinessEngagementStats from '../businessEngaagementStats/businessEngaagementStats.model';
+import EventReview from '../eventReview/eventReview.model';
+import EventEngagementStats from '../eventEngagementStats/eventEngagementStats.model';
 
 // const createOrUpdateFolder = async (
 //   userId: string,
@@ -212,9 +216,154 @@ const getCheckWishlistByUser = async (userId: string) => {
 };
 
 
+const getWishlistFolderDetailsByName = async (
+  userId: string,
+  folderName: string
+) => {
+  const wishlist = await WishList.findOne({ userId }).lean();
+
+  if (!wishlist) {
+    throw new AppError(httpStatus.NOT_FOUND, 'No wishlist found for user');
+  }
+
+  const targetFolder = wishlist.folders.find(
+    (folder) => folder.folderName === folderName
+  );
+
+  if (!targetFolder) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Folder not found');
+  }
+
+  // Fetch businesses
+  const businesses = await Business.find({ _id: { $in: targetFolder.businesses } })
+    .select('name coverImage address priceRange maxGuest subscriptionType createdAt providerType')
+    .populate('providerType', 'name');
+
+  const businessIds = businesses.map((biz) => biz._id);
+
+  const businessRatings = await BusinessReview.aggregate([
+    { $match: { businessId: { $in: businessIds } } },
+    {
+      $group: {
+        _id: '$businessId',
+        averageRating: { $avg: '$rating' },
+        totalReviews: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const businessEngagements = await BusinessEngagementStats.find({
+    businessId: { $in: businessIds },
+  }).select('businessId likes comments followers');
+
+  const businessRatingMap: Record<string, any> = {};
+  businessRatings.forEach((r) => {
+    businessRatingMap[r._id.toString()] = {
+      averageRating: parseFloat(r.averageRating.toFixed(1)),
+      totalReviews: r.totalReviews,
+    };
+  });
+
+  const businessEngagementMap: Record<string, any> = {};
+  businessEngagements.forEach((stat) => {
+    const id = stat.businessId.toString();
+    businessEngagementMap[id] = {
+      totalLikes: stat.likes?.length || 0,
+      totalComments: stat.comments?.length || 0,
+      isLiked: stat.likes?.some((like) => like.toString() === userId) || false,
+      isFollowed: stat.followers?.some((f) => f.toString() === userId) || false,
+    };
+  });
+
+  const populatedBusinesses = businesses.map((biz) => {
+    const id = biz._id.toString();
+    return {
+      ...biz.toObject(),
+      ...businessRatingMap[id],
+      ...businessEngagementMap[id],
+      blueVerifiedBadge: biz.subscriptionType === 'exclusive',
+    };
+  });
+
+  // Fetch events
+  const events = await Event.find({ _id: { $in: targetFolder.events } }).select(
+    'name coverImage address priceRange subscriptionType createdAt'
+  );
+
+  const eventIds = events.map((event) => event._id);
+
+  const eventRatings = await EventReview.aggregate([
+    { $match: { eventId: { $in: eventIds } } },
+    {
+      $group: {
+        _id: '$eventId',
+        averageRating: { $avg: '$rating' },
+        totalReviews: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const eventEngagements = await EventEngagementStats.find({
+    eventId: { $in: eventIds },
+  }).select('eventId likes comments');
+
+  const eventRatingMap: Record<string, any> = {};
+  eventRatings.forEach((r) => {
+    eventRatingMap[r._id.toString()] = {
+      averageRating: parseFloat(r.averageRating.toFixed(1)),
+      totalReviews: r.totalReviews,
+    };
+  });
+
+  const eventEngagementMap: Record<string, any> = {};
+  eventEngagements.forEach((stat) => {
+    const id = stat.eventId.toString();
+    eventEngagementMap[id] = {
+      totalLikes: stat.likes?.length || 0,
+      totalComments: stat.comments?.length || 0,
+      isLiked: stat.likes?.some((like) => like.toString() === userId) || false,
+    };
+  });
+
+  const populatedEvents = events.map((event) => {
+    const id = event._id.toString();
+    return {
+      ...event.toObject(),
+      ...eventRatingMap[id],
+      ...eventEngagementMap[id],
+      blueVerifiedBadge: ['diamond', 'emerald'].includes(event.subscriptionType),
+    };
+  });
+
+  // Fetch jobs
+  const jobs = await Job.find({ _id: { $in: targetFolder.jobs } }).select(
+    'title coverImage category createdAt subscriptionType'
+  );
+
+  const jobIds = jobs.map((job) => job._id);
+
+  const populatedJobs = jobs.map((job) => {
+    const id = job._id.toString();
+    return {
+      ...job.toObject(),
+      blueVerifiedBadge: ['visualTop', 'visualMedia'].includes(job.subscriptionType),
+    };
+  });
+
+  return {
+    folderName: targetFolder.folderName,
+    businesses: populatedBusinesses,
+    events: populatedEvents,
+    jobs: populatedJobs,
+  };
+};
+
+
+
 export const wishListService = {
   createOrUpdateFolder,
   getWishlistByUser,
   getCheckWishlistByUser,
-  updateFolderIsActive
+  updateFolderIsActive,
+  getWishlistFolderDetailsByName
 };
