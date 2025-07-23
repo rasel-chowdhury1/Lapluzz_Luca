@@ -1,5 +1,19 @@
 import { Date, Model, ObjectId, Types } from 'mongoose';
-import { ICategory } from '../category/category.interface';
+
+interface WizardFilters {
+  categoryName?: string[];
+  longitude?: number;
+  latitude?: number;
+  maxGuest?: string;
+  services?: string[];
+  priceRange?: 'budget' | 'medium' | 'high' | 'luxury';
+}
+
+export interface CompetitionResult {
+  competitionScore: number;
+  suggestedPack: 'PRIME' | 'ELITE' | 'EXCLUSIVE';
+  plusActive: boolean;
+}
 
 export interface IGallery {
   url: string;

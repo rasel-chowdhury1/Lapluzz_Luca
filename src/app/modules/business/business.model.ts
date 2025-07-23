@@ -179,6 +179,7 @@ const businessSchema = new Schema<IBusiness>(
   },
 );
 
+businessSchema.index({ location: '2dsphere' });
 
 const Business = model<IBusiness, IBusinessModules>('Business', businessSchema);
 export default Business;

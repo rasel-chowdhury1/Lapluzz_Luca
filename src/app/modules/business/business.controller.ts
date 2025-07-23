@@ -1,20 +1,21 @@
 import { Request, Response } from 'express';
-import catchAsync from '../../utils/catchAsync';
-import { businessService } from './business.service';
-import sendResponse from '../../utils/sendResponse';
-import { storeFiles } from '../../utils/fileHelper';
 import httpStatus from 'http-status';
+import catchAsync from '../../utils/catchAsync';
+import { storeFiles } from '../../utils/fileHelper';
+import sendResponse from '../../utils/sendResponse';
+import { businessService } from './business.service';
+
 
 const createBusiness = catchAsync(async (req: Request, res: Response) => {
-  const {userId, email} = req.user;
-  req.body.author = userId; 
+  const { userId, email } = req.user;
+  req.body.author = userId;
   req.body.email = email;
 
   console.log(req.files)
 
-  if(req.files){
+  if (req.files) {
     try {
-       // Use storeFiles to process all uploaded files
+      // Use storeFiles to process all uploaded files
       const filePaths = storeFiles(
         'business',
         req.files as { [fieldName: string]: Express.Multer.File[] },
@@ -49,7 +50,7 @@ const createBusiness = catchAsync(async (req: Request, res: Response) => {
     }
   }
 
-  console.log("create business ->>> ",req.body)
+  console.log("create business ->>> ", req.body)
   const result = await businessService.createBusiness(req.body);
   sendResponse(res, {
     statusCode: 201,
@@ -97,7 +98,7 @@ const updateBusiness = catchAsync(async (req: Request, res: Response) => {
   }
 
 
-  const updatedBusiness = await businessService.updateBusiness(businessId, req.body );
+  const updatedBusiness = await businessService.updateBusiness(businessId, req.body);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -108,7 +109,7 @@ const updateBusiness = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllBusiness = catchAsync(async (req: Request, res: Response) => {
-  const {userId} = req.user;
+  const { userId } = req.user;
   const result = await businessService.getAllBusiness(userId, req.query);
   sendResponse(res, {
     statusCode: 200,
@@ -119,10 +120,10 @@ const getAllBusiness = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getSpecificCategoryBusiness = catchAsync(async (req: Request, res: Response) => {
-  const {userId} = req.user;
-  const {categoryId} = req.params;
+  const { userId } = req.user;
+  const { categoryId } = req.params;
   const result = await businessService.getSpecificCategoryBusiness(categoryId, userId, req.query);
-  
+
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -171,6 +172,16 @@ const getMyBusiness = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getMyParentBusiness = catchAsync(async (req: Request, res: Response) => {
+  const result = await businessService.getMyParentBusiness(req.user.userId);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'my parent business fetched successfully',
+    data: result,
+  });
+});
+
 const getMyBusinessList = catchAsync(async (req: Request, res: Response) => {
 
   const result = await businessService.getMyBusinessesList(req.user.userId);
@@ -183,12 +194,24 @@ const getMyBusinessList = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getSpecificBusinessStats = catchAsync(async (req: Request, res: Response) => {
-  const {businessId} = req.params;
+  const { businessId } = req.params;
   const result = await businessService.getSpecificBusinessStats(businessId);
   sendResponse(res, {
     statusCode: 200,
     success: true,
     message: 'Specific business stats fetched successfully',
+    data: result,
+  });
+});
+
+const getCalculateCompetitionScore = catchAsync(async (req: Request, res: Response) => {
+  const { businessId } = req.params;
+  console.log("business updated id ->>> ", businessId)
+  const result = await businessService.calculateCompetitionScore(businessId);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Specific business calculate competition score fetched successfully',
     data: result,
   });
 });
@@ -234,7 +257,7 @@ const deleteBusiness = catchAsync(async (req: Request, res: Response) => {
 });
 
 
-const searchBusinessController = catchAsync(async (req: Request, res: Response) => {
+const searchBusiness = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.userId; // from JWT middleware
   const result = await businessService.searchBusinesses(req.query, userId);
 
@@ -245,6 +268,34 @@ const searchBusinessController = catchAsync(async (req: Request, res: Response) 
     meta: result.meta,
     data: result.data,
   });
+});
+
+
+const wizardSearchBusiness = catchAsync(async (req: Request, res: Response) => {
+     const {
+      longitude,
+      latitude,
+      ...restQuery
+    } = req.query;
+
+  const { userId } = req.user;
+    // Convert longitude and latitude to numbers if they exist
+    const filters = {
+      ...restQuery,
+      longitude: longitude ? Number(longitude) : undefined,
+      latitude: latitude ? Number(latitude) : undefined,
+    };
+
+  
+  console.log({filters})
+    const data = await businessService.wizardSearchBusinesses(userId, filters);
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'Businesses retrieved successfully based on wizard filters',
+      data,
+    });
 });
 
 export const businessController = {
@@ -259,7 +310,10 @@ export const businessController = {
   getMyBusiness,
   updateBusiness,
   getExtraBusinessDataById,
-  searchBusinessController,
+  searchBusiness,
+  wizardSearchBusiness,
   getSpecificBusinessStats,
-  getMyBusinessList
+  getMyBusinessList,
+  getCalculateCompetitionScore,
+  getMyParentBusiness
 };

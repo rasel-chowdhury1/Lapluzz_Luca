@@ -1,21 +1,22 @@
 import httpStatus from 'http-status';
+import mongoose, { Types } from 'mongoose';
 import QueryBuilder from '../../builder/QueryBuilder';
 import AppError from '../../error/AppError';
 import { buildLocation } from '../../utils/buildLocation';
-import { IBusiness } from './business.interface';
-import Business from './business.model';
-import { User } from '../user/user.models';
-import { console } from 'inspector';
-import BusinessReview from '../businessReview/businessReview.model';
 import BusinessEngagementStats from '../businessEngaagementStats/businessEngaagementStats.model';
 import BusinessProfileViews from '../businessProfileViews/businessProfileViews.model';
-import Event from '../event/event.model';
+import BusinessReview from '../businessReview/businessReview.model';
 import Category from '../category/category.model';
-import SearchRecord from '../searchRecord/searchRecord.model';
+import Event from '../event/event.model';
 import { enrichEvent } from '../event/event.utils';
 import { Inspiration } from '../inspiration/inspiration.model';
-import { Types } from 'mongoose';
+import SearchRecord from '../searchRecord/searchRecord.model';
+import { User } from '../user/user.models';
+import { CompetitionResult, IBusiness, WizardFilters } from './business.interface';
+import Business from './business.model';
 import { monthNames } from './business.utils';
+import geocodeAddress from '../../utils/geocodeAddress';
+import { jobController } from '../job/job.controller';
 
 const createBusiness = async (payload: IBusiness) => {
   const { longitude, latitude, ...rest } = payload;
@@ -24,9 +25,9 @@ const createBusiness = async (payload: IBusiness) => {
     rest.location = buildLocation(longitude, latitude) as any;
   }
 
-  const isExistBusiness = await Business.findOne({author: payload.author});
+  const isExistBusiness = await Business.findOne({ author: payload.author });
 
-  if(isExistBusiness){
+  if (isExistBusiness) {
     rest.businessLevel = 'sub';
   }
 
@@ -37,11 +38,11 @@ const createBusiness = async (payload: IBusiness) => {
     throw new AppError(httpStatus.BAD_REQUEST, 'Failed to create business');
   }
 
-  if(isExistBusiness){
-    await User.findByIdAndUpdate(payload.author, {isSubBusiness: true}, {new: true})
-    }
-  else{
-    await User.findByIdAndUpdate(payload.author, {parentBusiness: result._id}, {new: true})
+  if (isExistBusiness) {
+    await User.findByIdAndUpdate(payload.author, { isSubBusiness: true }, { new: true })
+  }
+  else {
+    await User.findByIdAndUpdate(payload.author, { parentBusiness: result._id }, { new: true })
   }
 
   return result;
@@ -68,10 +69,10 @@ const createBusiness = async (payload: IBusiness) => {
 
 
 const getAllBusiness = async (userId: string, query: Record<string, any>) => {
-  query['isDeleted'] = false; 
+  query['isDeleted'] = false;
 
 
-  const baseQuery = Business.find().populate('providerType','name').select(
+  const baseQuery = Business.find().populate('providerType', 'name').select(
     'name coverImage address priceRange maxGuest subscriptionType createdAt providerType'
   );
 
@@ -120,7 +121,7 @@ const getAllBusiness = async (userId: string, query: Record<string, any>) => {
   //   string,
   //   { totalLikes: number; totalComments: number; }
   // > = {};
-  
+
   // engagementStats.forEach((stat) => {
   //   engagementMap[stat.businessId.toString()] = {
   //     totalLikes: stat.likes?.length || 0,
@@ -128,7 +129,7 @@ const getAllBusiness = async (userId: string, query: Record<string, any>) => {
   //   };
   // });
 
-    const engagementMap: Record<
+  const engagementMap: Record<
     string,
     {
       totalLikes: number;
@@ -343,7 +344,7 @@ const getUnsubscriptionBusiness = async (query: Record<string, any>) => {
   query['isDeleted'] = false;
   query['isSubscription'] = false; // Only unsubscription businesses
 
-  console.log({query})
+  console.log({ query })
 
 
   const businessModel = new QueryBuilder(Business.find(), query)
@@ -359,10 +360,10 @@ const getUnsubscriptionBusiness = async (query: Record<string, any>) => {
   return { data, meta };
 };
 
-const getBusinessById = async (userId:string, id: string) => {
+const getBusinessById = async (userId: string, id: string) => {
   const business = await Business.findById(id)
     .populate('providerType', 'name')
-    // .select('name coverImage address priceRange maxGuest subscriptionType createdAt providerType isDeleted');
+  // .select('name coverImage address priceRange maxGuest subscriptionType createdAt providerType isDeleted');
 
   if (!business || business.isDeleted) {
     throw new Error('Business not found!');
@@ -404,7 +405,7 @@ const getBusinessById = async (userId:string, id: string) => {
   const engagement = await BusinessEngagementStats.findOne({
     businessId: businessId,
   })
-  .select('followers likes comments');
+    .select('followers likes comments');
 
   const engagementInfo = {
     totalFollowers: engagement?.followers?.length || 0,
@@ -414,7 +415,7 @@ const getBusinessById = async (userId:string, id: string) => {
     isFollowed: engagement?.followers?.some((u) => u.toString() === userId) || false,
   };
 
-    // ⭐ Get All Reviews (sorted newest first) with user data
+  // ⭐ Get All Reviews (sorted newest first) with user data
   const reviews = await BusinessReview.find({ businessId })
     .populate('userId', 'name profileImage') // 💁‍♂️ Adjust fields as needed
     .select('rating comment')
@@ -515,6 +516,26 @@ const getMyBusinesses = async (userId: string) => {
   return results;
 };
 
+const getMyParentBusiness = async (userId: string) => {
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  if (!user.parentBusiness) {
+    throw new Error('This user does not have a parent business assigned');
+  }
+
+  const parentBusiness = await Business.findById(user.parentBusiness);
+
+  if (!parentBusiness) {
+    throw new Error('Parent business not found');
+  }
+
+  return parentBusiness;
+};
+
 const getMyBusinessesList = async (userId: string) => {
   const businesses = await Business.find({ author: userId, isDeleted: false }).select("name")
 
@@ -538,7 +559,7 @@ const getExtraBusinessDataById = async (userId: string, id: string) => {
 
 
 
-  
+
   // ⭐ Get current and past events by author using startDate
   const allEvents = await Event.find({
     author: business.author,
@@ -554,18 +575,18 @@ const getExtraBusinessDataById = async (userId: string, id: string) => {
   // ⭐ Get related businesses with same providerType (excluding current)
   const relatedRaw = await Business.find({
     _id: { $ne: business._id },
-    author: {$ne: userId},
+    author: { $ne: userId },
     providerType: business.providerType || null,
     isDeleted: false,
   })
     .limit(5)
     .select('name coverImage address priceRange subscriptionType maxGuest');
-  
+
   const stats = await BusinessEngagementStats.findOne({ businessId: id })
     .select('comments') // only select comments
     .populate('comments.user', 'name profileImage') || [];
-  
-      // ⭐ Fetch inspiration blogs
+
+  // ⭐ Fetch inspiration blogs
   const inspirationBlogs = await Inspiration.find({
     author: business.author,
     type: 'blog',
@@ -573,7 +594,7 @@ const getExtraBusinessDataById = async (userId: string, id: string) => {
     .sort({ createdAt: -1 })
     .limit(5)
     .select('title coverImage description category createdAt') || [];
-  
+
   // ⭐ Add averageRating and totalReviews to each related business
   const relatedBusinesses = await Promise.all(
     relatedRaw.map(async (b) => {
@@ -590,28 +611,28 @@ const getExtraBusinessDataById = async (userId: string, id: string) => {
 
       const rating = ratingAgg[0] || { averageRating: 0, totalReviews: 0 };
 
-        // ⭐ Get engagement
-  const engagement = await BusinessEngagementStats.findOne({
-    businessId: id,
-  })
-  .select('followers likes comments');
+      // ⭐ Get engagement
+      const engagement = await BusinessEngagementStats.findOne({
+        businessId: id,
+      })
+        .select('followers likes comments');
 
-  const engagementInfo = {
-    totalFollowers: engagement?.followers?.length || 0,
-    totalLikes: engagement?.likes?.length || 0,
-    totalComments: engagement?.comments?.length || 0,
-    isLiked: engagement?.likes?.some((u) => u.toString() === userId) || false,
-    isFollowed: engagement?.followers?.some((u) => u.toString() === userId) || false,
-  };
+      const engagementInfo = {
+        totalFollowers: engagement?.followers?.length || 0,
+        totalLikes: engagement?.likes?.length || 0,
+        totalComments: engagement?.comments?.length || 0,
+        isLiked: engagement?.likes?.some((u) => u.toString() === userId) || false,
+        isFollowed: engagement?.followers?.some((u) => u.toString() === userId) || false,
+      };
 
       return {
         ...b.toObject(),
         totalFollowers: engagementInfo.totalFollowers,
-    totalLikes: engagementInfo.totalLikes,
-    totalComments: engagementInfo.totalComments,
-    isLiked: engagementInfo.isLiked,
-    isFollowed: engagementInfo.isFollowed,
-    blueVerifiedBadge: business.subscriptionType === 'exclusive',
+        totalLikes: engagementInfo.totalLikes,
+        totalComments: engagementInfo.totalComments,
+        isLiked: engagementInfo.isLiked,
+        isFollowed: engagementInfo.isFollowed,
+        blueVerifiedBadge: business.subscriptionType === 'exclusive',
         averageRating: parseFloat(rating.averageRating?.toFixed(1)) || 0,
         totalReviews: rating.totalReviews || 0,
       };
@@ -666,7 +687,7 @@ const getSpecificBusinessStats = async (businessId: string) => {
   const viewUsers = viewsDoc?.viewUsers || [];
   const profileViews = viewUsers.length;
 
-    const monthlyCounts = Array(12).fill(0);
+  const monthlyCounts = Array(12).fill(0);
   viewUsers.forEach((view: { viewedAt: Date }) => {
     const date = new Date(view.viewedAt);
     if (!isNaN(date.getTime())) {
@@ -718,9 +739,9 @@ const getSpecificBusinessStats = async (businessId: string) => {
     totalReviews: ratingStats.totalReviews,
     activeSubscription: activeSubscription
       ? {
-          type: activeSubscription.type,
-          expireDate: activeSubscription.expireDate
-        }
+        type: activeSubscription.type,
+        expireDate: activeSubscription.expireDate
+      }
       : null,
     totalActiveSub,
     totalCredits,
@@ -761,7 +782,7 @@ const getBusinessAndEventsForMap = async (userId?: string) => {
     .select('name address location coverImage availabilities');
 
   // 🔍 Fetch events with required fields
-  const events = await Event.find({ isDeleted: false, endDate: { $gte: today }})
+  const events = await Event.find({ isDeleted: false, endDate: { $gte: today } })
     .select('name address location coverImage startDate endDate startTime endTime');
 
   return {
@@ -770,7 +791,7 @@ const getBusinessAndEventsForMap = async (userId?: string) => {
   };
 };
 
-export const searchBusinesses = async (
+const searchBusinesses = async (
   query: Record<string, unknown>,
   userId?: string
 ) => {
@@ -817,6 +838,223 @@ export const searchBusinesses = async (
   return { data, meta };
 };
 
+
+const wizardSearchBusinesses = async (userId:string, filters: WizardFilters) => {
+  const {
+    categoryName = [],
+    longitude,
+    latitude,
+    maxGuest,
+    services = [],
+    priceRange,
+  } = filters;
+
+  const query: any = { isDeleted: false };
+
+  // 1. Category Filter
+  if (categoryName.length) {
+    const matchedCategories = await Category.find({
+      name: { $in: categoryName },
+      isDeleted: false,
+    });
+
+    const matchedCategoryIds = matchedCategories.map((cat) => cat._id);
+    query.providerType = { $in: matchedCategoryIds };
+  }
+
+  // 2. Geolocation Filter (within 50 km)
+  if (typeof longitude === 'number' && typeof latitude === 'number') {
+    query.location = {
+      $nearSphere: {
+        $geometry: {
+          type: 'Point',
+          coordinates: [longitude, latitude],
+        },
+        $maxDistance: 50000, // 50 km in meters
+      },
+    };
+  }
+
+  // 3. Guest Capacity Filter
+  if (maxGuest) {
+    switch (maxGuest) {
+      case 'fewer than 20':
+        query.maxGuest = { $lt: 20 };
+        break;
+      case '20-50':
+        query.maxGuest = { $gte: 20, $lte: 50 };
+        break;
+      case '50-100':
+        query.maxGuest = { $gt: 50, $lte: 100 };
+        break;
+      case '100-150':
+        query.maxGuest = { $gt: 100, $lte: 150 };
+        break;
+      case '150-200':
+        query.maxGuest = { $gt: 150, $lte: 200 };
+        break;
+      case 'more than 200':
+        query.maxGuest = { $gt: 200 };
+        break;
+    }
+  }
+
+  // 4. Services Filter
+  if (services.length) {
+    query.supportedServices = { $all: services };
+  }
+
+  // 5. Price Range Filter (using enum values)
+  if (priceRange) {
+    query.priceRange = priceRange;
+  }
+
+  // 6. Final Query Execution
+  const results = await Business.find(query).populate('providerType');
+
+    const businessIds = results.map((biz) => biz._id);
+
+  const businessRatings = await BusinessReview.aggregate([
+    { $match: { businessId: { $in: businessIds } } },
+    {
+      $group: {
+        _id: '$businessId',
+        averageRating: { $avg: '$rating' },
+        totalReviews: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const businessEngagements = await BusinessEngagementStats.find({
+    businessId: { $in: businessIds },
+  }).select('businessId likes comments followers');
+
+  const businessRatingMap: Record<string, any> = {};
+  businessRatings.forEach((r) => {
+    businessRatingMap[r._id.toString()] = {
+      averageRating: parseFloat(r.averageRating.toFixed(1)),
+      totalReviews: r.totalReviews,
+    };
+  });
+
+  const businessEngagementMap: Record<string, any> = {};
+  businessEngagements.forEach((stat) => {
+    const id = stat.businessId.toString();
+    businessEngagementMap[id] = {
+      totalLikes: stat.likes?.length || 0,
+      totalComments: stat.comments?.length || 0,
+      isLiked: stat.likes?.some((like) => like.toString() === userId) || false,
+      isFollowed: stat.followers?.some((f) => f.toString() === userId) || false,
+    };
+  });
+
+  const populatedBusinesses = results.map((biz) => {
+    const id = biz._id.toString();
+    return {
+      ...biz.toObject(),
+      ...businessRatingMap[id],
+      ...businessEngagementMap[id],
+      blueVerifiedBadge: biz.subscriptionType === 'exclusive',
+      type: "business"
+    };
+  });
+
+  return populatedBusinesses;
+};
+
+const calculateCompetitionScore = async (
+  businessId: string
+) => {
+
+  console.log("service business id->> ", { businessId })
+  // Step 1: Fetch the business
+  const business = await Business.findById(businessId)
+    .select('location providerType')
+    .lean();
+
+
+  if (!business || !business.location || !business.providerType) {
+    throw new Error('Business must have location and category to calculate competition.');
+  }
+
+  const [longitude, latitude] = business.location.coordinates;
+
+  // Step 2: Find all businesses within 50km and same category
+  const radiusInKm = 50;
+  const businesses = await Business.find({
+    _id: { $ne: businessId },
+    location: {
+      $nearSphere: {
+        $geometry: {
+          type: 'Point',
+          coordinates: [longitude, latitude],
+        },
+        $maxDistance: radiusInKm * 1000, // convert to meters
+      },
+    },
+    providerType: new mongoose.Types.ObjectId(business.providerType.toString()),
+    isDeleted: false,
+  }).select('subscriptionType');
+
+  console.log("business ->>>>>>", businesses)
+
+  const weights = {
+    exclusive: 5,
+    elite: 3,
+    prime: 2,
+    none: 0.5,
+  };
+
+  console.log({ weights })
+
+  // Step 3: Count types
+  let P1 = 0, P2 = 0, P3 = 0, FREE = 0;
+  for (const b of businesses) {
+    switch (b.subscriptionType) {
+      case 'exclusive':
+        P1++;
+        break;
+      case 'elite':
+        P2++;
+        break;
+      case 'prime':
+        P3++;
+        break;
+      default:
+        FREE++;
+    }
+  }
+
+  console.log({P1,P2,P3,FREE})
+
+  const TOTAL = P1 + P2 + P3 + FREE;
+
+  // Step 4: Apply competition score formula
+  const numerator = (P1 * weights.exclusive) + (P2 * weights.elite) + (P3 * weights.prime) + (FREE * weights.none);
+  const denominator = TOTAL * 4.5 || 1; // Avoid division by zero
+  const score = (numerator / denominator) * 100;
+  const roundedScore = Math.round(score);
+
+  // Step 5: Suggest pack
+  let suggestedPack: CompetitionResult['suggestedPack'] = 'PRIME';
+
+  
+  if (roundedScore > 60) {
+    suggestedPack = 'EXCLUSIVE';
+  } else if (roundedScore > 30) {
+    suggestedPack = 'ELITE';
+  }
+
+  const plusActive = roundedScore >= 80;
+
+  return {
+    competitionScore: roundedScore,
+    suggestedPack,
+    plusActive,
+  };
+};
+
+
 export const businessService = {
   createBusiness,
   getSubscrptionBusiness,
@@ -831,5 +1069,8 @@ export const businessService = {
   searchBusinesses,
   getExtraBusinessDataById,
   getSpecificBusinessStats,
-  getMyBusinessesList
+  getMyBusinessesList,
+  calculateCompetitionScore,
+  wizardSearchBusinesses,
+  getMyParentBusiness
 };

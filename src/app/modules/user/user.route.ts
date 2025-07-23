@@ -85,6 +85,11 @@ userRoutes
   )
 
 
+  .get(
+    "/myReferrals",
+    auth(USER_ROLE.USER, USER_ROLE.ORGANIZER,USER_ROLE.ADMIN),
+    userController.myReferrals
+  )
 
 
 

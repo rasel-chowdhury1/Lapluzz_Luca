@@ -190,6 +190,17 @@ const updateMyProfile = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const myReferrals = catchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.user;
+  const result = await userService.myReferrals(userId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: `My referrals fetched successfully`,
+    data: result,
+  });
+});
+
 const blockedUser = catchAsync(async (req: Request, res: Response) => {
   const result = await userService.blockedUser(req.params.id);
   sendResponse(res, {
@@ -246,5 +257,6 @@ export const userController = {
   getAllUsers,
   getAllUsersOverview,
   getUsersOverview,
-  getEarningOverview
+  getEarningOverview,
+  myReferrals
 };

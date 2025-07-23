@@ -282,12 +282,13 @@ const getWishlistFolderDetailsByName = async (
       ...businessRatingMap[id],
       ...businessEngagementMap[id],
       blueVerifiedBadge: biz.subscriptionType === 'exclusive',
+      type: "business"
     };
   });
 
   // Fetch events
   const events = await Event.find({ _id: { $in: targetFolder.events } }).select(
-    'name coverImage address priceRange subscriptionType createdAt'
+    'name coverImage address entranceFee subscriptionType createdAt'
   );
 
   const eventIds = events.map((event) => event._id);
@@ -332,12 +333,13 @@ const getWishlistFolderDetailsByName = async (
       ...eventRatingMap[id],
       ...eventEngagementMap[id],
       blueVerifiedBadge: ['diamond', 'emerald'].includes(event.subscriptionType),
+      type: "event"
     };
   });
 
   // Fetch jobs
   const jobs = await Job.find({ _id: { $in: targetFolder.jobs } }).select(
-    'title coverImage category createdAt subscriptionType'
+    'title coverImage category address createdAt subscriptionType'
   );
 
   const jobIds = jobs.map((job) => job._id);
@@ -347,6 +349,7 @@ const getWishlistFolderDetailsByName = async (
     return {
       ...job.toObject(),
       blueVerifiedBadge: ['visualTop', 'visualMedia'].includes(job.subscriptionType),
+      type: "job"
     };
   });
 

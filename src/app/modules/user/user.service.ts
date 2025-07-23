@@ -619,6 +619,17 @@ const getEarningOverview = async (year: number) => {
   return { monthlyEarnings };
 };
 
+const myReferrals = async (userId: string) => {
+  const isExistUser = await User.findById(userId);
+
+  return {
+    friendsInvited: isExistUser?.referralsUserList.length,
+    creditsEarned: isExistUser?.totalCredits,
+    customId: isExistUser?.customId
+  }
+}
+
+
 export const userService = {
   createUserToken,
   otpVerifyAndCreateUser,
@@ -635,5 +646,6 @@ export const userService = {
   dashboardOverview,
   getUsersOverview,
   getAllUsersOverview,
-  getEarningOverview
+  getEarningOverview,
+  myReferrals
 };
