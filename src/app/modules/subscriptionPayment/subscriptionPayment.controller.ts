@@ -247,7 +247,9 @@ const buySubscription = catchAsync(async (req: Request, res: Response) => {
 
 
 const initiateSubscriptionPayment = catchAsync(async (req: Request, res: Response) => {
+
   const { subscriptionId, subscriptionOptionIndex, subscriptionFor, subscriptionForType } = req.body;
+
   const { userId } = req.user;
 
   // 🔍 Validate subscription existence
@@ -276,6 +278,8 @@ const initiateSubscriptionPayment = catchAsync(async (req: Request, res: Respons
     expireDate,
   });
 
+  console.log({payment})
+
   // 🌐 Build WooCommerce redirect URL
   const redirectUrl = `https://pianofesta.it/pagamento/checkout?subscription_payment_id=${payment._id}&amount=${payment.amount}`;
 
@@ -293,8 +297,10 @@ const initiateSubscriptionPayment = catchAsync(async (req: Request, res: Respons
 // subscriptionPayment.controller.ts
 
 const handleWooPaymentWebhook = catchAsync(async (req: Request, res: Response) => {
-  const { subscription_payment_id, status,payment_method, woo_order_id } = req.body;
-
+  
+  const { subscription_payment_id, status,payment_method, woo_order_id,billing_email,billing_first_name,billing_last_name } = req.body;
+  
+  console.log("req.body handle woo payment -->>> ", req.body);
   // 🔴 Handle failed or incomplete payment
   if (status !== 'success') {
     return sendResponse(res, {
@@ -310,9 +316,12 @@ const handleWooPaymentWebhook = catchAsync(async (req: Request, res: Response) =
   const updated = await SubscriptionPayment.findByIdAndUpdate(
     subscription_payment_id,
     {
-      status: 'notActivate',
-      paymentId: woo_order_id, // replace temporary paymentId
-      paymentType
+      status,
+      woo_order_id, // replace temporary paymentId
+      payment_method: paymentType,
+      billing_email,
+      billing_first_name,
+      billing_last_name
     },
     { new: true }
   );

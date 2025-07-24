@@ -6,7 +6,7 @@ import SubscriptionPayment from './subscriptionPayment.model';
 // import retrievePayment from '../../utils/paypal';
 // import { createCheckoutSessionUsingPaypalForSubscription } from './subscriptionPayment.utils';
 // import Payment from '../payment/payment.model';
-import { createCheckoutSession, stripe } from './subscriptionPayment.utils';
+// import { createCheckoutSession, stripe } from './subscriptionPayment.utils';
 import Business from '../business/business.model';
 
 const findPaymentData = async (paymentDataBody: any) => {

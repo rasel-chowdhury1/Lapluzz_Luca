@@ -7,6 +7,10 @@ const subscriptionPaymentSchema: Schema = new Schema<ISubscriptionPayment>(
       type: String,
       required: true,
     },
+    woo_order_id: {
+      type: String,
+      default: ""
+    },
     amount: {
       type: Number,
       required: true,
@@ -14,6 +18,18 @@ const subscriptionPaymentSchema: Schema = new Schema<ISubscriptionPayment>(
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User"
+    },
+    billing_email: {
+      type: String,
+      default: ""
+    },
+    billing_first_name: {
+      type: String,
+      default: ""
+    },
+    billing_last_name: {
+      type: String,
+      default: ""
     },
     // 👇 Dynamic reference field
     subscriptionFor: {
@@ -35,14 +51,14 @@ const subscriptionPaymentSchema: Schema = new Schema<ISubscriptionPayment>(
       type: Number,
       required: true
     },
-    paymentType: {
+    payment_method: {
       type: String,
       enum: ['Card', 'Paypal', 'Klarna', 'Bank', "Credit"],
       default: 'Card',
     },
     status: {
       type: String,
-      enum: ["pending","notActivate", "activate", "stop", "gotCredits"],
+      enum: ["pending","reminder_1","reminder_2","reminder_3","reminder_4","success", "activate", "stop", "gotCredits"],
       default: "pending"
     },
     expireDate: {
