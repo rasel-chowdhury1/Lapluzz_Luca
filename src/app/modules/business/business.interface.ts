@@ -61,7 +61,7 @@ export interface IBusiness {
   logo: string;
   coverImage: string;
   // coverColor: string;
-  promotionImage: string;
+  promotionImage: IGallery[];
   gallery: IGallery[];
   faq: IFaq[];
   providerType: ObjectId;

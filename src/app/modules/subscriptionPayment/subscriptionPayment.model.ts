@@ -53,12 +53,12 @@ const subscriptionPaymentSchema: Schema = new Schema<ISubscriptionPayment>(
     },
     payment_method: {
       type: String,
-      enum: ['Card', 'Paypal', 'Klarna', 'Bank', "Credit"],
+      enum: ['Card', 'Paypal', 'Klarna', 'Bank', "Credit", "Manual"],
       default: 'Card',
     },
     status: {
       type: String,
-      enum: ["pending","reminder_1","reminder_2","reminder_3","reminder_4","success", "activate", "stop", "gotCredits"],
+      enum: ["pending","reminder_1","reminder_2","reminder_3","reminder_4","success", "activate", "stop", "gotCredits", "Completato"],
       default: "pending"
     },
     expireDate: {

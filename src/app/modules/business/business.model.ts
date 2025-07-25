@@ -138,7 +138,10 @@ const businessSchema = new Schema<IBusiness>(
     //     type: String, 
     //     default: null 
     // },
-    promotionImage: [GallerySchema],
+    promotionImage: {
+      type: [String],
+      default: []
+    },
     businessLevel: {
       type: String,
       enum: ['main', 'sub'],

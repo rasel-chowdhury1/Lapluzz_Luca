@@ -17,6 +17,10 @@ import { generateOptAndExpireTime } from '../otp/otp.utils';
 import SubscriptionPayment from '../subscriptionPayment/subscriptionPayment.model';
 import { DeleteAccountPayload, TUser, TUserCreate } from './user.interface';
 import { User } from './user.models';
+import { Types } from 'mongoose';
+import Business from '../business/business.model';
+import BusinessEngagementStats from '../businessEngaagementStats/businessEngaagementStats.model';
+import BusinessReview from '../businessReview/businessReview.model';
 
 export type IFilter = {
   searchTerm?: string;
@@ -321,6 +325,20 @@ const getAllUserQuery = async (userId: string, query: Record<string, unknown>) =
   return { meta, result };
 };
 
+const getAllUserList = async (userId: string) => {
+  const userQuery = new QueryBuilder(User.find({ _id: { $ne: userId }, role: 'user' }), query)
+    .search(['name', 'sureName', 'email'])
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
+
+  const result = await User.find({ _id: { $ne: userId }, role: 'user' })
+  // const result = await userQuery.modelQuery;
+  // const meta = await userQuery.countTotal();
+  return result;
+};
+
 const getAllUserCount = async () => {
   const allUserCount = await User.countDocuments();
   return allUserCount;
@@ -370,6 +388,82 @@ const getUsersOverview = async (userId: string, year: number, role: 'user' | 'or
     throw new Error('Error fetching dashboard data.');
   }
 };
+
+
+const getBusinessUserList = async () => {
+  // Step 1: Get all users with organizer role
+  const users = await User.find({ role: 'organizer' }).lean();
+
+  const result = await Promise.all(
+    users.map(async (user) => {
+      const userId = new Types.ObjectId(user._id);
+
+      // Get all businesses owned by this user
+      const businesses = await Business.find({ author: userId }).lean();
+      const totalBusiness = businesses.length;
+
+      // Try to get parent business if exists
+      const parentBusiness = user.parentBusiness
+        ? await Business.findById(user.parentBusiness).lean()
+        : null;
+
+      const totalSupportedServices = parentBusiness?.supportedServices?.length || 0;
+      const totalAdditionalServices = parentBusiness?.additionalServices?.length || 0;
+      const activeSponsorship = parentBusiness?.subscriptionType || 'none';
+
+      // Count active sponsorships from business list
+      const now = new Date();
+      const totalActiveSponsorship = businesses.filter(
+        b =>
+          b.subscriptionType !== 'none' &&
+          b.expireSubscriptionTime &&
+          new Date(b.expireSubscriptionTime) > now
+      ).length;
+
+      // Count events and jobs
+      const [totalEvent, totalJob] = await Promise.all([
+        Event.countDocuments({ author: userId }),
+        Job.countDocuments({ author: userId }),
+      ]);
+
+      // Engagement stats for parent business
+      const engagementStats = parentBusiness
+        ? await BusinessEngagementStats.findOne({ businessId: parentBusiness._id }).lean()
+        : null;
+
+      const totalFollowers = engagementStats?.followers?.length || 0;
+      const totalLikes = engagementStats?.likes?.length || 0;
+
+      // Total reviews
+      const totalReviews = parentBusiness
+        ? await BusinessReview.countDocuments({ businessId: parentBusiness._id })
+        : 0;
+
+      return {
+        userId: user._id,
+        customId: user.customId,
+        name: user.name || 'Unknown',
+        sureName: user.sureName || 'Unknown',
+        activeSponsorship,
+        totalBusiness,
+        totalEvent,
+        totalJob,
+        totalCredit: user.totalCredits || 0,
+        totalFollowers,
+        totalLikes,
+        totalReviews,
+        totalSupportedServices,
+        totalAdditionalServices,
+        totalActiveSponsorship,
+        parentBusiness: user.parentBusiness,
+        createdAt: user.createdAt,
+      };
+    })
+  );
+
+  return result;
+};
+
 
 
 const dashboardOverview = async (userId: string) => {
@@ -579,23 +673,25 @@ const blockedUser = async (id: string) => {
   return { status, user };
 };
 
-
 const getEarningOverview = async (year: number) => {
+  console.log({ year });
+
   // Step 1: Aggregate payments by month for the given year
   const earningsData = await SubscriptionPayment.aggregate([
     {
       $match: {
-        // status: 'activate',
         createdAt: {
           $gte: new Date(`${year}-01-01`),
           $lt: new Date(`${year + 1}-01-01`),
         },
+        status: { $in: ['pending', 'notActivate', 'success', 'activate', 'gotCredits'] },
       },
     },
     {
       $group: {
         _id: { $month: '$createdAt' },
-        totalRevenue: { $sum: '$amount' },
+        totalAmount: { $sum: '$amount' },
+        count: { $sum: 1 },
       },
     },
   ]);
@@ -612,7 +708,8 @@ const getEarningOverview = async (year: number) => {
     return {
       _id: monthNumber,
       monthName,
-      totalRevenue: matched ? matched.totalRevenue : 0,
+      totalRevenue: matched ? matched.totalAmount : 0, // <-- corrected here
+      paymentCount: matched ? matched.count : 0,
     };
   });
 
@@ -647,5 +744,6 @@ export const userService = {
   getUsersOverview,
   getAllUsersOverview,
   getEarningOverview,
-  myReferrals
+  myReferrals,
+  getBusinessUserList
 };

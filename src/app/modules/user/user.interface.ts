@@ -1,4 +1,4 @@
-import { Model, ObjectId, Schema } from 'mongoose';
+import { Model, ObjectId } from 'mongoose';
 
 
 export interface TUserCreate {
@@ -38,6 +38,7 @@ export interface TUserCreate {
   };
   longitude?: string;
   latitude?: string;
+  createdAt?: Date;
 }
 
 export interface TUser extends TUserCreate {
@@ -50,7 +51,7 @@ export interface DeleteAccountPayload {
 
 export interface UserModel extends Model<TUser> {
   isUserExist(email: string): Promise<TUser>;
-  
+
   isUserActive(email: string): Promise<TUser>;
 
   IsUserExistById(id: string): Promise<TUser>;

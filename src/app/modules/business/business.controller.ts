@@ -70,6 +70,7 @@ const updateBusiness = catchAsync(async (req: Request, res: Response) => {
         req.files as { [fieldName: string]: Express.Multer.File[] }
       );
 
+
       if (filePaths.logo && filePaths.logo.length > 0) {
         req.body.logo = filePaths.logo[0];
       }
@@ -83,9 +84,11 @@ const updateBusiness = catchAsync(async (req: Request, res: Response) => {
       }
 
       if (filePaths.promotionImage && filePaths.promotionImage.length > 0) {
+        console.log("file paths promotion image ->>> ",filePaths.promotionImage)
         req.body.promotionImage = filePaths.promotionImage;
       }
 
+      console.log("req body ==>>> ",req.body.promotionImage)
     } catch (error: any) {
       console.error('Error processing files:', error.message);
       return sendResponse(res, {
@@ -97,6 +100,7 @@ const updateBusiness = catchAsync(async (req: Request, res: Response) => {
     }
   }
 
+  console.log("update business =>>> ", businessId, req.body)
 
   const updatedBusiness = await businessService.updateBusiness(businessId, req.body);
 

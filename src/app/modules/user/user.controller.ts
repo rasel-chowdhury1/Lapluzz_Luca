@@ -61,6 +61,17 @@ const getAllUsers = catchAsync(async (req, res) => {
   });
 });
 
+const getAllBusinessUsers = catchAsync(async (req, res) => {
+  const result = await userService.getBusinessUserList();
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    data: result,
+    message: 'All business users are requered successful!!',
+  });
+});
+
 const getUserById = catchAsync(async (req: Request, res: Response) => {
   const result = await userService.getUserById(req.params.id);
   sendResponse(res, {
@@ -255,6 +266,7 @@ export const userController = {
   deleteMyAccount,
   getDashboardOverview,
   getAllUsers,
+  getAllBusinessUsers,
   getAllUsersOverview,
   getUsersOverview,
   getEarningOverview,

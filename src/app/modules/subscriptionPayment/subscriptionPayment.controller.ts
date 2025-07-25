@@ -13,6 +13,7 @@ const paymentTypeMap: Record<string, string> = {
   'klarna': 'Klarna',
   'paypal': 'Paypal',
   'bank_transfer': 'Bank',
+  "manual": "Manual"
 };
 
 // import AppError from '../../error/AppError';
@@ -354,6 +355,19 @@ const getMySubscription = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getEarningList = catchAsync(async (req: Request, res: Response) => {
+
+
+  const result = await SubcriptionPaymentService.getEarningList();
+  // ✅ Send success response
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Earnlist fetched successfully',
+    data: result,
+  });
+});
+
 
 
 
@@ -369,7 +383,8 @@ export const SubcriptionPaymentController = {
   buySubscription,
   initiateSubscriptionPayment,
   handleWooPaymentWebhook,
-   getMySubscription
+  getMySubscription,
+   getEarningList
    // stripe implement for payment end 
   
 };

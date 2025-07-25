@@ -63,6 +63,7 @@ userRoutes
     userController.getAdminProfile,
   )
   .get('/all-users', auth("admin"), userController.getAllUsers)
+  .get('/all-business-users', auth("admin"), userController.getAllBusinessUsers)
 
   .get("/all-users-overview", auth("admin"), userController.getAllUsersOverview)
 

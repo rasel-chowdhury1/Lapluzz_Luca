@@ -46,11 +46,17 @@ router.post(
   SubcriptionPaymentController.confirmPayment
 )
 
-  .get(
-    "/my",
-    auth(USER_ROLE.ORGANIZER),
-      SubcriptionPaymentController.getMySubscription
-    )
+.get(
+  "/my",
+  auth(USER_ROLE.ORGANIZER),
+    SubcriptionPaymentController.getMySubscription
+  )
+
+.get(
+  "/earning",
+   auth(USER_ROLE.ADMIN),
+    SubcriptionPaymentController.getEarningList
+  )
 
 router.get(
   "/buy",

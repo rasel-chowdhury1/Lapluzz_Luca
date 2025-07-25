@@ -87,6 +87,7 @@ const userSchema = new Schema<TUser>(
       ref: 'Business',
       default: null,
     },
+
     wishlist: {
       type: [String],
       default: []

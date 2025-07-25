@@ -187,6 +187,8 @@ const getAllBusiness = async (userId: string, query: Record<string, any>) => {
 };
 
 
+
+
 const getSpecificCategoryBusiness = async (
   categoryId: string,
   userId: string,
@@ -754,12 +756,15 @@ const updateBusiness = async (
   businessId: string,
   updateData: Partial<IBusiness>
 ) => {
+
+  console.log("updateData ->>> ",{...updateData})
   const updatedBusiness = await Business.findByIdAndUpdate(
     businessId,
-    updateData,
+    {...updateData},
     { new: true }
   );
 
+  
   return updatedBusiness;
 };
 
@@ -797,15 +802,14 @@ const searchBusinesses = async (
 ) => {
   const searchTerm = query.searchTerm as string;
 
-  // Find matching categories by name
+  // 1. Match categories by name
   const matchedCategories = await Category.find({
     name: { $regex: searchTerm, $options: 'i' },
     isDeleted: false,
   });
-
   const matchedCategoryIds = matchedCategories.map((cat) => cat._id);
 
-  // Create base query
+  // 2. Build main query
   const baseQuery = Business.find({
     $or: [
       { name: { $regex: searchTerm, $options: 'i' } },
@@ -817,25 +821,75 @@ const searchBusinesses = async (
     isDeleted: false,
   }).populate('providerType');
 
-  // Use QueryBuilder
+  // 3. QueryBuilder for sorting, pagination, etc.
   const queryBuilder = new QueryBuilder<IBusiness>(baseQuery, query)
     .filter()
     .sort()
     .paginate()
     .fields();
 
-  const data = await queryBuilder.modelQuery;
+  const results = await queryBuilder.modelQuery;
   const meta = await queryBuilder.countTotal();
 
-  // Store search record
+  const businessIds = results.map((biz) => biz._id);
+
+  // 4. Fetch ratings and reviews
+  const businessRatings = await BusinessReview.aggregate([
+    { $match: { businessId: { $in: businessIds } } },
+    {
+      $group: {
+        _id: '$businessId',
+        averageRating: { $avg: '$rating' },
+        totalReviews: { $sum: 1 },
+      },
+    },
+  ]);
+
+  // 5. Fetch engagement stats
+  const businessEngagements = await BusinessEngagementStats.find({
+    businessId: { $in: businessIds },
+  }).select('businessId likes comments followers');
+
+  const businessRatingMap: Record<string, any> = {};
+  businessRatings.forEach((r) => {
+    businessRatingMap[r._id.toString()] = {
+      averageRating: parseFloat(r.averageRating.toFixed(1)),
+      totalReviews: r.totalReviews,
+    };
+  });
+
+  const businessEngagementMap: Record<string, any> = {};
+  businessEngagements.forEach((stat) => {
+    const id = stat.businessId.toString();
+    businessEngagementMap[id] = {
+      totalLikes: stat.likes?.length || 0,
+      totalComments: stat.comments?.length || 0,
+      isLiked: userId ? stat.likes?.some((like) => like.toString() === userId) : false,
+      isFollowed: userId ? stat.followers?.some((f) => f.toString() === userId) : false,
+    };
+  });
+
+  // 6. Final response
+  const populatedBusinesses = results.map((biz) => {
+    const id = biz._id.toString();
+    return {
+      ...biz.toObject(),
+      ...businessRatingMap[id],
+      ...businessEngagementMap[id],
+      blueVerifiedBadge: biz.subscriptionType === 'exclusive',
+      type: 'business',
+    };
+  });
+
+  // 7. Store search record
   await SearchRecord.create({
     keyword: searchTerm,
-    totalResults: data.length,
+    totalResults: results.length,
     userId,
     searchDate: new Date(),
   });
 
-  return { data, meta };
+  return { data: populatedBusinesses, meta };
 };
 
 

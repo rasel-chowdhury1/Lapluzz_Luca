@@ -16,7 +16,7 @@ router.post(
     { name: 'logo', maxCount: 1 },
     { name: 'cover', maxCount: 1 },
     { name: 'gallery', maxCount: 10 },
-    { name: 'promotion', maxCount: 1 },
+    { name: 'promotionImage', maxCount: 1 },
   ]),
   parseData(),
   businessController.createBusiness
@@ -31,7 +31,7 @@ router.post(
       { name: 'logo', maxCount: 1 },
       { name: 'cover', maxCount: 1 },
       { name: 'gallery', maxCount: 10 },
-      { name: 'promotion', maxCount: 1 },
+      { name: 'promotionImage', maxCount: 1 },
     ]),
     parseData(),
     businessController.updateBusiness
@@ -45,6 +45,12 @@ router.post(
   .get(
     '/',
     auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
+    businessController.getAllBusiness
+)
+  
+  .get(
+    '/all',
+    auth(USER_ROLE.ADMIN),
     businessController.getAllBusiness
 )
   
