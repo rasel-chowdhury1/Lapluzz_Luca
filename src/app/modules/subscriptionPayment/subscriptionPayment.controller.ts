@@ -302,8 +302,11 @@ const handleWooPaymentWebhook = catchAsync(async (req: Request, res: Response) =
   const { subscription_payment_id, status,payment_method, woo_order_id,billing_email,billing_first_name,billing_last_name } = req.body;
   
   console.log("req.body handle woo payment -->>> ", req.body);
+  console.log(" out status -->>", status)
   // 🔴 Handle failed or incomplete payment
   if (status !== 'Completato' || status !== 'Completed') {
+
+    console.log(" in status -->>", status)
     return sendResponse(res, {
       statusCode: 400,
       success: false,
@@ -313,8 +316,11 @@ const handleWooPaymentWebhook = catchAsync(async (req: Request, res: Response) =
   }
 
   const paymentType = paymentTypeMap[payment_method] || 'Card'; // fallback
+
+  let updated;
   // ✅ Update subscription status
-  const updated = await SubscriptionPayment.findByIdAndUpdate(
+  try {
+    updated = await SubscriptionPayment.findByIdAndUpdate(
     subscription_payment_id,
     {
       status,
@@ -326,7 +332,11 @@ const handleWooPaymentWebhook = catchAsync(async (req: Request, res: Response) =
     },
     { new: true }
   );
+  } catch (error) {
+    console.log(error)
+  }
 
+  
   if (!updated) {
     throw new AppError(404, 'Subscription payment record not found');
   }
