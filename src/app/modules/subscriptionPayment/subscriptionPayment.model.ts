@@ -58,7 +58,7 @@ const subscriptionPaymentSchema: Schema = new Schema<ISubscriptionPayment>(
     },
     status: {
       type: String,
-      enum: ["pending","reminder_1","reminder_2","reminder_3","reminder_4","success", "activate", "stop", "gotCredits", "Completato"],
+      enum: ["pending","reminder_1","reminder_2","reminder_3","reminder_4","success", "activate", "stop", "gotCredits", "Completato", "Completed"],
       default: "pending"
     },
     expireDate: {
