@@ -304,7 +304,7 @@ const handleWooPaymentWebhook = catchAsync(async (req: Request, res: Response) =
   console.log("req.body handle woo payment -->>> ", req.body);
   console.log(" out status -->>", status)
   // 🔴 Handle failed or incomplete payment
-  if (status !== 'Completato' || status !== 'Completed') {
+  if (status !== 'Completato') {
 
     console.log(" in status -->>", status)
     return sendResponse(res, {
