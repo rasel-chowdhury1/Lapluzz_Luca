@@ -75,6 +75,12 @@ router.post(
   auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
   eventController.getUnsubscriptionEvents
 )
+  
+.get(
+  '/list',
+  auth(USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN),
+  eventController.getAllEventList
+)
 
 
 

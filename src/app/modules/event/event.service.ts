@@ -40,6 +40,53 @@ const getAllEvents = async (query: Record<string, any>) => {
   return { data, meta };
 };
 
+const getEventList = async () => {
+  const events = await Event.find({ isDeleted: false }).lean();
+
+  const results = await Promise.all(
+    events.map(async (event) => {
+      const eventId = new Types.ObjectId(event._id);
+
+      // 1️⃣ Likes & Comments
+      const engagement = await EventEngagementStats.findOne({ eventId }).lean();
+      const totalLikes = engagement?.likes?.length || 0;
+      const totalComments = engagement?.comments?.length || 0;
+
+      // 2️⃣ Views
+      const viewsDoc = await EventProfileViews.findOne({ eventId }).lean();
+      const profileViews = viewsDoc?.viewUsers?.length || 0;
+
+      // 3️⃣ Rating & Reviews
+      const ratingAgg = await EventReview.aggregate([
+        { $match: { eventId } },
+        {
+          $group: {
+            _id: '$eventId',
+            averageRating: { $avg: '$rating' },
+            totalReviews: { $sum: 1 },
+          },
+        },
+      ]);
+
+      const ratingStats = ratingAgg[0] || {
+        averageRating: 0,
+        totalReviews: 0,
+      };
+
+      return {
+        ...event,
+        totalLikes,
+        totalComments,
+        eventViews: profileViews,
+        averageRating: parseFloat(ratingStats.averageRating?.toFixed(1)) || 0,
+        totalReviews: ratingStats.totalReviews,
+      };
+    })
+  );
+
+  return results;
+};
+
 // const getSubscrptionEvent = async (query: Record<string, any>) => {
 //   query['isDeleted'] = false;
 
@@ -585,5 +632,6 @@ export const eventService = {
   getMyEvents,
   getExtraEventDataById,
   getMyEventList,
-  getSpecificEventStats
+  getSpecificEventStats,
+  getEventList
 };

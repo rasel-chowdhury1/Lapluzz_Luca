@@ -21,7 +21,7 @@ router.post(
 )
 
 .patch(
-  '/:id',
+  '/update/:id',
   // auth(USER_ROLE.ADMIN),
     upload.fields([
     { name: 'icon', maxCount: 1 },
@@ -33,7 +33,6 @@ router.post(
 
 .delete(
   '/:id',
-  auth(USER_ROLE.ADMIN),
   auth(USER_ROLE.ADMIN),
   categoryController.deleteCategory,
 )

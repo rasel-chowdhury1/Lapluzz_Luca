@@ -259,6 +259,34 @@ const otpVerifyAndCreateUser = async ({
   return { role, accessToken };
 };
 
+const adminCreateAdmin = async (userData: {name: string,email:string,password:string, role: string}) => {
+
+  const isExist = await User.isUserExist(userData.email as string);
+
+  if (isExist) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      'User already exists with this email',
+    );
+  }
+
+  const newUserData = {
+    name: userData.name,
+    password: userData.password,
+    email: userData.email,
+    isAdminCreated: true,
+    termsAndConditions: true
+  };
+
+  const user = await User.create(newUserData);
+
+  if (!user) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'User creation failed');
+  }
+
+  return user;
+};
+
 
 
 const completedUser = async (id: string, payload: Partial<TUser>) => {
@@ -325,18 +353,9 @@ const getAllUserQuery = async (userId: string, query: Record<string, unknown>) =
   return { meta, result };
 };
 
-const getAllUserList = async (userId: string) => {
-  const userQuery = new QueryBuilder(User.find({ _id: { $ne: userId }, role: 'user' }), query)
-    .search(['name', 'sureName', 'email'])
-    .filter()
-    .sort()
-    .paginate()
-    .fields();
-
-  const result = await User.find({ _id: { $ne: userId }, role: 'user' })
-  // const result = await userQuery.modelQuery;
-  // const meta = await userQuery.countTotal();
-  return result;
+const getAllUserList = async () => {
+  const users = await User.find({ role: 'user', isDeleted: false });
+  return users;
 };
 
 const getAllUserCount = async () => {
@@ -582,10 +601,8 @@ const getUserById = async (id: string) => {
 
 // Optimized the function to improve performance, reducing the processing time to 235 milliseconds.
 const getMyProfile = async (id: string) => {
-  const [userData, profileData] = await Promise.all([
-    User.findById(id).lean(),
-    // Profile.findOne({ user: id }).lean(),
-  ]);
+
+  const userData = await User.findById(id).lean();
 
 
   if (!userData) {
@@ -726,6 +743,17 @@ const myReferrals = async (userId: string) => {
   }
 }
 
+const getAdminList = async (userId: string) => {
+  const adminList = await User.find({
+    _id: { $ne: userId },
+    role: { $in: ['admin', 'super_admin'] },
+    isBlocked: false,
+    isDeleted: false,
+  }).select("name email profileImage role createdAt");
+
+  return adminList;
+};
+
 
 export const userService = {
   createUserToken,
@@ -745,5 +773,8 @@ export const userService = {
   getAllUsersOverview,
   getEarningOverview,
   myReferrals,
-  getBusinessUserList
+  getAllUserList,
+  getBusinessUserList,
+  adminCreateAdmin,
+  getAdminList
 };

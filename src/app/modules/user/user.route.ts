@@ -17,6 +17,11 @@ userRoutes
     validateRequest(userValidation?.userValidationSchema),
     userController.createUser,
   )
+  .post(
+    '/create/admin',
+    validateRequest(userValidation?.adminValidationSchema),
+    userController.adminCreateAdmin,
+  )
 
   .post(
     '/create-user-verify-otp',
@@ -26,14 +31,14 @@ userRoutes
 
   .patch(
     '/update-my-profile',
-    auth('user', USER_ROLE.ORGANIZER, "admin"),
+    auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN),
     upload.single('image'),
     parseData(),
     userController.updateMyProfile,
   )
 
   .patch(
-    '/block/:id',
+    '/block/:userId',
     auth('admin'),
     userController.blockedUser,
   )
@@ -46,9 +51,14 @@ userRoutes
   )
 
   .get(
+  '/adminList',
+  auth(USER_ROLE.ADMIN),
+  userController.getSuperAdminLists,
+  )
+  .get(
     '/my-profile',
     auth(
-      'user', "organizer", "admin",
+      USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.SUPER_ADMIN, USER_ROLE.SUPER_ADMIN
     ),
     userController.getMyProfile,
   )
@@ -62,8 +72,13 @@ userRoutes
     ),
     userController.getAdminProfile,
   )
-  .get('/all-users', auth("admin"), userController.getAllUsers)
-  .get('/all-business-users', auth("admin"), userController.getAllBusinessUsers)
+  .get('/all-users', auth("admin"), userController.getAllUsersList)
+
+  .get(
+    '/all-business-users',
+    auth("admin"),
+    userController.getAllBusinessUsers
+  )
 
   .get("/all-users-overview", auth("admin"), userController.getAllUsersOverview)
 

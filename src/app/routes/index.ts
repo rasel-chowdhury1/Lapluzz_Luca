@@ -14,7 +14,6 @@ import { requestCategoryRoutes } from "../modules/requestCategory/requestCategor
 import { wishListRoutes } from "../modules/wishlist/wishlist.route";
 import { postCommunityRoutes } from "../modules/postCommunity/postCommunity.route";
 import { businessSettingsRoutes } from "../modules/businessSetting/businessSetting.route";
-import { faqRoutes } from "../modules/faq/faq.router";
 import { InspirationRoutes } from "../modules/inspiration/inspiration.route";
 import { eventReviewRoutes } from "../modules/eventReview/eventReview.route";
 import { eventEngagementStatsRoutes } from "../modules/eventEngagementStats/eventEngagementStats.route";
@@ -32,6 +31,7 @@ import { messageRoutes } from "../modules/message/message.route";
 import { searchRecord } from "../modules/searchRecord/searchRecord.route";
 import { EventInterestRoutes } from "../modules/eventInterest/eventInterest.route";
 import { subcriptionPaymentRoutes } from "../modules/subscriptionPayment/subscriptionPayment.route";
+import { faqRoutes } from "../modules/faq/faq.router";
 
 const router = Router();
 

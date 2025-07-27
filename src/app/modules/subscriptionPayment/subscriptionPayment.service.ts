@@ -260,6 +260,7 @@ const getEarningList = async () => {
       status: payment.status,
       woo_order_id: payment.woo_order_id || '',
       paymentMethod: payment.payment_method,
+      createAt: payment.createdAt
     };
   });
 

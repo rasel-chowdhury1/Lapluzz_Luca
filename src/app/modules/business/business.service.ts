@@ -186,6 +186,92 @@ const getAllBusiness = async (userId: string, query: Record<string, any>) => {
   return { data, meta };
 };
 
+const getBusinessList = async (userId: string) => {
+  const businesses = await Business.find({ isDeleted: false })
+    .populate('providerType', 'name')
+    .select('name coverImage address priceRange maxGuest subscriptionType createdAt providerType')
+    .lean();
+
+  if (!businesses || businesses.length === 0) return [];
+
+  const businessIds = businesses.map((b) => b._id);
+
+  // ⭐ Get Ratings
+  const ratings = await BusinessReview.aggregate([
+    { $match: { businessId: { $in: businessIds } } },
+    {
+      $group: {
+        _id: '$businessId',
+        averageRating: { $avg: '$rating' },
+        totalReviews: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const ratingMap: Record<string, { averageRating: number; totalReviews: number }> = {};
+  ratings.forEach((r) => {
+    ratingMap[r._id.toString()] = {
+      averageRating: parseFloat(r.averageRating.toFixed(1)),
+      totalReviews: r.totalReviews,
+    };
+  });
+
+  // ⭐ Get Engagement Stats
+  const engagementStats = await BusinessEngagementStats.find({
+    businessId: { $in: businessIds },
+  }).select('businessId likes comments followers');
+
+  const engagementMap: Record<string, {
+    totalFollowers: number,
+    totalLikes: number;
+    totalComments: number;
+    isLiked: boolean;
+    isFollowed: boolean;
+  }> = {};
+
+  engagementStats.forEach((stat) => {
+    const id = stat.businessId.toString();
+    engagementMap[id] = {
+      totalFollowers: stat.followers.length || 0,
+      totalLikes: stat.likes?.length || 0,
+      totalComments: stat.comments?.length || 0,
+      isLiked: stat.likes?.some((like) => like.toString() === userId) || false,
+      isFollowed: stat.followers?.some((f) => f.toString() === userId) || false,
+    };
+  });
+
+  // 🔀 Combine all
+  let result = businesses.map((biz) => {
+    const id = biz._id.toString();
+    const rating = ratingMap[id] || { averageRating: 0, totalReviews: 0 };
+    const engagement = engagementMap[id] || {
+      totalLikes: 0,
+      totalComments: 0,
+      isLiked: false,
+      isFollowed: false,
+    };
+
+    return {
+      ...biz,
+      ...rating,
+      ...engagement,
+      blueVerifiedBadge: biz.subscriptionType === 'exclusive',
+    };
+  });
+
+  // 🔽 Sort by subscription type then createdAt
+  const subscriptionOrder = ['exclusive', 'elite', 'prime', 'none'];
+  result = result.sort((a, b) => {
+    const posA = subscriptionOrder.indexOf(a.subscriptionType ?? 'none');
+    const posB = subscriptionOrder.indexOf(b.subscriptionType ?? 'none');
+
+    if (posA !== posB) return posA - posB;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+
+  return result;
+};
+
 
 
 
@@ -833,8 +919,8 @@ const searchBusinesses = async (
 
   const businessIds = results.map((biz) => biz._id);
 
-  // 4. Fetch ratings and reviews
-  const businessRatings = await BusinessReview.aggregate([
+  // 4. ⭐ Get ratings
+  const ratingAgg = await BusinessReview.aggregate([
     { $match: { businessId: { $in: businessIds } } },
     {
       $group: {
@@ -845,18 +931,18 @@ const searchBusinesses = async (
     },
   ]);
 
+  const ratingMap: Record<string, { averageRating: number; totalReviews: number }> = {};
+  ratingAgg.forEach((entry) => {
+    ratingMap[entry._id.toString()] = {
+      averageRating: parseFloat(entry.averageRating.toFixed(1)),
+      totalReviews: entry.totalReviews,
+    };
+  });
+
   // 5. Fetch engagement stats
   const businessEngagements = await BusinessEngagementStats.find({
     businessId: { $in: businessIds },
   }).select('businessId likes comments followers');
-
-  const businessRatingMap: Record<string, any> = {};
-  businessRatings.forEach((r) => {
-    businessRatingMap[r._id.toString()] = {
-      averageRating: parseFloat(r.averageRating.toFixed(1)),
-      totalReviews: r.totalReviews,
-    };
-  });
 
   const businessEngagementMap: Record<string, any> = {};
   businessEngagements.forEach((stat) => {
@@ -872,10 +958,23 @@ const searchBusinesses = async (
   // 6. Final response
   const populatedBusinesses = results.map((biz) => {
     const id = biz._id.toString();
+
+    const rating = ratingMap[id] || {
+      averageRating: 0,
+      totalReviews: 0,
+    };
+
+    const engagement = businessEngagementMap[id] || {
+      totalLikes: 0,
+      totalComments: 0,
+      isLiked: false,
+      isFollowed: false,
+    };
+
     return {
       ...biz.toObject(),
-      ...businessRatingMap[id],
-      ...businessEngagementMap[id],
+      ...rating,
+      ...engagement,
       blueVerifiedBadge: biz.subscriptionType === 'exclusive',
       type: 'business',
     };
@@ -1004,8 +1103,15 @@ const wizardSearchBusinesses = async (userId:string, filters: WizardFilters) => 
 
   const populatedBusinesses = results.map((biz) => {
     const id = biz._id.toString();
+
+    const rating = businessRatingMap[id] || {
+      averageRating: 0,
+      totalReviews: 0,
+    };
+
     return {
       ...biz.toObject(),
+      ...rating,
       ...businessRatingMap[id],
       ...businessEngagementMap[id],
       blueVerifiedBadge: biz.subscriptionType === 'exclusive',

@@ -48,16 +48,14 @@ const completedProfile = catchAsync(async (req: Request, res: Response) => {
 // rest >...............
 
 
-const getAllUsers = catchAsync(async (req, res) => {
-  const { userId } = req.user;
-  const result = await userService.getAllUserQuery(userId, req.query);
+const getAllUsersList = catchAsync(async (req, res) => {
+  const result = await userService.getAllUserList();
 
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
-    meta: result.meta,
-    data: result.result,
-    message: 'Users All are requered successful!!',
+    data: result,
+    message: 'All user feteched successful!!',
   });
 });
 
@@ -213,7 +211,7 @@ const myReferrals = catchAsync(async (req: Request, res: Response) => {
 });
 
 const blockedUser = catchAsync(async (req: Request, res: Response) => {
-  const result = await userService.blockedUser(req.params.id);
+  const result = await userService.blockedUser(req.params.userId);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -254,6 +252,33 @@ const getEarningOverview = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const adminCreateAdmin = catchAsync(async (req: Request, res: Response) => {
+ 
+  if (!req.body.role) {
+    req.body.role = "super_admin"
+  }
+  const result = await userService.adminCreateAdmin(req.body);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Admin created successfully',
+    data: result ,
+  });
+});
+
+const getSuperAdminLists = catchAsync(async (req: Request, res: Response) => {
+ 
+  const result = await userService.getAdminList(req.user.userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Admins fetched successfully',
+    data: result ,
+  });
+});
+
 export const userController = {
   createUser,
   userCreateVarification,
@@ -265,10 +290,12 @@ export const userController = {
   blockedUser,
   deleteMyAccount,
   getDashboardOverview,
-  getAllUsers,
+  getAllUsersList,
   getAllBusinessUsers,
   getAllUsersOverview,
   getUsersOverview,
   getEarningOverview,
-  myReferrals
+  myReferrals,
+  adminCreateAdmin,
+  getSuperAdminLists
 };

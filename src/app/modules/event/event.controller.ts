@@ -76,6 +76,17 @@ const getAllEvents = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getAllEventList = catchAsync(async (req: Request, res: Response) => {
+  const result = await eventService.getEventList();
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Event list fetched successfully',
+    data: result,
+  });
+});
+
 const getSubscriptionEvents = catchAsync(async (req: Request, res: Response) => {
 
   const {userId} = req.user;
@@ -186,5 +197,6 @@ export const eventController = {
   getMyEvents,
   getExtraDataEventById,
   getMyEventList,
-  getSpecificEventStats
+  getSpecificEventStats,
+  getAllEventList
 };

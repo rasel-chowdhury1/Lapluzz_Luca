@@ -23,7 +23,20 @@ const userValidationSchema = z.object({
     image: z.string().optional()
   }),
 });
+const adminValidationSchema = z.object({
+  body: z.object({
+    name: z
+      .string()
+      .min(1, { message: 'Name is required' })
+      .optional(),
+    email: z.string().email({ message: 'Invalid email format' }),
+    password: z
+      .string()
+      .min(6, { message: 'Password must be at least 6 characters long' })
+  }),
+});
 
 export const userValidation = {
   userValidationSchema,
+  adminValidationSchema
 };
