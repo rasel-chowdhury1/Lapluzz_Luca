@@ -7,6 +7,7 @@ import { SubcriptionPaymentService } from './subscriptionPayment.service';
 import Subscription from '../subscription/subcription.model';
 import AppError from '../../error/AppError';
 import SubscriptionPayment from './subscriptionPayment.model';
+import { User } from '../user/user.models';
 
 const paymentTypeMap: Record<string, string> = {
   'card': 'Card',
@@ -293,6 +294,71 @@ const initiateSubscriptionPayment = catchAsync(async (req: Request, res: Respons
   });
 });
 
+const buySubscriptionByCredits = catchAsync(async (req: Request, res: Response) => {
+  const { subscriptionId, subscriptionOptionIndex, subscriptionFor, subscriptionForType } = req.body;
+  const { userId } = req.user;
+
+  // 🔍 Get the user and check credits
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new AppError(404, 'User not found.');
+  }
+
+  const userTotalCredits = user.totalCredits || 0;
+
+  // 🔍 Validate subscription existence
+  const subscription = await Subscription.findById(subscriptionId);
+  if (!subscription) {
+    throw new AppError(404, 'The selected subscription does not exist.');
+  }
+
+  // 🔍 Validate subscription option index
+  const selectedOption = subscription.options?.[subscriptionOptionIndex];
+  if (!selectedOption) {
+    throw new AppError(400, 'Invalid subscription option index provided.');
+  }
+
+  // 💸 Check if user has enough credits
+  if (selectedOption.price > userTotalCredits) {
+    return sendResponse(res, {
+      statusCode: 400,
+      success: false,
+      message: 'Insufficient credits to purchase this subscription.',
+      data: null,
+    });
+  }
+
+  // 📆 Calculate expiration date
+  const expireDate = new Date();
+  expireDate.setDate(expireDate.getDate() + (selectedOption.expirationDays || 30));
+
+  // 💳 Create a new subscription payment entry with 'Completed' status
+  const payment = await SubscriptionPayment.create({
+    paymentId: `credit-${Date.now()}`,
+    amount: selectedOption.price,
+    userId,
+    subscriptionFor,
+    subscriptionForType,
+    subscription: subscription._id,
+    subscriptionOptionIndex,
+    paymentType: 'Credit',
+    status: 'Completed',
+    expireDate,
+  });
+
+   // 🧾 Update user's credits without using .save()
+  await User.findByIdAndUpdate(userId, {
+    $inc: { totalCredits: -selectedOption.price },
+  });
+
+  // 📤 Send success response
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Subscription purchased successfully using your credits.',
+    data: null,
+  });
+});
 
 
 // subscriptionPayment.controller.ts
@@ -394,7 +460,8 @@ export const SubcriptionPaymentController = {
   initiateSubscriptionPayment,
   handleWooPaymentWebhook,
   getMySubscription,
-   getEarningList
+  getEarningList,
+   buySubscriptionByCredits
    // stripe implement for payment end 
   
 };

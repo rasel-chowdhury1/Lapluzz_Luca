@@ -57,6 +57,11 @@ router.post(
     jobController.getSpecificJobStats
   )
   .get(
+    '/list', 
+    auth( USER_ROLE.ADMIN),
+    jobController.getAllJobList
+  )
+  .get(
     '/:id', 
     auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
     jobController.getJobById

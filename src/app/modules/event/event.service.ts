@@ -224,6 +224,8 @@ const getSubscrptionEvent = async (userId: string, query: Record<string, any>) =
 };
 
 
+
+
 // const getUnsubscriptionEvent = async (query: Record<string, any>) => {
 //   query['isDeleted'] = false;
 

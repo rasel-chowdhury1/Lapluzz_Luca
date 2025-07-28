@@ -12,6 +12,7 @@ export interface ISubscriptionOption {
 
 export interface ISubscription extends Document {
   title: string;
+  subTitle: string;
   type: SubscriptionType;
   feature: string[];
   options: ISubscriptionOption[];

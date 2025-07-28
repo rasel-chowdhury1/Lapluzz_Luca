@@ -36,6 +36,12 @@ router.post(
   auth(USER_ROLE.ORGANIZER),
   SubcriptionPaymentController.initiateSubscriptionPayment
 )
+  
+.post(
+  '/buy/credit',
+  auth(USER_ROLE.ORGANIZER),
+  SubcriptionPaymentController.buySubscriptionByCredits
+)
   .post(
     '/woo-webhook',
     SubcriptionPaymentController.handleWooPaymentWebhook

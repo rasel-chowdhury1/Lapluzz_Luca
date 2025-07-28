@@ -203,6 +203,64 @@ const getJobById = async (userId: string, id: string) => {
   };
 };
 
+const getAllJobsList = async () => {
+  const jobs = await Job.find({ isDeleted: false }).populate("author", "sureName name email");
+  const jobIds = jobs.map((job) => job._id);
+
+  // ⭐ Aggregate Ratings
+  const ratingAgg = await JobReview.aggregate([
+    { $match: { jobId: { $in: jobIds } } },
+    {
+      $group: {
+        _id: '$jobId',
+        averageRating: { $avg: '$rating' },
+        totalReviews: { $sum: 1 },
+      },
+    },
+  ]);
+
+  // ⭐ Aggregate Total Comments
+  const commentAgg = await JobEngagementStats.aggregate([
+    { $match: { jobId: { $in: jobIds } } },
+    {
+      $project: {
+        jobId: 1,
+        totalComments: { $size: '$comments' },
+      },
+    },
+  ]);
+
+  // 🗺️ Map Results
+  const ratingMap = new Map<string, { averageRating: number; totalReviews: number }>();
+  ratingAgg.forEach((r) => {
+    ratingMap.set(r._id.toString(), {
+      averageRating: r.averageRating,
+      totalReviews: r.totalReviews,
+    });
+  });
+
+  const commentMap = new Map<string, number>();
+  commentAgg.forEach((c) => {
+    commentMap.set(c.jobId.toString(), c.totalComments);
+  });
+
+  // 🔁 Enrich Jobs
+  const enrichedJobs = jobs.map((job) => {
+    const jobId = job._id.toString();
+    const rating = ratingMap.get(jobId) || { averageRating: 0, totalReviews: 0 };
+    const totalComments = commentMap.get(jobId) || 0;
+
+    return {
+      ...job.toObject(),
+      averageRating: parseFloat(rating.averageRating.toFixed(1)),
+      totalReviews: rating.totalReviews,
+      totalComments,
+    };
+  });
+
+  return enrichedJobs;
+};
+
 const getMyJobs = async (userId: string) => {
 
 
@@ -489,5 +547,6 @@ export const jobService = {
   getSubscriptionJobs,
   getUnsubscriptionJobs,
   getMyJobsList,
-  getSpecificJobStats
+  getSpecificJobStats,
+  getAllJobsList
 };

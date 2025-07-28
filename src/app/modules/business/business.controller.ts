@@ -114,7 +114,7 @@ const updateBusiness = catchAsync(async (req: Request, res: Response) => {
 
 const getAllBusiness = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user;
-  const result = await businessService.getAllBusiness(userId, req.query);
+  const result = await businessService.getBusinessList(userId);
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -302,6 +302,35 @@ const wizardSearchBusiness = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+const filterSearchBusinesses = catchAsync(async (req: Request, res: Response) => {
+     const {
+      longitude,
+       latitude,
+      maxGuest,
+      ...restQuery
+    } = req.query;
+
+  const { userId } = req.user;
+    // Convert longitude and latitude to numbers if they exist
+    const filters = {
+      ...restQuery,
+      maxGuest: maxGuest ? Number(maxGuest) : undefined,
+      longitude: longitude ? Number(longitude) : undefined,
+      latitude: latitude ? Number(latitude) : undefined,
+    };
+
+  
+  console.log({filters})
+    const data = await businessService.filterSearchBusinesses(userId, filters);
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'Businesses retrieved successfully based on  filters',
+      data,
+    });
+});
+
 export const businessController = {
   createBusiness,
   getAllBusiness,
@@ -316,6 +345,7 @@ export const businessController = {
   getExtraBusinessDataById,
   searchBusiness,
   wizardSearchBusiness,
+  filterSearchBusinesses,
   getSpecificBusinessStats,
   getMyBusinessList,
   getCalculateCompetitionScore,

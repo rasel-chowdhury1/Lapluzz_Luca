@@ -17,6 +17,7 @@ const SubscriptionOptionSchema = new Schema<ISubscription['options'][0]>(
 const SubscriptionSchema = new Schema<ISubscription>(
   {
     title: { type: String, required: true },
+    subTitle: { type: String, default: "" },
     type: {type: String, enum: ['business','event','job'], required: true},
     feature: { type: [String], default: [] },
     options: { type: [SubscriptionOptionSchema], default: [] },

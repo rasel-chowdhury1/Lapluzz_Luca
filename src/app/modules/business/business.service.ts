@@ -188,6 +188,7 @@ const getAllBusiness = async (userId: string, query: Record<string, any>) => {
 
 const getBusinessList = async (userId: string) => {
   const businesses = await Business.find({ isDeleted: false })
+    .populate('author', 'sureName name email')
     .populate('providerType', 'name')
     .select('name coverImage address priceRange maxGuest subscriptionType createdAt providerType')
     .lean();
@@ -634,6 +635,7 @@ const getMyBusinessesList = async (userId: string) => {
   return businesses;
 
 };
+
 const getExtraBusinessDataById = async (userId: string, id: string) => {
   const business = await Business.findById(id)
     .populate('providerType', 'name')
@@ -1122,6 +1124,147 @@ const wizardSearchBusinesses = async (userId:string, filters: WizardFilters) => 
   return populatedBusinesses;
 };
 
+const filterSearchBusinesses = async (
+  userId: string,
+  filters: {
+    categoryName?: string[];
+    longitude?: number;
+    latitude?: number;
+    priceRange?: string[];
+    maxGuest?: number;
+    sortPriceRange: string,
+  }
+) => {
+  const {
+    categoryName = [],
+    longitude,
+    latitude,
+    priceRange = [],
+    maxGuest,
+    sortPriceRange = "asc"
+  } = filters;
+
+  const query: any = { isDeleted: false };
+
+  // 1. Category Filter
+  if (categoryName.length) {
+    const matchedCategories = await Category.find({
+      name: { $in: categoryName },
+      isDeleted: false,
+    });
+    const matchedCategoryIds = matchedCategories.map((cat) => cat._id);
+    query.providerType = { $in: matchedCategoryIds };
+  }
+
+  // 2. Location Filter (within 50km)
+  if (typeof longitude === 'number' && typeof latitude === 'number') {
+    query.location = {
+      $nearSphere: {
+        $geometry: {
+          type: 'Point',
+          coordinates: [longitude, latitude],
+        },
+        $maxDistance: 50000, // 50km
+      },
+    };
+  }
+
+  // 3. Price Range Filter
+  if (priceRange.length) {
+    query.priceRange = { $in: priceRange };
+  }
+
+  console.log('MAX GUEST ->>> ', typeof maxGuest)
+  // 4. Max Guest Filter
+  if (typeof maxGuest === 'number') {
+    query.maxGuest = { $gte: maxGuest };
+  }
+
+  // 5. Execute main query
+  const businesses = await Business.find(query).populate('providerType');
+  const businessIds = businesses.map((b) => b._id);
+
+  // 6. Ratings aggregation
+  const ratingsAgg = await BusinessReview.aggregate([
+    { $match: { businessId: { $in: businessIds } } },
+    {
+      $group: {
+        _id: '$businessId',
+        averageRating: { $avg: '$rating' },
+        totalReviews: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const ratingMap: Record<string, { averageRating: number; totalReviews: number }> = {};
+  ratingsAgg.forEach((r) => {
+    ratingMap[r._id.toString()] = {
+      averageRating: parseFloat(r.averageRating.toFixed(1)),
+      totalReviews: r.totalReviews,
+    };
+  });
+
+  // 7. Engagement stats
+  const engagementStats = await BusinessEngagementStats.find({
+    businessId: { $in: businessIds },
+  }).select('businessId likes comments followers');
+
+  const engagementMap: Record<
+    string,
+    { totalLikes: number; totalComments: number; isLiked: boolean; isFollowed: boolean }
+  > = {};
+
+  engagementStats.forEach((stat) => {
+    const id = stat.businessId.toString();
+    engagementMap[id] = {
+      totalLikes: stat.likes?.length || 0,
+      totalComments: stat.comments?.length || 0,
+      isLiked: userId ? stat.likes?.includes(userId) : false,
+      isFollowed: userId ? stat.followers?.includes(userId) : false,
+    };
+  });
+
+  // 8. Enrich and sort by priceRange
+  const priceOrder = {
+    luxury: 4,
+    high: 3,
+    medium: 2,
+    budget: 1,
+  };
+
+  const enriched = businesses.map((biz) => {
+    const id = biz._id.toString();
+    const rating = ratingMap[id] || { averageRating: 0, totalReviews: 0 };
+    const engagement = engagementMap[id] || {
+      totalLikes: 0,
+      totalComments: 0,
+      isLiked: false,
+      isFollowed: false,
+    };
+
+    return {
+      ...biz.toObject(),
+      ...rating,
+      ...engagement,
+      blueVerifiedBadge: biz.subscriptionType === 'exclusive',
+    };
+  });
+
+  // 9. Sort by price priority
+  enriched.sort((a, b) => {
+    const aPriority = priceOrder[a.priceRange as keyof typeof priceOrder] || 0;
+    const bPriority = priceOrder[b.priceRange as keyof typeof priceOrder] || 0;
+    
+  if (sortPriceRange === 'asc') {
+    return aPriority - bPriority; // lower price first
+  } else {
+    return bPriority - aPriority; // higher price first (default)
+  }
+  });
+
+  return enriched;
+};
+
 const calculateCompetitionScore = async (
   businessId: string
 ) => {
@@ -1232,5 +1375,7 @@ export const businessService = {
   getMyBusinessesList,
   calculateCompetitionScore,
   wizardSearchBusinesses,
-  getMyParentBusiness
+  getMyParentBusiness,
+  filterSearchBusinesses,
+  getBusinessList
 };

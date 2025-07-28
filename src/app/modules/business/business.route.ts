@@ -49,7 +49,7 @@ router.post(
 )
   
   .get(
-    '/all',
+    '/list',
     auth(USER_ROLE.ADMIN),
     businessController.getAllBusiness
 )
@@ -118,6 +118,12 @@ router.post(
     '/wizard-search',
     auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
     businessController.wizardSearchBusiness
+  )
+  
+  .get(
+    '/filter',
+    auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
+    businessController.filterSearchBusinesses
   )
 
   .get(

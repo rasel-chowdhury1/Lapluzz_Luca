@@ -49,6 +49,16 @@ const getAllJobs = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getAllJobList = catchAsync(async (req: Request, res: Response) => {
+  const result = await jobService.getAllJobsList();
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'All jobs list fetched successfully',
+    data: result,
+  });
+});
+
 const getMyJobsList = catchAsync(async (req: Request, res: Response) => {
   const result = await jobService.getMyJobsList(req.user.userId);
   sendResponse(res, {
@@ -155,5 +165,6 @@ export const jobController = {
   getSubscriptionJobs,
   getUnsubscriptionJobs,
   getMyJobsList,
-  getSpecificJobStats
+  getSpecificJobStats,
+  getAllJobList
 };
