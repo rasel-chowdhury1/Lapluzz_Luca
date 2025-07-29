@@ -114,7 +114,18 @@ const updateBusiness = catchAsync(async (req: Request, res: Response) => {
 
 const getAllBusiness = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user;
-  const result = await businessService.getBusinessList(userId);
+  const result = await businessService.getAllBusiness(userId, req.query);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'All business fetched successfully',
+    data: result,
+  });
+});
+
+const getAllBusinessList = catchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.user;
+  const result = await businessService.getAl(userId);
   sendResponse(res, {
     statusCode: 200,
     success: true,
