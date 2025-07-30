@@ -225,7 +225,7 @@ const buySubscription = async (data: any) => {
 const mySubscription = async (userId: string) => {
   const result = await SubscriptionPayment.find({ userId })
     .populate('subscription') // Static reference
-    .populate('subscriptionFor'); // Uses dynamic refPath
+    .populate('subscriptionFor', "name title"); // Uses dynamic refPath
 
   return result || [];
 };
