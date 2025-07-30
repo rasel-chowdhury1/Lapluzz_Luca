@@ -250,7 +250,7 @@ const buySubscription = catchAsync(async (req: Request, res: Response) => {
 
 const initiateSubscriptionPayment = catchAsync(async (req: Request, res: Response) => {
 
-  const { subscriptionId, subscriptionOptionIndex, subscriptionFor, subscriptionForType } = req.body;
+  const { subscriptionId, subscriptionOptionIndex, subscriptionFor, subscriptionForType, promotionCode, } = req.body;
 
   const { userId } = req.user;
 
