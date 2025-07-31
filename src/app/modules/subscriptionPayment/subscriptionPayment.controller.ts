@@ -8,6 +8,7 @@ import Subscription from '../subscription/subcription.model';
 import AppError from '../../error/AppError';
 import SubscriptionPayment from './subscriptionPayment.model';
 import { User } from '../user/user.models';
+import { Coupon } from '../coupon/coupon.model';
 
 const paymentTypeMap: Record<string, string> = {
   'card': 'Card',
@@ -249,43 +250,63 @@ const buySubscription = catchAsync(async (req: Request, res: Response) => {
 
 
 const initiateSubscriptionPayment = catchAsync(async (req: Request, res: Response) => {
-
-  const { subscriptionId, subscriptionOptionIndex, subscriptionFor, subscriptionForType, promotionCode, } = req.body;
-
+  const { subscriptionId, subscriptionOptionIndex, subscriptionFor, subscriptionForType, promotionCode } = req.body;
   const { userId } = req.user;
 
-  // 🔍 Validate subscription existence
+  // 🧾 Validate subscription
   const subscription = await Subscription.findById(subscriptionId);
   if (!subscription) throw new AppError(404, 'Subscription not found');
 
-  // 🔍 Validate subscription option index
+  // 🧮 Validate selected option
   const selectedOption = subscription.options[subscriptionOptionIndex];
   if (!selectedOption) throw new AppError(400, 'Invalid subscription option selected');
 
-  // 📆 Calculate expire date
+  let finalAmount = selectedOption.price;
+
+  // 🎟️ Apply Coupon Discount if promotionCode exists
+  if (promotionCode) {
+    const now = new Date();
+    const coupon = await Coupon.findOne({
+      name: promotionCode,
+      appliesTo: { $in: ['all', subscriptionForType] },
+      isEnable: true,
+      isDeleted: false,
+      startDate: { $lte: now },
+      endDate: { $gte: now },
+    });
+
+    if (!coupon) {
+      throw new AppError(400, 'Invalid or expired coupon');
+    }
+
+    // 💸 Apply discount
+    finalAmount = Math.max(0, finalAmount - coupon.discountPrice); // never below 0
+  }
+
+  // 📆 Set expiration date
   const expireDate = new Date();
   expireDate.setDate(expireDate.getDate() + (selectedOption.expirationDays || 30));
 
-  // 💳 Create temporary subscription payment entry
+  // 💳 Create payment record
   const payment = await SubscriptionPayment.create({
-    paymentId: `woo-${Date.now()}`, // temporary ID
-    amount: selectedOption.price,
+    paymentId: `woo-${Date.now()}`, // temp ID for now
+    amount: finalAmount,
     userId,
     subscriptionFor,
     subscriptionForType,
     subscription: subscription._id,
     subscriptionOptionIndex,
-    paymentType: 'Card', // default; will be updated via webhook
-    status: 'pending', // initial status
+    status: 'pending',
     expireDate,
+    ...(promotionCode && { appliedCoupon: promotionCode }), // optionally store applied coupon
   });
 
-  console.log({payment})
+  console.log('💰 Payment Created:', payment);
 
-  // 🌐 Build WooCommerce redirect URL
+  // 🔗 Redirect URL for WooCommerce (nice and clean)
   const redirectUrl = `https://pianofesta.it/pagamento/checkout?subscription_payment_id=${payment._id}&amount=${payment.amount}`;
 
-  // 📤 Send response
+  // 🚀 Respond back to client
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -365,12 +386,12 @@ const buySubscriptionByCredits = catchAsync(async (req: Request, res: Response) 
 
 const handleWooPaymentWebhook = catchAsync(async (req: Request, res: Response) => {
   
-  const { subscription_payment_id, status,payment_method, woo_order_id,billing_email,billing_first_name,billing_last_name } = req.body;
+  const { subscription_payment_id, woo_order_id, status, payment_status, payment_method, amount, amount_cents, currency, payment_detials,customer } = req.body;
   
   console.log("req.body handle woo payment -->>> ", req.body);
   console.log(" out status -->>", status)
   // 🔴 Handle failed or incomplete payment
-  if (status !== 'Completato') {
+  if (status !== 'completed') {
 
     console.log(" in status -->>", status)
     return sendResponse(res, {
@@ -381,20 +402,22 @@ const handleWooPaymentWebhook = catchAsync(async (req: Request, res: Response) =
     });
   }
 
-  const paymentType = paymentTypeMap[payment_method] || 'Card'; // fallback
 
   let updated;
   // ✅ Update subscription status
   try {
     updated = await SubscriptionPayment.findByIdAndUpdate(
     subscription_payment_id,
-    {
+      {
+      transaction_id: payment_detials.transaction_id,
+      woo_order_id,
+      amount_cents,
+      currency,
+      customer_name: customer?.name,
+      customer_email: customer?.email,
+      payment_method,
+      payment_status,
       status,
-      woo_order_id, // replace temporary paymentId
-      payment_method: paymentType,
-      billing_email,
-      billing_first_name,
-      billing_last_name
     },
     { new: true }
   );

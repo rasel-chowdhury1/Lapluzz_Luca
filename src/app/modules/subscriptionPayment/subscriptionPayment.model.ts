@@ -7,6 +7,14 @@ const subscriptionPaymentSchema: Schema = new Schema<ISubscriptionPayment>(
       type: String,
       required: true,
     },
+    transaction_id: {
+      type: String,
+      required: true,
+    },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
+    },
     woo_order_id: {
       type: String,
       default: ""
@@ -15,19 +23,19 @@ const subscriptionPaymentSchema: Schema = new Schema<ISubscriptionPayment>(
       type: Number,
       required: true,
     },
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User"
-    },
-    billing_email: {
+    amount_cents: {
+      type: Number,
+      default: 0,
+    },   
+    currency: {
       type: String,
       default: ""
     },
-    billing_first_name: {
+    customer_name: {
       type: String,
       default: ""
     },
-    billing_last_name: {
+    customer_email: {
       type: String,
       default: ""
     },
@@ -53,13 +61,20 @@ const subscriptionPaymentSchema: Schema = new Schema<ISubscriptionPayment>(
     },
     payment_method: {
       type: String,
-      enum: ['Card', 'Paypal', 'Klarna', 'Bank', "Credit", "Manual"],
-      default: 'Card',
+      default: "",
+    },
+    payment_status: {
+      type: String,
+      default: "",
     },
     status: {
       type: String,
-      enum: ["pending","reminder_1","reminder_2","reminder_3","reminder_4","success", "activate", "stop", "gotCredits", "Completato", "Completed"],
+      enum: ["pending", "processing", "on-hold","cancelled","completed", "refunded","failed"  ],
       default: "pending"
+    },
+      promotionCode: {
+      type: String,
+      default: null
     },
     expireDate: {
       type: Date,
