@@ -3,7 +3,7 @@ import { ICategory, ICategoryModel } from './category.interface';
 
 const categorySchema = new Schema<ICategory>(
   {
-    name: { type: 'string', required: true, unique: true },
+    name: { type: 'string', required: true },
     type: {
       type: 'string',
       required: true,
@@ -17,7 +17,7 @@ const categorySchema = new Schema<ICategory>(
         'community'
       ],
     },
-    description: { type: 'string', required: false, default: "" }, 
+    description: { type: 'string', required: false, default: "" },
     icon: { type: 'string', required: false, default: "" },
     banner: { type: 'string', required: false, default: "" },
     isDeleted: { type: 'boolean', default: false },
