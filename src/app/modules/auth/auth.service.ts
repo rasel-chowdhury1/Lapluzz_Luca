@@ -178,6 +178,7 @@ const forgotPasswordByEmail = async (email: string) => {
 
   const { isExist, isExpireOtp } = await otpServices.checkOtpByEmail(email);
 
+  console.log({isExist, isExpireOtp})
   const { otp, expiredAt } = generateOptAndExpireTime();
 
   if (isExist && !isExpireOtp) {

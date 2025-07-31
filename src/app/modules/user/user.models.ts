@@ -44,7 +44,7 @@ const userSchema = new Schema<TUser>(
     },
     gender: {
       type: String,
-      enum: ['male', 'female', 'others'],
+      enum: ['male', 'female', 'others', ''],
       default: "others"
     },
     about: {

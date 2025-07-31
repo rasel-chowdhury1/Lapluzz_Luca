@@ -84,11 +84,11 @@ const updateBusiness = catchAsync(async (req: Request, res: Response) => {
       }
 
       if (filePaths.promotionImage && filePaths.promotionImage.length > 0) {
-        console.log("file paths promotion image ->>> ",filePaths.promotionImage)
+        console.log("file paths promotion image ->>> ", filePaths.promotionImage)
         req.body.promotionImage = filePaths.promotionImage;
       }
 
-      console.log("req body ==>>> ",req.body.promotionImage)
+      console.log("req body ==>>> ", req.body.promotionImage)
     } catch (error: any) {
       console.error('Error processing files:', error.message);
       return sendResponse(res, {
@@ -125,7 +125,7 @@ const getAllBusiness = catchAsync(async (req: Request, res: Response) => {
 
 const getAllBusinessList = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user;
-  const result = await businessService.getAl(userId);
+  const result = await businessService.getBusinessList(userId);
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -287,59 +287,59 @@ const searchBusiness = catchAsync(async (req: Request, res: Response) => {
 
 
 const wizardSearchBusiness = catchAsync(async (req: Request, res: Response) => {
-     const {
-      longitude,
-      latitude,
-      ...restQuery
-    } = req.query;
+  const {
+    longitude,
+    latitude,
+    ...restQuery
+  } = req.query;
 
   const { userId } = req.user;
-    // Convert longitude and latitude to numbers if they exist
-    const filters = {
-      ...restQuery,
-      longitude: longitude ? Number(longitude) : undefined,
-      latitude: latitude ? Number(latitude) : undefined,
-    };
+  // Convert longitude and latitude to numbers if they exist
+  const filters = {
+    ...restQuery,
+    longitude: longitude ? Number(longitude) : undefined,
+    latitude: latitude ? Number(latitude) : undefined,
+  };
 
-  
-  console.log({filters})
-    const data = await businessService.wizardSearchBusinesses(userId, filters);
 
-    sendResponse(res, {
-      statusCode: httpStatus.OK,
-      success: true,
-      message: 'Businesses retrieved successfully based on wizard filters',
-      data,
-    });
+  console.log({ filters })
+  const data = await businessService.wizardSearchBusinesses(userId, filters);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Businesses retrieved successfully based on wizard filters',
+    data,
+  });
 });
 
 const filterSearchBusinesses = catchAsync(async (req: Request, res: Response) => {
-     const {
-      longitude,
-       latitude,
-      maxGuest,
-      ...restQuery
-    } = req.query;
+  const {
+    longitude,
+    latitude,
+    maxGuest,
+    ...restQuery
+  } = req.query;
 
   const { userId } = req.user;
-    // Convert longitude and latitude to numbers if they exist
-    const filters = {
-      ...restQuery,
-      maxGuest: maxGuest ? Number(maxGuest) : undefined,
-      longitude: longitude ? Number(longitude) : undefined,
-      latitude: latitude ? Number(latitude) : undefined,
-    };
+  // Convert longitude and latitude to numbers if they exist
+  const filters = {
+    ...restQuery,
+    maxGuest: maxGuest ? Number(maxGuest) : undefined,
+    longitude: longitude ? Number(longitude) : undefined,
+    latitude: latitude ? Number(latitude) : undefined,
+  };
 
-  
-  console.log({filters})
-    const data = await businessService.filterSearchBusinesses(userId, filters);
 
-    sendResponse(res, {
-      statusCode: httpStatus.OK,
-      success: true,
-      message: 'Businesses retrieved successfully based on  filters',
-      data,
-    });
+  console.log({ filters })
+  const data = await businessService.filterSearchBusinesses(userId, filters);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Businesses retrieved successfully based on  filters',
+    data,
+  });
 });
 
 export const businessController = {

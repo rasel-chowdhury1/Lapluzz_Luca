@@ -231,7 +231,7 @@ const otpVerifyAndCreateUser = async ({
   };
 
   // console.log({ jwtPayload });
-  const expityTime = role === "organizer" ? '10m' : "5m";
+  const expityTime = role === "organizer" ? '30m' : "15m";
   let accessToken;
 
   if (expityTime) {
