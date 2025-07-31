@@ -4,16 +4,16 @@ import { Inspiration } from "./inspiration.model";
 
 
 const createInspiration = async (payload: IInspiration) => {
-  console.log({payload})
+  console.log({ payload })
   const result = await Inspiration.create(payload);
-  console.log({result})
+  console.log({ result })
   return result;
 };
 
 
 const getAllInspirations = async (query: Record<string, any>) => {
   const inspirationQuery = new QueryBuilder(
-    Inspiration.find({isBlocked: false, isDeleted: true}).populate('category', 'name description'),
+    Inspiration.find({ isBlocked: false, isDeleted: true }).populate('category', 'name description'),
     query
   )
     .search(['title']) // searchable fields
@@ -33,7 +33,7 @@ const getAllInspirations = async (query: Record<string, any>) => {
 
 const getMyInspirations = async (userId: string, query: Record<string, any>) => {
   const inspirationQuery = new QueryBuilder(
-    Inspiration.find({author: userId, isBlocked: false, isDeleted: false}).populate('category', 'name description'),
+    Inspiration.find({ author: userId, isBlocked: false, isDeleted: false }).populate('category', 'name description'),
     query
   )
     .search(['title']) // searchable fields
@@ -110,7 +110,7 @@ const getSpecificCategoryInspiration = async (
   };
 
   const inspirationQuery = new QueryBuilder(
-    Inspiration.find({ category: categoryId }).populate('category', 'name'),
+    Inspiration.find({ category: categoryId }).populate('category', 'name description'),
     filterQuery
   )
     .search(['title'])
