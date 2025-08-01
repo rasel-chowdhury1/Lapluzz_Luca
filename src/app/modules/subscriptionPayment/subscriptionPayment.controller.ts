@@ -9,6 +9,7 @@ import AppError from '../../error/AppError';
 import SubscriptionPayment from './subscriptionPayment.model';
 import { User } from '../user/user.models';
 import { Coupon } from '../coupon/coupon.model';
+import MySubscription from '../mySubscription/mySubscription.mdel';
 
 const paymentTypeMap: Record<string, string> = {
   'card': 'Card',
@@ -250,7 +251,7 @@ const buySubscription = catchAsync(async (req: Request, res: Response) => {
 
 
 const initiateSubscriptionPayment = catchAsync(async (req: Request, res: Response) => {
-  const { subscriptionId, subscriptionOptionIndex, subscriptionFor, subscriptionForType, promotionCode } = req.body;
+  const { subscriptionId, subscriptionOptionIndex, subscriptionFor, subscriptionForType, couponCode } = req.body;
   const { userId } = req.user;
 
   // 🧾 Validate subscription
@@ -263,11 +264,11 @@ const initiateSubscriptionPayment = catchAsync(async (req: Request, res: Respons
 
   let finalAmount = selectedOption.price;
 
-  // 🎟️ Apply Coupon Discount if promotionCode exists
-  if (promotionCode) {
+  // 🎟️ Apply Coupon Discount if couponCode exists
+  if (couponCode) {
     const now = new Date();
     const coupon = await Coupon.findOne({
-      name: promotionCode,
+      name: couponCode,
       appliesTo: { $in: ['all', subscriptionForType] },
       isEnable: true,
       isDeleted: false,
@@ -275,8 +276,12 @@ const initiateSubscriptionPayment = catchAsync(async (req: Request, res: Respons
       endDate: { $gte: now },
     });
 
-    if (!coupon) {
+    if (!coupon ) {
       throw new AppError(400, 'Invalid or expired coupon');
+    }
+
+    if(coupon.usageLimit <= coupon.usedCount){
+      throw new AppError(400 , "coupon limit reached")
     }
 
     // 💸 Apply discount
@@ -298,7 +303,7 @@ const initiateSubscriptionPayment = catchAsync(async (req: Request, res: Respons
     subscriptionOptionIndex,
     status: 'pending',
     expireDate,
-    ...(promotionCode && { appliedCoupon: promotionCode }), // optionally store applied coupon
+    ...(couponCode && { appliedCoupon: couponCode }), // optionally store applied coupon
   });
 
   console.log('💰 Payment Created:', payment);
@@ -385,15 +390,23 @@ const buySubscriptionByCredits = catchAsync(async (req: Request, res: Response) 
 // subscriptionPayment.controller.ts
 
 const handleWooPaymentWebhook = catchAsync(async (req: Request, res: Response) => {
-  
-  const { subscription_payment_id, woo_order_id, status, payment_status, payment_method, amount, amount_cents, currency, payment_detials,customer } = req.body;
-  
-  console.log("req.body handle woo payment -->>> ", req.body);
-  console.log(" out status -->>", status)
-  // 🔴 Handle failed or incomplete payment
-  if (status !== 'completed') {
+  const {
+    subscription_payment_id,
+    woo_order_id,
+    status,
+    payment_status,
+    payment_method,
+    amount_cents,
+    currency,
+    payment_detials,
+    customer,
+  } = req.body;
 
-    console.log(" in status -->>", status)
+  console.log("Webhook payload received:", req.body);
+
+  // 🔴 Exit early if payment not successful
+  if (status !== 'completed') {
+    console.log("Payment status not completed:", status);
     return sendResponse(res, {
       statusCode: 400,
       success: false,
@@ -402,39 +415,54 @@ const handleWooPaymentWebhook = catchAsync(async (req: Request, res: Response) =
     });
   }
 
-
-  let updated;
-  // ✅ Update subscription status
-  try {
-    updated = await SubscriptionPayment.findByIdAndUpdate(
+  // ✅ Update SubscriptionPayment
+  const updated = await SubscriptionPayment.findByIdAndUpdate(
     subscription_payment_id,
-      {
-      transaction_id: payment_detials.transaction_id,
+    {
+      transaction_id: payment_detials?.transaction_id,
       woo_order_id,
       amount_cents,
       currency,
-      customer_name: customer?.name,
-      customer_email: customer?.email,
+      customer_name: customer?.name || '',
+      customer_email: customer?.email || '',
       payment_method,
       payment_status,
       status,
     },
     { new: true }
   );
-  } catch (error) {
-    console.log(error)
-  }
 
-  
   if (!updated) {
     throw new AppError(404, 'Subscription payment record not found');
   }
 
-  // ✅ Send success response
-  sendResponse(res, {
+  
+  // ✅ Create MySubscription using updated fields
+  await MySubscription.create({
+    user: updated.userId,
+    expiryDate: updated.expireDate,
+    subscriptionFor: updated.subscriptionFor,
+    subscriptionForType: updated.subscriptionForType,
+    subscription: updated.subscription,
+    subscriptionOptionIndex: updated.subscriptionOptionIndex,
+    payment_method: updated.payment_method,
+    payment_status: updated.payment_status,
+    status: 'notActivate',
+  });
+
+  // ✅ Increment coupon usage if applicable
+  if (updated.couponCode) {
+    await Coupon.findOneAndUpdate(
+      { name: updated.couponCode },
+      { $inc: { usedCount: 1 } }
+    );
+  }
+
+  // ✅ Final response
+  return sendResponse(res, {
     statusCode: 200,
     success: true,
-    message: 'Subscription payment successfully',
+    message: 'Subscription payment processed successfully',
     data: updated,
   });
 });

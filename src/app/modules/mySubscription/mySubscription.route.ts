@@ -1,11 +1,25 @@
-import { Router } from 'express';
-import auth from '../../middleware/auth';
-import { USER_ROLE } from '../user/user.constants';
+import { Router } from "express";
+import auth from "../../middleware/auth";
+import { USER_ROLE } from "../user/user.constants";
+import { mySubscriptionController } from "./mySubscription.controller";
 
 const router = Router();
 
-router.post('/:subsId', auth(USER_ROLE.ORGANIZER));
-// router.get("/", isValidUser, getMySubscriptionDetails);
-// router.get("/my_packages", isValidUser, myPackages);
+router
+.get(
+    "/",
+    auth(USER_ROLE.ORGANIZER),
+    mySubscriptionController.getMySubscriptions
+)
 
-export const mySubscription = router;
+.patch(
+    "/activate/:id",
+    auth(USER_ROLE.ORGANIZER),
+    mySubscriptionController.activateSubscription
+)
+
+.patch(
+    "/stop/:id",
+    auth(USER_ROLE.ORGANIZER),
+    mySubscriptionController.activateSubscription
+)

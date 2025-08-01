@@ -9,6 +9,7 @@ const couponSchema = new Schema<ICouponDocument>(
     endDate: { type: Date, required: true },
     appliesTo: { type: String, enum: ["all", "business", "event", "job"], required: true }, // can adjust based on use-case
     usageLimit: { type: Number, required: true },
+    usedCount: { type: Number, default: 0 },
     isEnable: { type: Boolean, default: true },
     isDeleted: { type: Boolean, default: false },
   },

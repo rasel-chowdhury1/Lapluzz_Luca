@@ -7,6 +7,7 @@ export interface ICoupon {
   endDate: Date;
   appliesTo: string; // could also be enum or array depending on logic
   usageLimit: number;
+  usedCount: number;
   isEnable: boolean;
   isDeleted: boolean;
 }

@@ -72,7 +72,12 @@ const subscriptionPaymentSchema: Schema = new Schema<ISubscriptionPayment>(
       enum: ["pending", "processing", "on-hold","cancelled","completed", "refunded","failed"  ],
       default: "pending"
     },
-      promotionCode: {
+    userStatus: {
+        type: String,
+        enum: ["pending","notActivate", "activate", "stop", "gotCredits"],
+        default: "pending"
+    }, 
+      couponCode: {
       type: String,
       default: null
     },

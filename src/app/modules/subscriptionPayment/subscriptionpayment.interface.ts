@@ -19,8 +19,9 @@ export interface ISubscriptionPayment extends Document {
   payment_method: string;
   payment_status: string;
   status: string;
+  userStatus: string;
   currentStatus: string;
-  promotionCode?: string;
+  couponCode?: string;
   expireDate: Date;
   createdAt?: Date;
   updatedAt?: Date;
