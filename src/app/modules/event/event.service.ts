@@ -11,6 +11,7 @@ import mongoose, { Types } from 'mongoose';
 import { User } from '../user/user.models';
 import { monthNames } from '../business/business.utils';
 import { EventInterestUserList } from '../eventInterest/eventInterest.model';
+import { enrichEvent } from './event.utils';
 
 const createEvent = async (payload: IEvent) => {
   const { longitude, latitude, ...rest } = payload;
@@ -598,21 +599,85 @@ const updateEvent = async (
   return updatedEvent;
 };
 
-const getExtraEventDataById = async (
-  eventId: string,  userId: string
+
+const activateEventById = async (
+  userId: string,
+  eventId: string
 ) => {
-  const existingEvent = await Event.findById(eventId);
+  const event = await Event.findById(eventId);
+
+  if (!event) {
+    throw new Error('event not found');
+  }
+
+  // Check if the user is the author (ObjectId to string comparison)
+  if (event.author.toString() !== userId) {
+    throw new Error('You are not allowed to update this event');
+  }
+
+  // Toggle isActive value
+  const updatedevent = await Event.findByIdAndUpdate(
+    eventId,
+    { isActive: !event.isActive },
+    { new: true }
+  );
+
+  return updatedevent;
+};
+
+const getExtraEventDataById = async (
+  eventId: string,
+  userId: string
+) => {
+  // 1. Fetch main event with author
+  const existingEvent = await Event.findById(eventId).populate("author", "name sureName");
 
   if (!existingEvent || existingEvent.isDeleted) {
     throw new AppError(httpStatus.NOT_FOUND, 'Event not found');
   }
 
-    const comment = await EventEngagementStats.findOne({ eventId })
-    .select('comments') // only select comments
-    .populate('comments.user', 'name profileImage') || [];
+  const now = new Date();
 
+  // 2. Fetch comments (engagement)
+  const commentStats = await EventEngagementStats.findOne({ eventId })
+    .select('comments')
+    .populate('comments.user', 'name profileImage') || { comments: [] };
+
+  // 3. Fetch all events from the same author (excluding deleted ones)
+  const authorEvents = await Event.find({
+    author: existingEvent.author._id,
+    isDeleted: false,
+  });
+
+  const currentRaw = authorEvents.filter((e) => e._id.toString() !== eventId && e.startDate >= now);
+  const currentEvents = await Promise.all(currentRaw.map((event) => enrichEvent(event, userId))) || [];
+
+  // 4. Related events (same category, different author)
+  const relatedRaw = await Event.find({
+    _id: { $ne: eventId },
+    author: { $ne: userId },
+    category: existingEvent.category,
+    isDeleted: false,
+  })
+    .limit(5)
+    .select('name coverImage startDate endDate startTime endTime location category author');
+
+  const relatedEvents = await Promise.all(
+    relatedRaw.map(async (e) => {
+      const enriched = await enrichEvent(e, userId);
+      return enriched;
+    })
+  ) || [];
+
+  // 🧃 Final return
   return {
-    comment
+    author: {
+      name: existingEvent.author?.name || '',
+      surename: existingEvent.author?.sureName || '',
+    },
+    comments: commentStats.comments || [],
+    currentEvents,
+    relatedEvents,
   };
 };
 
@@ -635,5 +700,6 @@ export const eventService = {
   getExtraEventDataById,
   getMyEventList,
   getSpecificEventStats,
-  getEventList
+  getEventList,
+  activateEventById
 };

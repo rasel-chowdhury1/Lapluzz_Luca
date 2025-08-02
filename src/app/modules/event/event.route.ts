@@ -35,6 +35,12 @@ router.post(
   parseData(),
   eventController.updateEvent
 )
+  
+.patch(
+  '/activate/:eventId', 
+  auth(USER_ROLE.ORGANIZER),
+  eventController.activateEventById
+)
 
 .delete(
     '/:id', 
@@ -84,6 +90,12 @@ router.post(
 
 
 
+.get(
+    '/extra/:id', 
+    auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
+  eventController.getExtraDataEventById
+)
+  
 .get(
     '/:id', 
     auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),

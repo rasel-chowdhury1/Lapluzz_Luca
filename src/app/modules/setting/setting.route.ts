@@ -14,13 +14,23 @@ settingsRoutes
      settingsController.getPrivacyPolicy
 )
     .get(
+     "/accept-privacy-policy", 
+    //  auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
+     settingsController.getAnyonePrivacyPolicy
+)
+    .get(
+     "/business/accept-privacy-policy", 
+    //  auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
+     settingsController.getBusinessPrivacyPolicy
+)
+    .get(
       "/termAndConditions", 
       auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
       settingsController.getTermConditions
 )
     .get(
       "/cookiePolicy", 
-      auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
+      // auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
       settingsController.getCookiePolicy
 )
     .get("/aboutUs", settingsController.getAboutUs)

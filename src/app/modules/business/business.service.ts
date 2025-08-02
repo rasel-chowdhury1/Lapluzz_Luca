@@ -69,6 +69,7 @@ const createBusiness = async (payload: IBusiness) => {
 
 
 const getAllBusiness = async (userId: string, query: Record<string, any>) => {
+  query['isActive'] = true;
   query['isDeleted'] = false;
 
 
@@ -628,11 +629,9 @@ const getMyParentBusiness = async (userId: string) => {
 const getMyBusinessesList = async (userId: string) => {
   const businesses = await Business.find({ author: userId, isDeleted: false }).select("name")
 
-  if (!businesses.length) {
-    throw new Error('No businesses found!');
-  }
+  
 
-  return businesses;
+  return businesses || [];
 
 };
 
@@ -853,6 +852,32 @@ const updateBusiness = async (
   );
 
   
+  return updatedBusiness;
+};
+
+
+const activateBusinessById = async (
+  userId: string,
+  businessId: string
+) => {
+  const business = await Business.findById(businessId);
+
+  if (!business) {
+    throw new Error('Business not found');
+  }
+
+  // Check if the user is the author (ObjectId to string comparison)
+  if (business.author.toString() !== userId) {
+    throw new Error('You are not allowed to update this business');
+  }
+
+  // Toggle isActive value
+  const updatedBusiness = await Business.findByIdAndUpdate(
+    businessId,
+    { isActive: !business.isActive },
+    { new: true }
+  );
+
   return updatedBusiness;
 };
 
@@ -1275,7 +1300,7 @@ const calculateCompetitionScore = async (
     .select('location providerType')
     .lean();
 
-
+  console.log({ business });
   if (!business || !business.location || !business.providerType) {
     throw new Error('Business must have location and category to calculate competition.');
   }
@@ -1377,5 +1402,6 @@ export const businessService = {
   wizardSearchBusinesses,
   getMyParentBusiness,
   filterSearchBusinesses,
-  getBusinessList
+  getBusinessList,
+  activateBusinessById
 };

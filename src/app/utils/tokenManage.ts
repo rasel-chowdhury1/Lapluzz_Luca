@@ -28,12 +28,13 @@ const createToken = ({
 const verifyToken = ({
   token,
   access_secret,
-}: VerifyTokenParams): JwtPayload => {
+}: VerifyTokenParams) => {
   try {
     return jwt.verify(token, access_secret) as JwtPayload;
   } catch (err) {
-    console.error('JWT verification failed:', err);
-    throw new AppError(httpStatus.FORBIDDEN, 'You are not authorized!');
+    console.log('JWT verification failed:', err);
+    // throw new AppError(httpStatus.FORBIDDEN, 'You are not authorized!');
+    return;
   }
 };
 

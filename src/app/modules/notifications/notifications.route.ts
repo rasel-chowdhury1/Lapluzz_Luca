@@ -12,7 +12,10 @@ notificationRoutes
     "/create",
     auth('user', "admin"),
     notificationController.createNotification
-  )
+)
+  
+  
+  
   .get(
     '/all-notifications', 
     auth('user'), 

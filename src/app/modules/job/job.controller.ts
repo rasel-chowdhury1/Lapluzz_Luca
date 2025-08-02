@@ -39,6 +39,16 @@ const updateJob = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const activateJobById = catchAsync(async (req: Request, res: Response) => {
+  const result = await jobService.activateJobById(req.user.userId, req.params.jobId);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Job updated successfully',
+    data: result,
+  });
+});
+
 const getAllJobs = catchAsync(async (req: Request, res: Response) => {
   const result = await jobService.getAllJobs(req.query);
   sendResponse(res, {
@@ -166,5 +176,6 @@ export const jobController = {
   getUnsubscriptionJobs,
   getMyJobsList,
   getSpecificJobStats,
-  getAllJobList
+  getAllJobList,
+  activateJobById
 };

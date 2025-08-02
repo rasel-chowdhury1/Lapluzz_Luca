@@ -43,6 +43,7 @@ export interface IEvent {
   isSubscription: boolean;
   subscriptionType: string;
   expireSubscriptionTime?: Date;
+  isActive: boolean;
   isDeleted: boolean;
 }
 

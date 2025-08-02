@@ -4,7 +4,6 @@ import sendResponse from '../../utils/sendResponse';
 import { eventService } from './event.service';
 import { storeFiles } from '../../utils/fileHelper';
 import httpStatus from 'http-status';
-import { eventEngagementStatsService } from '../eventEngagementStats/eventEngagementStats.service';
 
 const createEvent = catchAsync(async (req: Request, res: Response) => {
 
@@ -57,6 +56,21 @@ const updateEvent = catchAsync(async (req: Request, res: Response) => {
 
   // Call update service
   const result = await eventService.updateEvent(eventId, req.body);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Event updated successfully',
+    data: result,
+  });
+});
+
+const activateEventById = catchAsync(async (req: Request, res: Response) => {
+  const { eventId } = req.params;
+  const { userId } = req.user;
+
+  // Call update service
+  const result = await eventService.activateEventById(userId, eventId);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -166,7 +180,7 @@ const getEventById = catchAsync(async (req: Request, res: Response) => {
 const getExtraDataEventById = catchAsync(async (req: Request, res: Response) => {
 
   const {userId} = req.user;
-  const result = await eventService.getExtraEventDataById(req.params.eventId, userId);
+  const result = await eventService.getExtraEventDataById(req.params.id, userId);
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -198,5 +212,6 @@ export const eventController = {
   getExtraDataEventById,
   getMyEventList,
   getSpecificEventStats,
-  getAllEventList
+  getAllEventList,
+  activateEventById
 };

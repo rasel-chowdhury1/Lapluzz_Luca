@@ -19,12 +19,15 @@ const NotificationSchema = new Schema<INotification>(
         fullName: {type: String, default: false},
         image: { type: String, default: "" }, // Store the image URL or path
         text: { type: String, required: true },  // Store additional data
+        name: { type: String, required: false},  // Store additional data
+        types: { type: String, enum: ["business", "event", "job"], required: false},  // Store additional data
+        notificationFor: { type: String, required: false },  // Store additional data
       },
       required: true, // The message object itself is required
     },
     type: {
       type: String,
-      enum: ["added","adminProvide", "social"],
+      enum: ["added","adminProvide", "social", "marketing"],
       required: true,
     },
     isRead: {

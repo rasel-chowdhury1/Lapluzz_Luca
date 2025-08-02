@@ -3,8 +3,10 @@ import BusinessSettings, { ISettings } from "./businessSetting.model";
 
 
 // Get the settings
-const getSettingsByKey = async (payload: {key: 'privacy_policy' | "term_condition"  | "cookie_policy" | 'about_us' }): Promise<ISettings | null> => {
-    return await BusinessSettings.findOne(payload).sort({ createdAt: -1 });
+const getSettingsByKey = async (payload: {key: 'privacy_policy' | "term_condition"  | "cookie_policy" | 'about_us' }) => {
+    const result = await BusinessSettings.findOne(payload).sort({ createdAt: -1 });
+
+    return result;
 };
 
 // Create or update the privacy policy

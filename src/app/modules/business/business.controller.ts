@@ -112,6 +112,21 @@ const updateBusiness = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const activateBusinessById = catchAsync(async (req: Request, res: Response) => {
+  const { businessId } = req.params;
+  const { userId } = req.user;
+
+
+  const updatedBusiness = await businessService.activateBusinessById(userId, businessId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Business updated successfully',
+    data: updatedBusiness,
+  });
+});
+
 const getAllBusiness = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user;
   const result = await businessService.getAllBusiness(userId, req.query);
@@ -360,5 +375,6 @@ export const businessController = {
   getSpecificBusinessStats,
   getMyBusinessList,
   getCalculateCompetitionScore,
-  getMyParentBusiness
+  getMyParentBusiness,
+  activateBusinessById
 };

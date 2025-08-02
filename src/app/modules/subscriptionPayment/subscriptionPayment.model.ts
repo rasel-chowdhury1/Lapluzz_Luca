@@ -9,7 +9,7 @@ const subscriptionPaymentSchema: Schema = new Schema<ISubscriptionPayment>(
     },
     transaction_id: {
       type: String,
-      required: true,
+      default: "",
     },
     userId: {
       type: mongoose.Schema.Types.ObjectId,

@@ -172,6 +172,10 @@ const businessSchema = new Schema<IBusiness>(
       type: Number,
       default: 0
     },
+    isActive: { 
+        type: Boolean, 
+        default: true 
+    },
     isDeleted: { 
         type: Boolean, 
         default: false 

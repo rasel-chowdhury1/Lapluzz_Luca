@@ -8,7 +8,8 @@ import { businessSettingsService } from "../businessSetting/businessSetting.serv
 // Get the privacy policy
 const getPrivacyPolicy = async (req: Request, res: Response) => {
 
-    const {role} = req.user;
+    const { role } = req.user;
+    
     try {
         let policy;
         if(role === USER_ROLE.USER || role === USER_ROLE.ADMIN){
@@ -33,6 +34,31 @@ const getPrivacyPolicy = async (req: Request, res: Response) => {
             data: null,
         });
     }
+};
+
+const getAnyonePrivacyPolicy = async (req: Request, res: Response) => {
+
+
+   let policy = await settingsService.getSettingsByKey({ key: "privacy_policy" });
+    
+    sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Privacy policy retrieved successfully",
+            data: policy || null,
+        });
+};
+const getBusinessPrivacyPolicy  = async (req: Request, res: Response) => {
+
+
+   let policy = await businessSettingsService.getSettingsByKey({ key: "privacy_policy" });
+    
+    sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Privacy policy retrieved successfully",
+            data: policy || null,
+        });
 };
 
 // Get the term conditions
@@ -145,5 +171,7 @@ export const settingsController = {
     getTermConditions,
     getCookiePolicy,
     getAboutUs,
-    updateSettingsByKey
+    updateSettingsByKey,
+    getAnyonePrivacyPolicy,
+    getBusinessPrivacyPolicy,
 };

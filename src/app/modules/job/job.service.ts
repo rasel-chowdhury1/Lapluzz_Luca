@@ -264,11 +264,9 @@ const getAllJobsList = async () => {
 const getMyJobs = async (userId: string) => {
 
 
-  const jobs = await Job.find({ author: userId, isDeleted: false });
+  const jobs = await Job.find({ author: userId, isDeleted: false }) || [];
 
-  if (!jobs.length) {
-    throw new AppError(httpStatus.NOT_FOUND, 'No jobs found for this user');
-  }
+
 
   const enrichedJobs = await Promise.all(
     jobs.map(async (job) => {
@@ -369,17 +367,15 @@ const getMyJobs = async (userId: string) => {
     })
   );
 
-  return enrichedJobs;
+  return enrichedJobs || [];
 };
 
 const getMyJobsList = async (userId: string) => {
 
 
-  const jobs = await Job.find({ author: userId, isDeleted: false }).select("title");
+  const jobs = await Job.find({ author: userId, isDeleted: false }).select("title") || [];
 
-  if (!jobs.length) {
-    throw new AppError(httpStatus.NOT_FOUND, 'No jobs found for this user');
-  }
+ 
 
   return jobs;
 };
@@ -388,6 +384,32 @@ const updateJob = async (id: string, payload: Partial<IJob>) => {
   const result = await Job.findByIdAndUpdate(id, payload, { new: true });
   if (!result) throw new AppError(httpStatus.BAD_REQUEST, 'Failed to update job');
   return result;
+};
+
+
+const activateJobById = async (
+  userId: string,
+  jobId: string
+) => {
+  const job = await Job.findById(jobId);
+
+  if (!job) {
+    throw new Error('job not found');
+  }
+
+  // Check if the user is the author (ObjectId to string comparison)
+  if (job.author.toString() !== userId) {
+    throw new Error('You are not allowed to update this job');
+  }
+
+  // Toggle isActive value
+  const updatedjob = await Job.findByIdAndUpdate(
+    jobId,
+    { isActive: !job.isActive },
+    { new: true }
+  );
+
+  return updatedjob;
 };
 
 const deleteJob = async (id: string) => {
@@ -548,5 +570,6 @@ export const jobService = {
   getUnsubscriptionJobs,
   getMyJobsList,
   getSpecificJobStats,
-  getAllJobsList
+  getAllJobsList,
+  activateJobById
 };

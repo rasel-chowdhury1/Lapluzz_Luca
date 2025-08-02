@@ -113,7 +113,7 @@ const JobSchema = new Schema<IJob>(
     },
     isActive: {
       type: Boolean,
-      default: false
+      default: true
     },
     isDeleted: {
       type: Boolean,

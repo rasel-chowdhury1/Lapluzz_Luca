@@ -35,6 +35,12 @@ router.post(
     ]),
     parseData(),
     businessController.updateBusiness
+)
+  
+  .patch(
+    '/activate/:businessId',
+    auth(USER_ROLE.ORGANIZER),
+    businessController.activateBusinessById
   )
 
   .delete(

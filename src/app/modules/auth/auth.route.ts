@@ -4,6 +4,7 @@ import auth from '../../middleware/auth';
 import validateRequest from '../../middleware/validateRequest';
 import { authValidation } from './auth.validation';
 import { USER_ROLE } from '../user/user.constants';
+import { otpControllers } from '../otp/otp.controller';
 
 export const authRoutes = Router();
 
@@ -16,6 +17,12 @@ authRoutes
     '/refresh-token',
     validateRequest(authValidation.refreshTokenValidationSchema),
     authControllers.refreshToken,
+)
+  
+  .post(
+    '/resent-otp',
+    validateRequest(authValidation.refreshTokenValidationSchema),
+    otpControllers.resendOtp,
   )
   
   .post(

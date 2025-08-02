@@ -134,6 +134,10 @@ const EventSchema = new Schema<IEvent>(
         type: Date, 
         default: null 
     },
+    isActive: { 
+        type: Boolean, 
+        default: true 
+    },
     isDeleted: { 
         type: Boolean, 
         default: false 

@@ -84,6 +84,7 @@ export interface IBusiness {
   advertisingCreditsList: IBusinessAdvertisingCredits[];
   totalAdvertisingCredits: number;
   expireSubscriptionTime?: Date;
+  isActive: boolean;
   isDeleted: boolean;
 }
 

@@ -20,6 +20,22 @@ router.post(
   jobController.createJob
   )
 
+  .patch(
+    '/update/:jobId', 
+    auth(USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
+    upload.fields([
+      { name: 'logo', maxCount: 1 },
+      { name: 'cover', maxCount: 1 },
+      { name: 'gallery', maxCount: 10 }
+    ]),
+    parseData(),
+    jobController.updateJob
+  )
+  .patch(
+    '/activate/:jobId', 
+    auth(USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
+    jobController.activateJobById
+  )
 
   .get(
       '/', 
@@ -65,17 +81,6 @@ router.post(
     '/:id', 
     auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
     jobController.getJobById
-  )
-  .patch(
-    '/update/:jobId', 
-    auth(USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
-    upload.fields([
-      { name: 'logo', maxCount: 1 },
-      { name: 'cover', maxCount: 1 },
-      { name: 'gallery', maxCount: 10 }
-    ]),
-    parseData(),
-    jobController.updateJob
   )
   .delete(
       '/:id', 

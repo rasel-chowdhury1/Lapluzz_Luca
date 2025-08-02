@@ -8,9 +8,11 @@ export interface INotification {
       fullName?: string;
       image: string; // URL or path to the user's image
       text: string; // Additional data (text or other relevant information)
-      photos?: string[]; // Optional array of photo URLs or paths
+      name?: string; // Optional array of photo URLs or paths
+      type?: string; // Optional array of photo URLs or paths
+      notificationFor?: string;
     };
-    type: "Join" | "SendFollow" | "AcceptFollow" | "DeclineFollow"; // Type of notification
+    type: "added" | "adminProvide" | "social" ; // Type of notification
     isRead: boolean; // Whether the notification is read
     
   }
