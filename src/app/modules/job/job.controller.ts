@@ -135,13 +135,13 @@ const getSpecificJobStats = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getCalculateCompetitionScore = catchAsync(async (req: Request, res: Response) => {
-  const { eventId } = req.params;
-  console.log("Event updated id ->>> ", eventId)
-  const result = await jobService.calculateCompetitionScoreForJob(eventId);
+  const { jobId } = req.params;
+  console.log("Event updated id ->>> ", jobId)
+  const result = await jobService.calculateCompetitionScoreForJob(jobId);
   sendResponse(res, {
     statusCode: 200,
     success: true,
-    message: 'Specific event calculate competition score fetched successfully',
+    message: 'Specific job calculate competition score fetched successfully',
     data: result,
   });
 });
@@ -187,5 +187,6 @@ export const jobController = {
   getMyJobsList,
   getSpecificJobStats,
   getAllJobList,
-  activateJobById
+  activateJobById,
+  getCalculateCompetitionScore
 };

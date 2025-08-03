@@ -76,7 +76,15 @@ router.post(
     '/list', 
     auth( USER_ROLE.ADMIN),
     jobController.getAllJobList
-  )
+)
+  
+  
+     .get(
+    '/competation/:jobId',
+    auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
+    jobController.getCalculateCompetitionScore
+)
+  
   .get(
     '/:id', 
     auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
