@@ -96,6 +96,12 @@ router.post(
   eventController.getExtraDataEventById
 )
   
+    .get(
+    '/competation/:eventId',
+    auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
+    eventController.getCalculateCompetitionScore
+  )
+  
 .get(
     '/:id', 
     auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),

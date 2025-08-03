@@ -3,6 +3,8 @@ import sendResponse from '../../utils/sendResponse';
 import httpStatus from 'http-status';
 import catchAsync from '../../utils/catchAsync';
 import { notificationService } from './notifications.service';
+import { emitNotificationToApplicantsOfJob, emitNotificationToFollowersOfBusiness, emitNotificationToInterestUsersOfEvent } from '../../../socketIo';
+import mongoose from 'mongoose';
 
 const createNotification = catchAsync(async (req: Request, res: Response) => {
   const {userId} = req.user;
@@ -14,6 +16,60 @@ const createNotification = catchAsync(async (req: Request, res: Response) => {
     success: true,
     message: 'Notification created successfully',
     data: result,
+  });
+});
+
+const sentNotificationToFollowersOfBusiness = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.userId;
+  const { message, type } = req.body;
+
+  await emitNotificationToFollowersOfBusiness({
+    userId: new mongoose.Types.ObjectId(userId),
+    userMsg: message,
+    type: type || 'BusinessNotification', // Default fallback
+  });
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Notifications sent to all followers of the business',
+    data: null,
+  });
+});
+
+const sentNotificationToInterestedUsersOfEvent = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.userId;
+  const { message, type } = req.body;
+
+  await emitNotificationToInterestUsersOfEvent({
+    userId: new mongoose.Types.ObjectId(userId),
+    userMsg: message,
+    type: type || 'EventNotification', // Default fallback
+  });
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Notifications sent to all interested users of the event',
+    data: null,
+  });
+});
+
+const sentNotificationToApplicantsOfJob = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.userId;
+  const { message, type } = req.body;
+
+  await emitNotificationToApplicantsOfJob({
+    userId: new mongoose.Types.ObjectId(userId),
+    userMsg: message,
+    type: type || 'JobNotification', // Default fallback
+  });
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Notifications sent to all applicants of the job',
+    data: null,
   });
 });
 
@@ -83,4 +139,7 @@ export const notificationController = {
   markAsRead,
   markAllAsRead,
   deleteNotification,
+  sentNotificationToFollowersOfBusiness,
+  sentNotificationToInterestedUsersOfEvent,
+  sentNotificationToApplicantsOfJob
 };

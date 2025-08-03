@@ -190,6 +190,18 @@ const getExtraDataEventById = catchAsync(async (req: Request, res: Response) => 
 });
 
 
+const getCalculateCompetitionScore = catchAsync(async (req: Request, res: Response) => {
+  const { eventId } = req.params;
+  console.log("Event updated id ->>> ", eventId)
+  const result = await eventService.calculateCompetitionScoreForEvent(eventId);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Specific event calculate competition score fetched successfully',
+    data: result,
+  });
+});
+
 const deleteEvent = catchAsync(async (req: Request, res: Response) => {
   const result = await eventService.deleteEvent(req.params.id);
   sendResponse(res, {
@@ -213,5 +225,6 @@ export const eventController = {
   getMyEventList,
   getSpecificEventStats,
   getAllEventList,
-  activateEventById
+  activateEventById,
+  getCalculateCompetitionScore
 };

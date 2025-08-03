@@ -15,6 +15,9 @@ import { User } from './app/modules/user/user.models';
 import { callbackFn } from './app/utils/callbackFn';
 import { verifyToken } from './app/utils/tokenManage';
 import moment from 'moment-timezone';
+import Business from './app/modules/business/business.model';
+import BusinessEngagementStats from './app/modules/businessEngaagementStats/businessEngaagementStats.model';
+import { EventInterestUserList } from './app/modules/eventInterest/eventInterest.model';
 
 // Define the socket server port
 const socketPort: number = parseInt(process.env.SOCKET_PORT || '9020', 10);
@@ -574,54 +577,166 @@ export const emitAcceptedRequest = async (userId: string) => {
 
 export const emitNotificationToFollowersOfBusiness = async ({
   userId,
-  receiverId,
   userMsg,
   type,
 }: {
   userId: mongoose.Types.ObjectId;
-  receiverId: mongoose.Types.ObjectId;
-  userMsg?: { image: string; text: string; photos?: string[], };
+  userMsg?: { image: string; text: string; name: string; notificationFor: string };
   type?: string;
 }): Promise<void> => {
   if (!io) {
     throw new Error('Socket.IO is not initialized');
   }
 
-  // Get the socket ID of the specific user
-  const userSocket = connectedUsers.get(receiverId.toString());
+  // 1. Find followers of the business
+  const engagement = await BusinessEngagementStats.findOne({
+    businessId: userMsg?.notificationFor, // business ID
+  }).select('followers');
 
-  // Fetch unread notifications count for the receiver before creating the new notification
-  const unreadCount = await Notification.countDocuments({
-    receiverId: receiverId,
-    isRead: false, // Filter by unread notifications
-  });
+  const followers = engagement?.followers || [];
 
-  console.log('userSocket ------>>>> ', userSocket);
-  console.log('connected ---->>> ', connectedUsers);
+  // 2. Loop through followers and send notifications individually
+  for (const followerId of followers) {
+    const userSocket = connectedUsers.get(followerId.toString());
 
-  // Notify the specific user
-  if (userMsg && userSocket) {
-    console.log();
-    io.to(userSocket.socketID).emit(`notification`, {
-      // userId,
-      // message: userMsg,
-      statusCode: 200,
-      success: true,
-      unreadCount: unreadCount >= 0 ? unreadCount + 1 : 1,
+    // Count unread notifications for this user
+    const unreadCount = await Notification.countDocuments({
+      receiverId: followerId,
+      isRead: false,
+    });
+
+    // 3. Emit notification via socket
+    if (userMsg && userSocket) {
+      io.to(userSocket.socketID).emit('notification', {
+        statusCode: 200,
+        success: true,
+        unreadCount: unreadCount + 1,
+        message: userMsg,
+      });
+    }
+
+    // 4. Save to DB
+    await Notification.create({
+      userId, // sender
+      receiverId: followerId, // follower is the receiver
+      message: userMsg,
+      type: type || 'BusinessNotification',
+      isRead: false,
+      timestamp: new Date(),
     });
   }
+};
 
-  // Save notification to the database
-  const newNotification = {
-    userId, // Ensure that userId is of type mongoose.Types.ObjectId
-    receiverId, // Ensure that receiverId is of type mongoose.Types.ObjectId
-    message: userMsg,
-    type, // Use the provided type (default to "FollowRequest")
-    isRead: false, // Set to false since the notification is unread initially
-    timestamp: new Date(), // Timestamp of when the notification is created
+export const emitNotificationToInterestUsersOfEvent = async ({
+  userId,
+  userMsg,
+  type,
+}: {
+  userId: mongoose.Types.ObjectId;
+  userMsg?: {
+    image: string;
+    text: string;
+    name: string;
+    types: string;
+    notificationFor: string;
+    fullName?: string;
   };
+  type?: string;
+}): Promise<void> => {
+  if (!io) throw new Error('Socket.IO is not initialized');
 
-  // Save notification to the database
-  const result = await Notification.create(newNotification);
-  console.log({ result });
+  // 1. Find interest users for this event
+  const interestList = await EventInterestUserList.findOne({
+    eventId: userMsg?.notificationFor,
+  }).select('interestUsers');
+
+  const interestUsers = interestList?.interestUsers || [];
+
+  // 2. Loop through interested users
+  for (const interest of interestUsers) {
+    const receiverId = interest.user;
+    const userSocket = connectedUsers.get(receiverId.toString());
+
+    const unreadCount = await Notification.countDocuments({
+      receiverId: receiverId,
+      isRead: false,
+    });
+
+    // 3. Emit socket if online
+    if (userMsg && userSocket) {
+      io.to(userSocket.socketID).emit('notification', {
+        success: true,
+        statusCode: 200,
+        unreadCount: unreadCount + 1,
+        message: userMsg,
+      });
+    }
+
+    // 4. Save notification
+    await Notification.create({
+      userId, // sender
+      receiverId, // receiver is the interested user
+      message: userMsg,
+      type: type || 'EventNotification',
+      isRead: false,
+      timestamp: new Date(),
+    });
+  }
+};
+
+export const emitNotificationToApplicantsOfJob = async ({
+  userId,
+  userMsg,
+  type,
+}: {
+  userId: mongoose.Types.ObjectId;
+  userMsg?: {
+    image: string;
+    text: string;
+    name: string;
+    types: string;
+    notificationFor: string;
+    fullName?: string;
+  };
+  type?: string;
+}): Promise<void> => {
+  if (!io) throw new Error('Socket.IO is not initialized');
+
+  // 1. Find interest users for this event
+  const interestList = await EventInterestUserList.findOne({
+    eventId: userMsg?.notificationFor,
+  }).select('interestUsers');
+
+  const interestUsers = interestList?.interestUsers || [];
+
+  // 2. Loop through interested users
+  for (const interest of interestUsers) {
+    const receiverId = interest.user;
+    const userSocket = connectedUsers.get(receiverId.toString());
+
+    const unreadCount = await Notification.countDocuments({
+      receiverId: receiverId,
+      isRead: false,
+    });
+
+    // 3. Emit socket if online
+    if (userMsg && userSocket) {
+      io.to(userSocket.socketID).emit('notification', {
+        success: true,
+        statusCode: 200,
+        unreadCount: unreadCount + 1,
+        message: userMsg,
+      });
+    }
+
+    // 4. Save notification
+    await Notification.create({
+      userId, // sender
+      receiverId, // receiver is the interested user
+      message: userMsg,
+      type: type || 'JobNotification',
+      isRead: false,
+      timestamp: new Date(),
+    });
+  }
 };

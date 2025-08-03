@@ -134,7 +134,17 @@ const getSpecificJobStats = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-
+const getCalculateCompetitionScore = catchAsync(async (req: Request, res: Response) => {
+  const { eventId } = req.params;
+  console.log("Event updated id ->>> ", eventId)
+  const result = await jobService.calculateCompetitionScoreForJob(eventId);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Specific event calculate competition score fetched successfully',
+    data: result,
+  });
+});
 
 const deleteJob = catchAsync(async (req: Request, res: Response) => {
   const result = await jobService.deleteJob(req.params.id);

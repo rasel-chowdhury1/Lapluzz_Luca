@@ -2,6 +2,7 @@ import { Router } from 'express';
 import auth from '../../middleware/auth';
 import { notificationController } from './notifications.controller';
 import { otpControllers } from '../otp/otp.controller';
+import { USER_ROLE } from '../user/user.constants';
 
 export const notificationRoutes = Router();
 
@@ -13,6 +14,24 @@ notificationRoutes
     auth('user', "admin"),
     notificationController.createNotification
 )
+  
+  .post(
+    "/business/sent-notification",
+    auth(USER_ROLE.ORGANIZER, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN),
+    notificationController.sentNotificationToFollowersOfBusiness
+  )
+  
+  .post(
+    "/event/sent-notification",
+    auth(USER_ROLE.ORGANIZER, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN),
+    notificationController.sentNotificationToInterestedUsersOfEvent
+  )
+  
+  .post(
+    "/job/sent-notification",
+    auth(USER_ROLE.ORGANIZER, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN),
+    notificationController.sentNotificationToApplicantsOfJob
+  )
   
   
   

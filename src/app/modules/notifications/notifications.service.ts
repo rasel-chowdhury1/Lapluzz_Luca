@@ -2,6 +2,8 @@
 import AppError from '../../error/AppError';
 import httpStatus from 'http-status';
 import Notification from './notifications.model';
+import { emitNotificationToFollowersOfBusiness } from '../../../socketIo';
+import mongoose from 'mongoose';
 
 interface ICreateNotificationProps {
   userId: string;
@@ -27,6 +29,8 @@ const createNotification = async ({
   await newNotification.save();
   return newNotification;
 };
+
+
 
 const getAllNotifications = async (query: Record<string, unknown>) => {
   // You can implement a query builder like in your `userService` for pagination, filtering, etc.
@@ -83,4 +87,6 @@ export const notificationService = {
   markAsRead,
   markAllAsRead,
   deleteNotification,
+
+
 };

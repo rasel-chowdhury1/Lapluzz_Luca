@@ -15,8 +15,6 @@ import { User } from '../user/user.models';
 import { CompetitionResult, IBusiness, WizardFilters } from './business.interface';
 import Business from './business.model';
 import { monthNames } from './business.utils';
-import geocodeAddress from '../../utils/geocodeAddress';
-import { jobController } from '../job/job.controller';
 
 const createBusiness = async (payload: IBusiness) => {
   const { longitude, latitude, ...rest } = payload;
@@ -878,6 +876,7 @@ const activateBusinessById = async (
     { new: true }
   );
 
+  console.log({updateBusiness})
   return updatedBusiness;
 };
 

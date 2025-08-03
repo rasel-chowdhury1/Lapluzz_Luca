@@ -1,7 +1,7 @@
 import httpStatus from 'http-status';
 import AppError from '../../error/AppError';
 import Event from './event.model';
-import { IEvent } from './event.interface';
+import { CompetitionResultOfEvent, IEvent } from './event.interface';
 import QueryBuilder from '../../builder/QueryBuilder';
 import { buildLocation } from '../../utils/buildLocation';
 import EventReview from '../eventReview/eventReview.model';
@@ -417,7 +417,8 @@ const getMyEvents = async (userId: string) => {
   const events = await Event.find({ author: userId, isDeleted: false });
 
   if (!events.length) {
-    throw new AppError(httpStatus.NOT_FOUND, 'No events found for this user');
+    return []
+    // throw new AppError(httpStatus.NOT_FOUND, 'No events found for this user');
   }
 
   console.log({events})
@@ -682,6 +683,82 @@ const getExtraEventDataById = async (
 };
 
 
+const calculateCompetitionScoreForEvent = async (eventId: string) => {
+  // Step 1: Get the event
+  const event = await Event.findById(eventId).select('location category subscriptionType isDeleted').lean();
+
+  if (!event || !event.location || !event.category) {
+    throw new Error('Event must have location and category to calculate competition.');
+  }
+
+  const [longitude, latitude] = event.location.coordinates;
+
+  // Step 2: Find nearby competing events
+  const radiusInKm = 50;
+  const competingEvents = await Event.find({
+    _id: { $ne: eventId },
+    location: {
+      $nearSphere: {
+        $geometry: {
+          type: 'Point',
+          coordinates: [longitude, latitude],
+        },
+        $maxDistance: radiusInKm * 1000, // convert to meters
+      },
+    },
+    category: event.category,
+    isDeleted: false,
+    isActive: true,
+  }).select('subscriptionType');
+
+  // Step 3: Subscription weight mapping
+  const weights = {
+    diamond: 5,
+    emerald: 3,
+    ruby: 2,
+    none: 0.5,
+  };
+
+  let D = 0, E = 0, R = 0, N = 0;
+  for (const e of competingEvents) {
+    switch (e.subscriptionType) {
+      case 'diamond':
+        D++;
+        break;
+      case 'emerald':
+        E++;
+        break;
+      case 'ruby':
+        R++;
+        break;
+      default:
+        N++;
+    }
+  }
+
+  const TOTAL = D + E + R + N;
+  const numerator = (D * weights.diamond) + (E * weights.emerald) + (R * weights.ruby) + (N * weights.none);
+  const denominator = TOTAL * 4.5 || 1;
+  const rawScore = (numerator / denominator) * 100;
+  const roundedScore = Math.round(rawScore);
+
+  // Step 4: Suggest a pack based on competition level
+  let suggestedPack: CompetitionResultOfEvent['suggestedPack'] = 'RUBY';
+  if (roundedScore > 60) {
+    suggestedPack = 'DIAMOND';
+  } else if (roundedScore > 30) {
+    suggestedPack = 'EMERALD';
+  }
+
+  const plusActive = roundedScore >= 80;
+
+  return {
+    competitionScore: roundedScore,
+    suggestedPack,
+    plusActive,
+  };
+};
+
 const deleteEvent = async (id: string) => {
   const result = await Event.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
   if (!result) throw new AppError(httpStatus.BAD_REQUEST, 'Failed to delete event');
@@ -701,5 +778,6 @@ export const eventService = {
   getMyEventList,
   getSpecificEventStats,
   getEventList,
-  activateEventById
+  activateEventById,
+  calculateCompetitionScoreForEvent
 };

@@ -558,6 +558,41 @@ const getSpecificJobStats = async (jobId: string) => {
   };
 };
 
+const calculateCompetitionScoreForJob = async (job: any): Promise<number> => {
+  if (!job.categoryId) return 0;
+
+  // Count how many jobs are in the same category
+  const totalJobsInCategory = await Job.countDocuments({
+    categoryId: job.categoryId,
+    isActive: true,
+    isDeleted: false
+  });
+
+  if (totalJobsInCategory === 0) return 100;
+
+  let baseScore = 100 - ((1 / totalJobsInCategory) * 100);
+
+  // Apply boost based on subscription
+  if (job.isSubscription) {
+    switch (job.subscriptionType) {
+      case 'visualTop':
+        baseScore += 10;
+        break;
+      case 'visualMedia':
+        baseScore += 5;
+        break;
+      case 'visualBase':
+        baseScore += 3;
+        break;
+      default:
+        break;
+    }
+  }
+
+  // Cap the score between 0 and 100
+  return Math.min(100, Math.max(0, parseFloat(baseScore.toFixed(2))));
+};
+
 export const jobService = {
   createJob,
   getAllJobs,
@@ -571,5 +606,6 @@ export const jobService = {
   getMyJobsList,
   getSpecificJobStats,
   getAllJobsList,
-  activateJobById
+  activateJobById,
+  calculateCompetitionScoreForJob
 };

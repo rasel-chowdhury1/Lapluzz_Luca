@@ -1,6 +1,13 @@
 import { Date, ObjectId, Model } from 'mongoose';
 import { IFaq, IGallery, ISocialLinks } from '../business/business.interface';
 
+
+export interface CompetitionResultOfEvent {
+  competitionScore: number;
+  suggestedPack: 'DIAMOND' | 'EMERALD' | 'RUBY';
+  plusActive: boolean;
+}
+
 export interface IEventSubscription {
   type: string;
   buyDate: Date;

@@ -27,7 +27,7 @@ const NotificationSchema = new Schema<INotification>(
     },
     type: {
       type: String,
-      enum: ["added","adminProvide", "social", "marketing"],
+      enum: ["added","adminProvide", "social", "BusinessNotification", "EventNotification", "JobNotification"],
       required: true,
     },
     isRead: {
