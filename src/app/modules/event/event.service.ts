@@ -347,7 +347,8 @@ const getEventById = async (userId: string, id: string) => {
   const event = await Event.findById(id);
 
   if (!event || event.isDeleted) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Event not found');
+    // throw new AppError(httpStatus.NOT_FOUND, 'Event not found');
+    return null;
   }
 
   
@@ -583,7 +584,8 @@ const getMyEventList = async (userId: string) => {
   const events = await Event.find({ author: userId, isDeleted: false }).select("name");
 
   if (!events.length) {
-    throw new AppError(httpStatus.NOT_FOUND, 'No events found for this user');
+    // throw new AppError(httpStatus.NOT_FOUND, 'No events found for this user');
+    return [];
   }
   
   return events;

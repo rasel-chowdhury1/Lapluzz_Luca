@@ -118,7 +118,8 @@ const getWishlistByUser = async (userId: string) => {
   const wishlist = await WishList.findOne({ userId }).lean();
 
   if (!wishlist) {
-    throw new AppError(httpStatus.NOT_FOUND, 'No wishlist found for user');
+    // throw new AppError(httpStatus.NOT_FOUND, 'No wishlist found for user');
+    return null;
   }
 
   console.log({wishlist})
@@ -174,7 +175,8 @@ const getCheckWishlistByUser = async (userId: string) => {
   const wishlist = await WishList.findOne({ userId }).lean();
 
   if (!wishlist) {
-    throw new AppError(httpStatus.NOT_FOUND, 'No wishlist found for user');
+    // throw new AppError(httpStatus.NOT_FOUND, 'No wishlist found for user');
+    return null;
   }
 
   const updatedFolders = await Promise.all(
@@ -223,7 +225,8 @@ const getWishlistFolderDetailsByName = async (
   const wishlist = await WishList.findOne({ userId }).lean();
 
   if (!wishlist) {
-    throw new AppError(httpStatus.NOT_FOUND, 'No wishlist found for user');
+    return null;
+    // throw new AppError(httpStatus.NOT_FOUND, 'No wishlist found for user');
   }
 
   const targetFolder = wishlist.folders.find(
@@ -231,7 +234,8 @@ const getWishlistFolderDetailsByName = async (
   );
 
   if (!targetFolder) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Folder not found');
+    // throw new AppError(httpStatus.NOT_FOUND, 'Folder not found');
+    return null;
   }
 
   // Fetch businesses

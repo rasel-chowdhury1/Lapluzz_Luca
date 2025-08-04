@@ -51,9 +51,9 @@ const getStats = async (businessId: string) => {
     .populate('followers', 'name email')
     .populate('comments.user', 'name email');
 
-  if (!stats) throw new AppError(httpStatus.NOT_FOUND, 'No engagement stats found');
+  // if (!stats) throw new AppError(httpStatus.NOT_FOUND, 'No engagement stats found');
 
-  return stats;
+  return stats || null;
 };
 
 const getBusinessComments = async (businessId: string) => {
@@ -61,11 +61,11 @@ const getBusinessComments = async (businessId: string) => {
     .select('comments') // only select comments
     .populate('comments.user', 'name profileImage');
 
-  if (!stats) {
-    throw new AppError(httpStatus.NOT_FOUND, 'No engagement stats found for this business');
-  }
+  // if (!stats) {
+  //   throw new AppError(httpStatus.NOT_FOUND, 'No engagement stats found for this business');
+  // }
 
-  return stats.comments;
+  return stats?.comments || null;
 };
 
 export const businessEngagementStatsService = {

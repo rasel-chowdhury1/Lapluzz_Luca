@@ -24,7 +24,8 @@ const getViewsByJob = async (jobId: string) => {
     .populate('viewUsers.user', 'name email profileImage');
 
   if (!result) {
-    throw new AppError(httpStatus.NOT_FOUND, 'No views found for this job');
+    // throw new AppError(httpStatus.NOT_FOUND, 'No views found for this job');
+    return null;
   }
 
   return result;

@@ -102,7 +102,8 @@ const getJobById = async (userId: string, id: string) => {
   const job = await Job.findById(id);
 
   if (!job || job.isDeleted) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Job not found');
+    // throw new AppError(httpStatus.NOT_FOUND, 'Job not found');
+    return null;
   }
 
   const jobId = job._id;

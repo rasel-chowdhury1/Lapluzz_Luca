@@ -21,7 +21,8 @@ const addComment = async (jobId: string, userId: string, text: string) => {
 const getEngagementStats = async (jobId: string) => {
   const stats = await JobEngagementStats.findOne({ jobId }).populate('comments.user', 'name email');
   if (!stats) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Engagement stats not found for this job');
+    // throw new AppError(httpStatus.NOT_FOUND, 'Engagement stats not found for this job');
+    return null;
   }
   return stats;
 };

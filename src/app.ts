@@ -5,13 +5,29 @@
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express, { Application, Request, Response } from 'express';
+import rateLimit from 'express-rate-limit'; 
 import globalErrorHandler from './app/middleware/globalErrorhandler';
 // import notFound from './app/middleware/notfound';
 import router from './app/routes';
 import notFound from './app/middleware/notfound';
 import serverHomePage from './app/helpers/serverHomePage';
 import { logHttpRequests } from './app/utils/logger';
+
+
 const app: Application = express();
+
+
+// 👮 Rate Limiter Middleware (apply to all requests)
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 1000000, // limit each IP to 100 requests per 15 min
+  message: "🚫 Too many requests from this IP. Please try again later.",
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use(limiter); // 👈 Add before your routes
+
+
 app.use(logHttpRequests);
 app.use(express.static('public'));
 app.use(express.urlencoded({ extended: true }));

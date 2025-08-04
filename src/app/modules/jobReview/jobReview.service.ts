@@ -24,7 +24,8 @@ const getReviewsByJob = async (jobId: string) => {
 const deleteReview = async (reviewId: string, userId: string) => {
   const review = await JobReview.findById(reviewId);
   if (!review) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Review not found');
+    // throw new AppError(httpStatus.NOT_FOUND, 'Review not found');
+    return null;
   }
 
   if (review.userId.toString() !== userId) {

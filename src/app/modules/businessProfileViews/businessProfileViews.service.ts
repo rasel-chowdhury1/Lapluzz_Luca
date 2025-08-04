@@ -25,11 +25,11 @@ const getViewsByBusiness = async (businessId: string) => {
     .populate('viewUsers.user', 'name email profileImage') // ✅ Correct nested populate
     .lean(); // ✅ Optional: improves read performance
 
-  if (!result) {
-    throw new AppError(httpStatus.NOT_FOUND, 'No views found for this business');
-  }
+  // if (!result) {
+  //   throw new AppError(httpStatus.NOT_FOUND, 'No views found for this business');
+  // }
 
-  return result;
+  return result || null;
 };
 
 

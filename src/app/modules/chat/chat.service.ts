@@ -7,6 +7,7 @@ import { User } from '../user/user.models';
 import { IChat } from './chat.interface';
 import Chat from './chat.model';
 import httpStatus from 'http-status';
+import { ensureFriendship } from './chat.utils';
 // Convert string to ObjectId
 const toObjectId = (id: string): mongoose.Types.ObjectId =>
   new mongoose.Types.ObjectId(id);
@@ -24,7 +25,7 @@ const addNewChat = async (
   }
 
   // Check if another user in the chat exist
-  const anotherUser = await User.find({ _id: data?.users[0] });
+  const anotherUser = await User.findOne({ _id: data?.users[0] });
 
   if (!anotherUser) {
     throw new Error('Another user not found');
@@ -55,6 +56,7 @@ const addNewChat = async (
     }
   }
 
+  await ensureFriendship(isCreatorExist._id, anotherUser._id);
   // Create the chat in the database
   const result = await Chat.create(data);
 
@@ -71,7 +73,7 @@ const addNewChat = async (
   );
 
   return {
-    ...populatedResult.toObject(),
+    ...populatedResult?.toObject(),
     users: filteredUsers,
   };
 };
@@ -213,7 +215,8 @@ const getChatById = async (chatId: string) => {
   console.log(result);
   // If no chat is found, throw an AppError
   if (!result) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Chat not found');
+    // throw new AppError(httpStatus.NOT_FOUND, 'Chat not found');
+    return null;
   }
 
   return result;

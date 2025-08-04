@@ -35,7 +35,8 @@ const getStats = async (eventId: string) => {
     .populate('comments.user', 'name email');
 
   if (!stats) {
-    throw new AppError(httpStatus.NOT_FOUND, 'No engagement stats found');
+    // throw new AppError(httpStatus.NOT_FOUND, 'No engagement stats found');
+    return null
   }
 
   return stats;
@@ -47,8 +48,8 @@ const getEventComments = async (eventId: string) => {
     .populate('comments.user', 'name profileImage');
 
   if (!stats) {
-    return [];
-    throw new AppError(httpStatus.NOT_FOUND, 'No engagement stats found for this business');
+    return null;
+    // throw new AppError(httpStatus.NOT_FOUND, 'No engagement stats found for this business');
   }
 
   return stats.comments;

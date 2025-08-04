@@ -24,7 +24,8 @@ const getViewsByEvent = async (eventId: string) => {
     .populate('viewUsers.user', 'name email profileImage');
 
   if (!result) {
-    throw new AppError(httpStatus.NOT_FOUND, 'No views found for this event');
+    return null;
+    // throw new AppError(httpStatus.NOT_FOUND, 'No views found for this event');
   }
 
   return result;
