@@ -581,7 +581,7 @@ export const emitNotificationToFollowersOfBusiness = async ({
   type,
 }: {
   userId: mongoose.Types.ObjectId;
-  userMsg?: { image: string; text: string; name: string; notificationFor: string };
+  userMsg?: { image?: string; text: string; name: string; notificationFor: string };
   type?: string;
 }): Promise<void> => {
   if (!io) {
@@ -634,7 +634,7 @@ export const emitNotificationToInterestUsersOfEvent = async ({
 }: {
   userId: mongoose.Types.ObjectId;
   userMsg?: {
-    image: string;
+    image?: string;
     text: string;
     name: string;
     types: string;
@@ -691,7 +691,7 @@ export const emitNotificationToApplicantsOfJob = async ({
 }: {
   userId: mongoose.Types.ObjectId;
   userMsg?: {
-    image: string;
+    image?: string;
     text: string;
     name: string;
     types: string;
