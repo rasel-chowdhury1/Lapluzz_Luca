@@ -4,6 +4,7 @@ import catchAsync from '../../utils/catchAsync';
 import { storeFiles } from '../../utils/fileHelper';
 import sendResponse from '../../utils/sendResponse';
 import { businessService } from './business.service';
+import { uploadMultipleFilesToS3 } from '../../utils/fileUploadS3';
 
 
 const createBusiness = catchAsync(async (req: Request, res: Response) => {
@@ -15,30 +16,31 @@ const createBusiness = catchAsync(async (req: Request, res: Response) => {
 
   if (req.files) {
     try {
-      // Use storeFiles to process all uploaded files
-      const filePaths = storeFiles(
-        'business',
-        req.files as { [fieldName: string]: Express.Multer.File[] },
+      
+      const uploadedFiles = await uploadMultipleFilesToS3(
+        req.files as { [fieldName: string]: Express.Multer.File[] }
       );
 
-      if (filePaths.logo && filePaths.logo.length > 0) {
-        req.body.logo = filePaths.logo[0];
+
+      if (uploadedFiles.logo?.[0]) {
+        req.body.logo = uploadedFiles.logo[0];
       }
 
-      // Set photos (multiple files)
-      if (filePaths.cover && filePaths.cover.length > 0) {
-        req.body.coverImage = filePaths.cover[0]; // Assign full array of photos
+
+      if (uploadedFiles.cover?.[0]) {
+        req.body.cover = uploadedFiles.cover[0];
       }
 
-      // Set image (single file)
-      if (filePaths.gallery && filePaths.gallery.length > 0) {
-        req.body.gallery = filePaths.gallery; // Assign first image
+
+      if (uploadedFiles.gallery?.length) {
+        req.body.gallery = uploadedFiles.gallery;
       }
 
-      if (filePaths.promotionImage && filePaths.promotionImage.length > 0) {
-        req.body.promotionImage = filePaths.promotionImage;
+      if (uploadedFiles.promotionImage?.length) {
+        req.body.promotionImage = uploadedFiles.promotionImage;
       }
 
+      console.log("req body ==>>> ", req.body.promotionImage)
     } catch (error: any) {
       console.error('Error processing files:', error.message);
       return sendResponse(res, {
@@ -65,27 +67,28 @@ const updateBusiness = catchAsync(async (req: Request, res: Response) => {
 
   if (req.files) {
     try {
-      const filePaths = storeFiles(
-        'business',
+      
+      const uploadedFiles = await uploadMultipleFilesToS3(
         req.files as { [fieldName: string]: Express.Multer.File[] }
       );
 
 
-      if (filePaths.logo && filePaths.logo.length > 0) {
-        req.body.logo = filePaths.logo[0];
+      if (uploadedFiles.logo?.[0]) {
+        req.body.logo = uploadedFiles.logo[0];
       }
 
-      if (filePaths.cover && filePaths.cover.length > 0) {
-        req.body.coverImage = filePaths.cover[0];
+
+      if (uploadedFiles.cover?.[0]) {
+        req.body.coverImage = uploadedFiles.cover[0];
       }
 
-      if (filePaths.gallery && filePaths.gallery.length > 0) {
-        req.body.gallery = filePaths.gallery;
+
+      if (uploadedFiles.gallery?.length) {
+        req.body.gallery = uploadedFiles.gallery;
       }
 
-      if (filePaths.promotionImage && filePaths.promotionImage.length > 0) {
-        console.log("file paths promotion image ->>> ", filePaths.promotionImage)
-        req.body.promotionImage = filePaths.promotionImage;
+      if (uploadedFiles.promotionImage?.length) {
+        req.body.promotionImage = uploadedFiles.promotionImage;
       }
 
       console.log("req body ==>>> ", req.body.promotionImage)
@@ -152,6 +155,7 @@ const getAllBusinessList = catchAsync(async (req: Request, res: Response) => {
 const getSpecificCategoryBusiness = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user;
   const { categoryId } = req.params;
+  console.log("user id from controller -> ", userId)
   const result = await businessService.getSpecificCategoryBusiness(categoryId, userId, req.query);
 
   sendResponse(res, {

@@ -4,6 +4,7 @@ import sendResponse from '../../utils/sendResponse';
 import { jobService } from './job.service';
 import { storeFiles } from '../../utils/fileHelper';
 import httpStatus from 'http-status';
+import { uploadMultipleFilesToS3 } from '../../utils/fileUploadS3';
 
 const createJob = catchAsync(async (req: Request, res: Response) => {
   const { userId, email: userEmail } = req.user;
@@ -11,13 +12,36 @@ const createJob = catchAsync(async (req: Request, res: Response) => {
   if (!req.body.email) req.body.email = userEmail;
 
   if (req.files) {
-    const filePaths = storeFiles(
-      'jobs',
-      req.files as { [fieldname: string]: Express.Multer.File[] }
-    );
-    if (filePaths.logo) req.body.logo = filePaths.logo[0];
-    if (filePaths.cover) req.body.coverImage = filePaths.cover[0];
-    if (filePaths.gallery) req.body.gallery = filePaths.gallery;
+    try {
+      
+      const uploadedFiles = await uploadMultipleFilesToS3(
+        req.files as { [fieldName: string]: Express.Multer.File[] }
+      );
+
+
+      if (uploadedFiles.logo?.[0]) {
+        req.body.logo = uploadedFiles.logo[0];
+      }
+
+
+      if (uploadedFiles.cover?.[0]) {
+        req.body.cover = uploadedFiles.cover[0];
+      }
+
+
+      if (uploadedFiles.gallery?.length) {
+        req.body.gallery = uploadedFiles.gallery;
+      }
+
+    } catch (error: any) {
+      console.error('Error processing files:', error.message);
+      return sendResponse(res, {
+        statusCode: httpStatus.BAD_REQUEST,
+        success: false,
+        message: 'Failed to process uploaded files',
+        data: null,
+      });
+    }
   }
 
   const result = await jobService.createJob(req.body);
@@ -30,6 +54,41 @@ const createJob = catchAsync(async (req: Request, res: Response) => {
 });
 
 const updateJob = catchAsync(async (req: Request, res: Response) => {
+
+    if (req.files) {
+    try {
+      
+      const uploadedFiles = await uploadMultipleFilesToS3(
+        req.files as { [fieldName: string]: Express.Multer.File[] }
+      );
+
+
+      if (uploadedFiles.logo?.[0]) {
+        req.body.logo = uploadedFiles.logo[0];
+      }
+
+
+      if (uploadedFiles.cover?.[0]) {
+        req.body.cover = uploadedFiles.cover[0];
+      }
+
+
+      if (uploadedFiles.gallery?.length) {
+        req.body.gallery = uploadedFiles.gallery;
+      }
+
+    } catch (error: any) {
+      console.error('Error processing files:', error.message);
+      return sendResponse(res, {
+        statusCode: httpStatus.BAD_REQUEST,
+        success: false,
+        message: 'Failed to process uploaded files',
+        data: null,
+      });
+    }
+  }
+
+  
   const result = await jobService.updateJob(req.params.jobId, req.body);
   sendResponse(res, {
     statusCode: 200,

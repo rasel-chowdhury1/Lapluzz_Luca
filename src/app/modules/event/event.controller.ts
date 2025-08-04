@@ -4,6 +4,7 @@ import sendResponse from '../../utils/sendResponse';
 import { eventService } from './event.service';
 import { storeFiles } from '../../utils/fileHelper';
 import httpStatus from 'http-status';
+import { uploadMultipleFilesToS3 } from '../../utils/fileUploadS3';
 
 const createEvent = catchAsync(async (req: Request, res: Response) => {
 
@@ -16,17 +17,42 @@ const createEvent = catchAsync(async (req: Request, res: Response) => {
     req.body.email = userEmail;
   }
   
-
   if (req.files) {
-    const filePaths = storeFiles(
-      'events',
-      req.files as { [fieldname: string]: Express.Multer.File[] }
-    );
+    try {
+      
+      const uploadedFiles = await uploadMultipleFilesToS3(
+        req.files as { [fieldName: string]: Express.Multer.File[] }
+      );
 
-    if (filePaths.logo) req.body.logo = filePaths.logo[0];
-    if (filePaths.cover) req.body.coverImage = filePaths.cover[0];
-    if (filePaths.gallery) req.body.gallery = filePaths.gallery;
-    if (filePaths.promotions) req.body.promotions= filePaths.promotions;
+
+      if (uploadedFiles.logo?.[0]) {
+        req.body.logo = uploadedFiles.logo[0];
+      }
+
+
+      if (uploadedFiles.cover?.[0]) {
+        req.body.cover = uploadedFiles.cover[0];
+      }
+
+
+      if (uploadedFiles.gallery?.length) {
+        req.body.gallery = uploadedFiles.gallery;
+      }
+
+      if (uploadedFiles.promotionImage?.length) {
+        req.body.promotionImage = uploadedFiles.promotionImage;
+      }
+
+      console.log("req body ==>>> ", req.body.promotionImage)
+    } catch (error: any) {
+      console.error('Error processing files:', error.message);
+      return sendResponse(res, {
+        statusCode: httpStatus.BAD_REQUEST,
+        success: false,
+        message: 'Failed to process uploaded files',
+        data: null,
+      });
+    }
   }
 
   const result = await eventService.createEvent(req.body);
@@ -41,17 +67,42 @@ const createEvent = catchAsync(async (req: Request, res: Response) => {
 const updateEvent = catchAsync(async (req: Request, res: Response) => {
   const { eventId } = req.params;
 
-  // Handle file uploads
   if (req.files) {
-    const filePaths = storeFiles(
-      'events',
-      req.files as { [fieldname: string]: Express.Multer.File[] }
-    );
+    try {
+      
+      const uploadedFiles = await uploadMultipleFilesToS3(
+        req.files as { [fieldName: string]: Express.Multer.File[] }
+      );
 
-    if (filePaths.logo) req.body.logo = filePaths.logo[0];
-    if (filePaths.cover) req.body.coverImage = filePaths.cover[0];
-    if (filePaths.gallery) req.body.gallery = filePaths.gallery;
-    if (filePaths.promotions) req.body.promotions = filePaths.promotions;
+
+      if (uploadedFiles.logo?.[0]) {
+        req.body.logo = uploadedFiles.logo[0];
+      }
+
+
+      if (uploadedFiles.cover?.[0]) {
+        req.body.cover = uploadedFiles.cover[0];
+      }
+
+
+      if (uploadedFiles.gallery?.length) {
+        req.body.gallery = uploadedFiles.gallery;
+      }
+
+      if (uploadedFiles.promotionImage?.length) {
+        req.body.promotionImage = uploadedFiles.promotionImage;
+      }
+
+      console.log("req body ==>>> ", req.body.promotionImage)
+    } catch (error: any) {
+      console.error('Error processing files:', error.message);
+      return sendResponse(res, {
+        statusCode: httpStatus.BAD_REQUEST,
+        success: false,
+        message: 'Failed to process uploaded files',
+        data: null,
+      });
+    }
   }
 
   // Call update service

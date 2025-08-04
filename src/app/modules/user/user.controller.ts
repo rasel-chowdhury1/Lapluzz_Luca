@@ -2,9 +2,10 @@ import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import { userService } from './user.service';
-
+import fs, { access } from 'fs';
 import httpStatus from 'http-status';
 import { storeFile } from '../../utils/fileHelper';
+import { uploadFileToS3 } from '../../utils/fileUploadS3';
 
 const createUser = catchAsync(async (req: Request, res: Response) => {
   console.log(req.body);
@@ -152,6 +153,23 @@ const getUsersOverview = catchAsync(async (req, res) => {
 });
 
 
+const getAllUserQueryNameList = catchAsync(async (req, res) => {
+
+  const { userId } = req.user;
+
+
+
+  // Fetch data from service
+  const result = await userService.getAllUserQueryNameList(userId, req.query);
+
+  // Send response
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'User overview fetched successfully',
+    data: result,
+  });
+});
 
 const getAllUsersOverview = catchAsync(async (req, res) => {
   console.log("get all user overviewo _>>>> ");
@@ -183,7 +201,25 @@ const getAllUsersOverview = catchAsync(async (req, res) => {
 
 const updateMyProfile = catchAsync(async (req: Request, res: Response) => {
   if (req?.file) {
-    req.body.profileImage = storeFile('profile', req?.file?.filename);
+    // req.body.profileImage = storeFile('profile', req?.file?.filename);
+
+        // upload file in bucket function is done
+    try {
+      const data = await uploadFileToS3(req.file)
+
+
+      console.log("data----->>>> ",data)
+      // deleting file after upload
+      fs.unlinkSync(req.file.path)
+  
+      req.body.profileImage = data.Location;
+    } catch (error) {
+      console.log("====erro9r --->>> ", error)
+      if(fs.existsSync(req.file.path)){
+        fs.unlinkSync(req.file.path)
+      }
+    }
+
   }
   // console.log('file', req?.file);
   // console.log('body data', req.body);

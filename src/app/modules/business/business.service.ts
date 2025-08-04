@@ -71,7 +71,7 @@ const getAllBusiness = async (userId: string, query: Record<string, any>) => {
   query['isDeleted'] = false;
 
 
-  const baseQuery = Business.find().populate('providerType', 'name').select(
+  const baseQuery = Business.find({author: { $ne: new mongoose.Types.ObjectId(userId) },isActive: true, isDeleted: false}).populate('providerType', 'name').select(
     'name coverImage address priceRange maxGuest subscriptionType createdAt providerType'
   );
 
@@ -283,11 +283,15 @@ const getSpecificCategoryBusiness = async (
   query['isDeleted'] = false;
   query['providerType'] = categoryId;
 
-  const baseQuery = Business.find()
+
+  console.log("user id -> ", {userId})
+  const baseQuery = Business.find({author: { $ne: new mongoose.Types.ObjectId(userId) },isActive: true, isDeleted: false})
     .populate('providerType', 'name')
     .select(
       'name coverImage address priceRange maxGuest subscriptionType createdAt providerType'
-    );
+  );
+  
+  console.log({baseQuery})
 
   const businessModel = new QueryBuilder(baseQuery, query)
     .search(['name', 'email', 'phoneNumber', 'address', 'subscriptionType', 'priceRange'])

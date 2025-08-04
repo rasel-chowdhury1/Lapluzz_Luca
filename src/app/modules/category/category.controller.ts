@@ -2,37 +2,27 @@ import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
 import { categoryService } from './category.service';
 import sendResponse from '../../utils/sendResponse'; 
-import { uploadToS3 } from '../../utils/UploadFileToS3';
-import { storeFile, storeFiles } from '../../utils/fileHelper';
+import { uploadMultipleFilesToS3 } from '../../utils/fileUploadS3';
 
 const createCategory = catchAsync(async (req: Request, res: Response) => {
-
-  // if (req.file) {
-  //   req.body.banner = await uploadToS3({
-  //     file: req.file,
-  //     fileName: `images/categories/banner/${Math.floor(100000 + Math.random() * 900000)}`,
-  //   });
-  // }
-  //   if (req?.file) {
-  //   req.body.banner = storeFile('categories', req?.file?.filename);
-
-  // }
   
-    if(req.files){
+   if (req.files) {
     try {
-       // Use storeFiles to process all uploaded files
-      const filePaths = storeFiles(
-        'categories',
-        req.files as { [fieldName: string]: Express.Multer.File[] },
+      
+      const uploadedFiles = await uploadMultipleFilesToS3(
+        req.files as { [fieldName: string]: Express.Multer.File[] }
       );
 
-      if (filePaths.icon && filePaths.icon.length > 0) {
-        req.body.icon = filePaths.icon[0];
+
+      if (uploadedFiles.icon?.[0]) {
+        req.body.icon = uploadedFiles.icon[0];
       }
 
-      if (filePaths.banner && filePaths.banner.length > 0) {
-        req.body.banner = filePaths.banner[0]; // Assign full array of photos
+
+      if (uploadedFiles.banner?.[0]) {
+        req.body.banner = uploadedFiles.banner[0];
       }
+
 
     } catch (error: any) {
       console.error('Error processing files:', error.message);
@@ -44,8 +34,6 @@ const createCategory = catchAsync(async (req: Request, res: Response) => {
       });
     }
   }
-
-  console.log(req.body)
 
   const result = await categoryService.createCategory(req.body);
   sendResponse(res, {
@@ -90,22 +78,24 @@ const getCategoryById = catchAsync(async (req: Request, res: Response) => {
 });
 
 const updateCategory = catchAsync(async (req: Request, res: Response) => { 
-  
-    if(req.files){
+
+    if (req.files) {
     try {
-       // Use storeFiles to process all uploaded files
-      const filePaths = storeFiles(
-        'categories',
-        req.files as { [fieldName: string]: Express.Multer.File[] },
+      
+      const uploadedFiles = await uploadMultipleFilesToS3(
+        req.files as { [fieldName: string]: Express.Multer.File[] }
       );
 
-      if (filePaths.icon && filePaths.icon.length > 0) {
-        req.body.icon = filePaths.icon[0];
+
+      if (uploadedFiles.icon?.[0]) {
+        req.body.icon = uploadedFiles.icon[0];
       }
 
-      if (filePaths.banner && filePaths.banner.length > 0) {
-        req.body.banner = filePaths.banner[0]; // Assign full array of photos
+
+      if (uploadedFiles.banner?.[0]) {
+        req.body.banner = uploadedFiles.banner[0];
       }
+
 
     } catch (error: any) {
       console.error('Error processing files:', error.message);

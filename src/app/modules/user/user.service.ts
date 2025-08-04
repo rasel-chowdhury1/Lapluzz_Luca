@@ -358,6 +358,21 @@ const getAllUserList = async () => {
   return users;
 };
 
+
+const getAllUserQueryNameList = async (userId: string, query: Record<string, unknown>) => {
+  const userQuery = new QueryBuilder(User.find({ _id: { $ne: userId }, isDeleted: false}), query)
+    .search(['name', 'sureName', 'email'])
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
+
+  const result = await userQuery.modelQuery;
+  const meta = await userQuery.countTotal();
+  return { meta, result };
+};
+
+
 const getAllUserCount = async () => {
   const allUserCount = await User.countDocuments();
   return allUserCount;
@@ -770,6 +785,7 @@ export const userService = {
   getAllUserCount,
   dashboardOverview,
   getUsersOverview,
+  getAllUserQueryNameList,
   getAllUsersOverview,
   getEarningOverview,
   myReferrals,
