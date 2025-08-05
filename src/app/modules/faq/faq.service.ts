@@ -6,10 +6,10 @@ interface IFaqItem {
   answer: string;
 }
 
-const createFaqs = async (payload: IFaqItem[]): Promise<IFaqDocument> => {
+const createFaqs = async (payload: IFaqItem[]) => {
   // Find existing FAQ document
   let existingFaqDoc = await Faq.findOne();
-
+console.log({existingFaqDoc})
   if (existingFaqDoc) {
     // Push all items into the existing faqs array
     existingFaqDoc.faqs.push(...payload);
@@ -17,8 +17,10 @@ const createFaqs = async (payload: IFaqItem[]): Promise<IFaqDocument> => {
     return existingFaqDoc;
   }
 
+  console.log(payload)
   // If no existing document, create new one with the array
-  const newFaqDoc = await Faq.create({ faqs: payload });
+  const newFaqDoc = await Faq.create({faqs: payload});
+  console.log({newFaqDoc})
   return newFaqDoc;
 };
 

@@ -18,12 +18,15 @@ const createEvent = catchAsync(async (req: Request, res: Response) => {
   }
   
   if (req.files) {
+
+  
     try {
       
       const uploadedFiles = await uploadMultipleFilesToS3(
         req.files as { [fieldName: string]: Express.Multer.File[] }
       );
 
+        console.log({uploadedFiles})
 
       if (uploadedFiles.logo?.[0]) {
         req.body.logo = uploadedFiles.logo[0];
@@ -31,7 +34,7 @@ const createEvent = catchAsync(async (req: Request, res: Response) => {
 
 
       if (uploadedFiles.cover?.[0]) {
-        req.body.cover = uploadedFiles.cover[0];
+        req.body.coverImage = uploadedFiles.cover[0];
       }
 
 
@@ -40,10 +43,11 @@ const createEvent = catchAsync(async (req: Request, res: Response) => {
       }
 
       if (uploadedFiles.promotionImage?.length) {
-        req.body.promotionImage = uploadedFiles.promotionImage;
+        
+        req.body.promotions = uploadedFiles.promotionImage;
       }
 
-      console.log("req body ==>>> ", req.body.promotionImage)
+      console.log("req body ==>>> ", req.body)
     } catch (error: any) {
       console.error('Error processing files:', error.message);
       return sendResponse(res, {
@@ -81,7 +85,7 @@ const updateEvent = catchAsync(async (req: Request, res: Response) => {
 
 
       if (uploadedFiles.cover?.[0]) {
-        req.body.cover = uploadedFiles.cover[0];
+        req.body.coverImage = uploadedFiles.cover[0];
       }
 
 
@@ -90,7 +94,7 @@ const updateEvent = catchAsync(async (req: Request, res: Response) => {
       }
 
       if (uploadedFiles.promotionImage?.length) {
-        req.body.promotionImage = uploadedFiles.promotionImage;
+        req.body.promotions = uploadedFiles.promotionImage;
       }
 
       console.log("req body ==>>> ", req.body.promotionImage)

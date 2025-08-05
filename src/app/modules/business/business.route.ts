@@ -57,7 +57,7 @@ router.post(
   .get(
     '/list',
     auth(USER_ROLE.ADMIN),
-    businessController.getAllBusiness
+    businessController.getAllBusinessList
 )
   
 

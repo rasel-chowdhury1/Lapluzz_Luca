@@ -39,7 +39,7 @@ authRoutes
 
   .patch(
     '/change-password',
-    auth(USER_ROLE.USER, USER_ROLE.ORGANIZER),
+    auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN),
     authControllers.changePassword,
   )
 

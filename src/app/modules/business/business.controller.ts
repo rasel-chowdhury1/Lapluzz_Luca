@@ -380,5 +380,6 @@ export const businessController = {
   getMyBusinessList,
   getCalculateCompetitionScore,
   getMyParentBusiness,
-  activateBusinessById
+  activateBusinessById,
+  getAllBusinessList
 };

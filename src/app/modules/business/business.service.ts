@@ -189,7 +189,7 @@ const getBusinessList = async (userId: string) => {
   const businesses = await Business.find({ isDeleted: false })
     .populate('author', 'sureName name email')
     .populate('providerType', 'name')
-    .select('name coverImage address priceRange maxGuest subscriptionType createdAt providerType')
+    // .select('name description detailDescription logo coverImage email phone address priceRange maxGuest subscriptionType createdAt providerType')
     .lean();
 
   if (!businesses || businesses.length === 0) return [];

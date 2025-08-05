@@ -120,7 +120,10 @@ const EventSchema = new Schema<IEvent>(
         default: '' 
     },
     faq: [FaqSchema],
-    promotions: [GallerySchema],
+    promotions: {
+            type: [String],
+            default: []
+    },
     subscriptionList: [EventSubscriptionSchema],
     isSubscription: { 
         type: Boolean, 

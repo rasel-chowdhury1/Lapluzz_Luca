@@ -16,7 +16,7 @@ router.post(
     { name: 'logo', maxCount: 1 },
     { name: 'cover', maxCount: 1 },
     { name: 'gallery', maxCount: 10 },
-    { name: 'promotion', maxCount: 5 },
+    { name: 'promotionImage', maxCount: 5 },
   ]),
   parseData(),
   eventController.createEvent
@@ -30,7 +30,7 @@ router.post(
     { name: 'logo', maxCount: 1 },
     { name: 'cover', maxCount: 1 },
     { name: 'gallery', maxCount: 10 },
-    { name: 'promotion', maxCount: 5 },
+    { name: 'promotionImage', maxCount: 5 },
   ]),
   parseData(),
   eventController.updateEvent

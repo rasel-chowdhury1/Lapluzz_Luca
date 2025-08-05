@@ -4,41 +4,45 @@ import catchAsync from '../../utils/catchAsync';
 import { InspirationService } from './inspiration.service';
 import sendResponse from '../../utils/sendResponse';
 import { storeFiles } from '../../utils/fileHelper';
+import { uploadMultipleFilesToS3 } from '../../utils/fileUploadS3';
 
 
 const createInspiration = catchAsync(
   async (req: Request, res: Response) => {
 
     req.body.author = req.user.userId;
+
+      if (req.files) {
     
-    if(req.files){
-    try {
-       // Use storeFiles to process all uploaded files
-      const filePaths = storeFiles(
-        'inspiration',
-        req.files as { [fieldName: string]: Express.Multer.File[] },
-      );
-
-      // Set photos (multiple files)
-      if (filePaths.cover && filePaths.cover.length > 0) {
-        req.body.coverImage = filePaths.cover[0]; // Assign full array of photos
+      
+        try {
+          
+          const uploadedFiles = await uploadMultipleFilesToS3(
+            req.files as { [fieldName: string]: Express.Multer.File[] }
+          );
+    
+    
+          if (uploadedFiles.cover?.[0]) {
+            req.body.coverImage = uploadedFiles.cover[0];
+          }
+    
+    
+          if (uploadedFiles.gallery?.length) {
+            req.body.imageGallery = uploadedFiles.gallery;
+          }
+    
+    
+          console.log("req body ==>>> ", req.body)
+        } catch (error: any) {
+          console.error('Error processing files:', error.message);
+          return sendResponse(res, {
+            statusCode: httpStatus.BAD_REQUEST,
+            success: false,
+            message: 'Failed to process uploaded files',
+            data: null,
+          });
+        }
       }
-
-      // Set image (single file)
-      if (filePaths.gallery && filePaths.gallery.length > 0) {
-        req.body.imageGallery = filePaths.gallery; // Assign first image
-      }
-
-    } catch (error: any) {
-      console.error('Error processing files:', error.message);
-      return sendResponse(res, {
-        statusCode: httpStatus.BAD_REQUEST,
-        success: false,
-        message: 'Failed to process uploaded files',
-        data: null,
-      });
-    }
-  }
     const result = await InspirationService.createInspiration(req.body);
     sendResponse(res, {
       statusCode: httpStatus.CREATED,

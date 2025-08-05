@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import catchAsync from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
 import { mySubscriptionService } from "./mySubscription.service";
+import httpStatus from 'http-status';
 
 const getMySubscriptions = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.userId; // Adjust depending on your auth logic

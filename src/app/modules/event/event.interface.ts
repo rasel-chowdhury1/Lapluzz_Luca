@@ -1,5 +1,5 @@
 import { Date, ObjectId, Model } from 'mongoose';
-import { IFaq, IGallery, ISocialLinks } from '../business/business.interface';
+import { IFaq,  ISocialLinks } from '../business/business.interface';
 
 
 export interface CompetitionResultOfEvent {
@@ -12,6 +12,12 @@ export interface IEventSubscription {
   type: string;
   buyDate: Date;
   expireDate: Date;
+}
+
+
+export interface IGallery {
+  url: string;
+  key: string;
 }
 
 export interface IEvent {

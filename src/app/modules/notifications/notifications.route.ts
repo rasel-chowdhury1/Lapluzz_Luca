@@ -31,6 +31,13 @@ notificationRoutes
     "/job/sent-notification",
     auth(USER_ROLE.ORGANIZER, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN),
     notificationController.sentNotificationToApplicantsOfJob
+)
+  
+  
+  .post(
+    "/direct",
+    auth(USER_ROLE.ORGANIZER, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN),
+    notificationController.sentNotificationToDirect
   )
   
   
@@ -43,7 +50,7 @@ notificationRoutes
 
   .get(
     '/my-notifications', 
-    auth('user', 'admin'), 
+    auth(USER_ROLE.USER,USER_ROLE.ORGANIZER, USER_ROLE.SUPER_ADMIN,USER_ROLE.ADMIN), 
     notificationController.getMyNotifications
   )
 

@@ -33,6 +33,7 @@ import { EventInterestRoutes } from "../modules/eventInterest/eventInterest.rout
 import { subcriptionPaymentRoutes } from "../modules/subscriptionPayment/subscriptionPayment.route";
 import { faqRoutes } from "../modules/faq/faq.router";
 import { couponRoutes } from "../modules/coupon/coupon.route";
+import { mySubscriptionRoutes } from "../modules/mySubscription/mySubscription.route";
 
 const router = Router();
 
@@ -193,6 +194,10 @@ const moduleRoutes = [
   {
     path: "/subscriptionPayment",
     route: subcriptionPaymentRoutes
+  },
+  {
+    path: "/mySubscription",
+    route: mySubscriptionRoutes
   },
 
   // search record

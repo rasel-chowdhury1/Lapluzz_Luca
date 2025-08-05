@@ -19,6 +19,24 @@ const createNotification = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const sentNotificationToDirect = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.userId;
+  const { message, type } = req.body;
+
+  // await emitNotificationToFollowersOfBusiness({
+  //   userId: new mongoose.Types.ObjectId(userId),
+  //   userMsg: message,
+  //   type: type || 'direct', // Default fallback
+  // });
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Notifications sent to all followers of the business',
+    data: null,
+  });
+});
+
 const sentNotificationToFollowersOfBusiness = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.userId;
   const { message, type } = req.body;
@@ -141,5 +159,6 @@ export const notificationController = {
   deleteNotification,
   sentNotificationToFollowersOfBusiness,
   sentNotificationToInterestedUsersOfEvent,
-  sentNotificationToApplicantsOfJob
+  sentNotificationToApplicantsOfJob,
+  sentNotificationToDirect
 };

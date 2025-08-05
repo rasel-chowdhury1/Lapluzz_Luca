@@ -43,6 +43,9 @@ const addNewChat = catchAsync(async (req: Request, res: Response) => {
 });
 
 
+
+
+
 // const getUserChats = catchAsync(async (req: Request, res: Response) => {
 //   const {userId} = req.user;
 //   const chats = await ChatService.getUserChats(userId);

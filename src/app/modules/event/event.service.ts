@@ -249,7 +249,7 @@ const getSubscrptionEvent = async (userId: string, query: Record<string, any>) =
 const getUnsubscriptionEvent = async (userId: string, query: Record<string, any>) => {
   query['isDeleted'] = false;
 
-  const eventModel = new QueryBuilder(Event.find(), query)
+  const eventModel = new QueryBuilder(Event.find({isActive: true, isDeleted: false}), query)
     .search(['name', 'email', 'phoneNumber', 'address'])
     .filter()
     .paginate()
@@ -634,7 +634,7 @@ const getExtraEventDataById = async (
 ) => {
   // 1. Fetch main event with author
   const existingEvent = await Event.findById(eventId).populate("author", "name sureName");
-
+console.log({existingEvent})
   if (!existingEvent || existingEvent.isDeleted) {
     throw new AppError(httpStatus.NOT_FOUND, 'Event not found');
   }
@@ -652,7 +652,10 @@ const getExtraEventDataById = async (
     isDeleted: false,
   });
 
-  const currentRaw = authorEvents.filter((e) => e._id.toString() !== eventId && e.startDate >= now);
+  console.log({authorEvents})
+
+  const currentRaw = authorEvents.filter((e) => e._id.toString() !== eventId && e.startDate < now);
+  console.log({currentRaw})
   const currentEvents = await Promise.all(currentRaw.map((event) => enrichEvent(event, userId))) || [];
 
   // 4. Related events (same category, different author)

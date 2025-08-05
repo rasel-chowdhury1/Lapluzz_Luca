@@ -434,48 +434,57 @@ export const initSocketIO = async (server: HttpServer): Promise<void> => {
 
 // Export the Socket.IO instance
 export { io };
-
+  
 export const emitOnlineUser = async (userId: string) => {
-  console.log('emit online user id -.>>>', userId);
   if (!io) throw new Error('Socket.IO is not initialized');
 
-  const userList = await Friendship.findOne({ userId }).populate(
-    'friendship',
-    'fullName profileImage',
-  );
+  // 1. Find current user's friends
+  const userList = await Friendship.findOne({ userId });
 
   if (!userList || !userList.friendship) return;
 
-  const connectedFriends = userList.friendship.filter((friend) =>
-    connectedUsers.has((friend as any)._id.toString()),
+  // 2. Filter friends who are currently online
+  const connectedFriends = userList.friendship.filter((friendId) =>
+    connectedUsers.has(friendId.toString())
   );
 
-  console.log('connectedFriends---->>> ', connectedFriends);
-
+  // 3. Notify each connected friend with their visible friends
   await Promise.all(
-    connectedFriends.map(async (friend: any) => {
-      const friendSocket = connectedUsers.get(friend._id.toString());
+    connectedFriends.map(async (friendId: any) => {
+      const friendSocket = connectedUsers.get(friendId.toString());
+
       if (friendSocket) {
         const friendList = await Friendship.findOne({
-          userId: friend._id,
-        }).populate('friendship', 'fullName profileImage');
+          userId: friendId,
+        });
 
         if (!friendList || !friendList.friendship) return;
 
-        const visibleFriends = friendList.friendship.filter((f) =>
-          connectedUsers.has((f as any)._id.toString()),
+        const visibleFriends = friendList.friendship.filter((fId: any) =>
+          connectedUsers.has(fId.toString())
         );
+
+        const visibleFriendUserIds = visibleFriends.map((fId: any) =>
+          fId.toString()
+        );
+
+        console.log(`Emitting to ${friendId}:`, visibleFriendUserIds);
 
         io.to(friendSocket.socketID).emit('active-users', {
           success: true,
-          data: visibleFriends,
+          data: visibleFriendUserIds,
         });
       }
-    }),
+    })
   );
 
-  return { success: true, data: connectedFriends };
+  const connectedFriendUserIds = connectedFriends.map((id) => id.toString());
+
+  return { success: true, data: connectedFriendUserIds };
 };
+
+
+
 
 export const emitNotification = async ({
   userId,
@@ -582,9 +591,9 @@ export const emitDirectNotification = async ({
 }: {
   userId: mongoose.Types.ObjectId;
   receiverId: mongoose.Types.ObjectId;
-  userMsg?: { image: string; text: string; photos?: string[] };
-  type?: string;
-}): Promise<void> => {
+  userMsg?: { image: string; text: string; };
+  }): Promise<void> => {
+  
   if (!io) {
     throw new Error('Socket.IO is not initialized');
   }
@@ -598,8 +607,6 @@ export const emitDirectNotification = async ({
     isRead: false, // Filter by unread notifications
   });
 
-  console.log('userSocket ------>>>> ', userSocket);
-  console.log('connected ---->>> ', connectedUsers);
 
   // Notify the specific user
   if (userMsg && userSocket) {
@@ -627,6 +634,60 @@ export const emitDirectNotification = async ({
   const result = await Notification.create(newNotification);
   console.log({ result });
 };
+
+
+export const emitMassNotification = async ({
+  userId,
+  receiverId,
+  userMsg
+}: {
+  userId: mongoose.Types.ObjectId;
+  receiverId: mongoose.Types.ObjectId;
+  userMsg?: { image: string; text: string; photos?: string[] };
+  type?: string;
+  }): Promise<void> => {
+  
+  if (!io) {
+    throw new Error('Socket.IO is not initialized');
+  }
+
+  // Get the socket ID of the specific user
+  const userSocket = connectedUsers.get(receiverId.toString());
+
+  // Fetch unread notifications count for the receiver before creating the new notification
+  const unreadCount = await Notification.countDocuments({
+    receiverId: receiverId,
+    isRead: false, // Filter by unread notifications
+  });
+
+
+  // Notify the specific user
+  if (userMsg && userSocket) {
+    console.log();
+    io.to(userSocket.socketID).emit(`notification`, {
+      // userId,
+      // message: userMsg,
+      statusCode: 200,
+      success: true,
+      unreadCount: unreadCount >= 0 ? unreadCount + 1 : 1,
+    });
+  }
+
+  // Save notification to the database
+  const newNotification = {
+    userId, // Ensure that userId is of type mongoose.Types.ObjectId
+    receiverId, // Ensure that receiverId is of type mongoose.Types.ObjectId
+    message: userMsg,
+    type: "direct", // Use the provided type (default to "FollowRequest")
+    isRead: false, // Set to false since the notification is unread initially
+    timestamp: new Date(), // Timestamp of when the notification is created
+  };
+
+  // Save notification to the database
+  const result = await Notification.create(newNotification);
+  console.log({ result });
+};
+
 
 export const emitNotificationToFollowersOfBusiness = async ({
   userId,
@@ -679,6 +740,7 @@ export const emitNotificationToFollowersOfBusiness = async ({
     });
   }
 };
+
 
 export const emitNotificationToInterestUsersOfEvent = async ({
   userId,

@@ -9,14 +9,18 @@ import { businessSettingsService } from "../businessSetting/businessSetting.serv
 const getPrivacyPolicy = async (req: Request, res: Response) => {
 
     const { role } = req.user;
-    
+    console.log({role})
     try {
         let policy;
-        if(role === USER_ROLE.USER || role === USER_ROLE.ADMIN){
+        if (role === USER_ROLE.USER || role === USER_ROLE.ADMIN || role === USER_ROLE.SUPER_ADMIN) {
+            console.log("hitted")
           policy = await settingsService.getSettingsByKey({key: "privacy_policy"});
         }
         else if(role === USER_ROLE.ORGANIZER){
         policy = await businessSettingsService.getSettingsByKey({key: "privacy_policy"});
+        }
+        else {
+            policy = await settingsService.getSettingsByKey({key: "privacy_policy"});
         }
 
         sendResponse(res, {
