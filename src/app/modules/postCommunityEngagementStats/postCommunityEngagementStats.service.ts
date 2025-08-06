@@ -51,11 +51,9 @@ const getPostCommunityComments = async (postId: string) => {
     .select('comments')
     .populate('comments.user', 'name profileImage');
 
-  if (!stats) {
-    throw new AppError(httpStatus.NOT_FOUND, 'No engagement stats found for this post');
-  }
+  
 
-  return stats.comments;
+  return stats?.comments || [];
 };
 
 export const postCommunityEngagementStatsService = {

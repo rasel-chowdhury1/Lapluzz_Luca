@@ -19,6 +19,7 @@ userRoutes
   )
   .post(
     '/create/admin',
+    auth(USER_ROLE.ADMIN),
     validateRequest(userValidation?.adminValidationSchema),
     userController.adminCreateAdmin,
   )
@@ -123,6 +124,12 @@ userRoutes
     auth('user'
     ),
     userController.deleteMyAccount,
+  )
+  .delete(
+    '/delete/:userId',
+    auth(USER_ROLE.ADMIN
+    ),
+    userController.deleteSuperAdmin,
   );
 
 // export default userRoutes;

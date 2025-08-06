@@ -35,7 +35,7 @@ const userSchema = new Schema<TUser>(
     },
     role: {
       type: String,
-      enum: [USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN],
+      enum: [USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN],
       default: USER_ROLE.USER,
     },
     phone: {

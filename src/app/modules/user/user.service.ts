@@ -274,6 +274,7 @@ const adminCreateAdmin = async (userData: {name: string,email:string,password:st
     name: userData.name,
     password: userData.password,
     email: userData.email,
+    role: "super_admin",
     isAdminCreated: true,
     termsAndConditions: true
   };
@@ -676,6 +677,23 @@ const deleteMyAccount = async (id: string, payload: DeleteAccountPayload) => {
   return userDeleted;
 };
 
+
+const deleteSuperAdmin = async (id: string) => {
+  const user: TUser | null = await User.IsUserExistById(id);
+
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  const deletedUser = await User.findByIdAndDelete(id);
+
+  if (!deletedUser) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Failed to delete the user');
+  }
+
+  return deletedUser;
+};
+
 const blockedUser = async (id: string) => {
   const singleUser = await User.IsUserExistById(id);
 
@@ -766,6 +784,7 @@ const getAdminList = async (userId: string) => {
     isDeleted: false,
   }).select("name email profileImage role createdAt");
 
+  console.log(adminList)
   return adminList;
 };
 
@@ -792,5 +811,6 @@ export const userService = {
   getAllUserList,
   getBusinessUserList,
   adminCreateAdmin,
-  getAdminList
+  getAdminList,
+  deleteSuperAdmin
 };

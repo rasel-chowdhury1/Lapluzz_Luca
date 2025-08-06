@@ -25,7 +25,7 @@ const createJob = catchAsync(async (req: Request, res: Response) => {
 
 
       if (uploadedFiles.cover?.[0]) {
-        req.body.cover = uploadedFiles.cover[0];
+        req.body.coverImage = uploadedFiles.cover[0];
       }
 
 
@@ -69,7 +69,7 @@ const updateJob = catchAsync(async (req: Request, res: Response) => {
 
 
       if (uploadedFiles.cover?.[0]) {
-        req.body.cover = uploadedFiles.cover[0];
+        req.body.coverImage = uploadedFiles.cover[0];
       }
 
 

@@ -266,6 +266,17 @@ const deleteMyAccount = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const deleteSuperAdmin = catchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.params;
+  const result = await userService.deleteSuperAdmin(userId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Super admin deleted successfully',
+    data: null,
+  });
+});
+
 const getEarningOverview = catchAsync(async (req: Request, res: Response) => {
   const year = req.query.year ? parseInt(req.query.year as string, 10) : new Date().getFullYear();
 
@@ -333,5 +344,6 @@ export const userController = {
   getEarningOverview,
   myReferrals,
   adminCreateAdmin,
-  getSuperAdminLists
+  getSuperAdminLists,
+  deleteSuperAdmin
 };
