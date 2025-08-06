@@ -65,9 +65,34 @@ const updateFaqs = async (
   return null;
 };
 
+const deleteFaqItem = async (
+  id: string,
+  index: number
+): Promise<IFaqDocument | null> => {
+  const faqDoc = await Faq.findById(id);
+
+  console.log({index})
+
+  if (!faqDoc) {
+    throw new Error('FAQ document not found');
+  }
+
+  if (index < 0 || index >= faqDoc.faqs.length) {
+    throw new Error('Invalid index');
+  }
+
+  // Remove the item from the array
+  faqDoc.faqs.splice(index, 1);
+  await faqDoc.save();
+
+  return faqDoc;
+};
+
+
 export default {
   createFaqs,
   getAllFaqs,
   updateFaqs,
+  deleteFaqItem
 };
 

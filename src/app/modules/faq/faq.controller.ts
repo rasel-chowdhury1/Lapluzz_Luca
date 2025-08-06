@@ -32,6 +32,21 @@ const updateFaqs = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const deleteFaqs = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  console.log(req.body)
+  const { index } = req.body;
+
+  const result = await faqService.deleteFaqItem(id, index);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: `FAQ item at index ${index} was successfully deleted from the FAQ document.`,
+    data: result,
+  });
+});
+
 const createFaqs = catchAsync(async (req: Request, res: Response) => {
   const result = await faqService.createFaqs(req.body);
 
@@ -47,5 +62,6 @@ const createFaqs = catchAsync(async (req: Request, res: Response) => {
 export const faqController = {
   getFaqs,
   updateFaqs,
-  createFaqs
+  createFaqs,
+  deleteFaqs
 };

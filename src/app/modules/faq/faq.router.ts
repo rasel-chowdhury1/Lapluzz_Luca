@@ -14,6 +14,11 @@ router.get(
     .patch(
         '/:id',
         faqController.updateFaqs
+)  // Update existing FAQs by ID
+    
+    .delete(
+        '/:id',
+        faqController.deleteFaqs
     );  // Update existing FAQs by ID
 
 export const faqRoutes =  router;
