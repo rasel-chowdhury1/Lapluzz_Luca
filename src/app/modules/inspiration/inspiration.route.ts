@@ -48,8 +48,13 @@ router.post(
     inspirationController.getInspirationById
   )
 
-  .put(
-    '/:id',
+  .patch(
+    '/update/:id',
+    upload.fields([
+      { name: 'cover', maxCount: 1 },
+      { name: 'gallery', maxCount: 10 },
+    ]),
+    parseData(),
     inspirationController.updateInspiration
 )
   

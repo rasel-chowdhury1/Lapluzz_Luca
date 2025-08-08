@@ -38,8 +38,14 @@ notificationRoutes
     "/direct",
     auth(USER_ROLE.ORGANIZER, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN),
     notificationController.sentNotificationToDirect
-  )
+)
   
+  
+  .post(
+    "/search",
+    auth(USER_ROLE.ORGANIZER, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN),
+    notificationController.sentSearchNotificationToBusinesses
+)
   
   
   .get(
@@ -48,6 +54,8 @@ notificationRoutes
     notificationController.getAllNotifications
   )
 
+
+  
   .get(
     '/my-notifications', 
     auth(USER_ROLE.USER,USER_ROLE.ORGANIZER, USER_ROLE.SUPER_ADMIN,USER_ROLE.ADMIN), 

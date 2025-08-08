@@ -117,7 +117,39 @@ const getSpecificCategoryInspiration = catchAsync(
 );
 
  const updateInspiration = catchAsync(
-  async (req: Request, res: Response) => {
+   async (req: Request, res: Response) => {
+     
+           if (req.files) {
+    
+      
+        try {
+          
+          const uploadedFiles = await uploadMultipleFilesToS3(
+            req.files as { [fieldName: string]: Express.Multer.File[] }
+          );
+    
+    
+          if (uploadedFiles.cover?.[0]) {
+            req.body.coverImage = uploadedFiles.cover[0];
+          }
+    
+    
+          if (uploadedFiles.gallery?.length) {
+            req.body.imageGallery = uploadedFiles.gallery;
+          }
+    
+    
+          console.log("req body ==>>> ", req.body)
+        } catch (error: any) {
+          console.error('Error processing files:', error.message);
+          return sendResponse(res, {
+            statusCode: httpStatus.BAD_REQUEST,
+            success: false,
+            message: 'Failed to process uploaded files',
+            data: null,
+          });
+        }
+      }
     const result = await InspirationService.updateInspiration(req.params.id, req.body);
     sendResponse(res, {
       statusCode: httpStatus.OK,

@@ -14,11 +14,11 @@ const createInspiration = async (payload: IInspiration) => {
 const getAllInspirations = async (query: Record<string, any>) => {
   const inspirationQuery = new QueryBuilder(
     Inspiration.find({ isBlocked: false, isDeleted: false })
-               .populate('author', 'name description')
+               .populate('author', 'name description role')
                .populate('category', 'name description'),
     query
   )
-    .search(['title']) // searchable fields
+    .search(['title', "description"]) // searchable fields
     .filter()
     .paginate()
     .sort()
@@ -135,7 +135,10 @@ const getInspirationById = async (id: string) => {
 };
 
 const updateInspiration = async (id: string, payload: Partial<IInspiration>) => {
-  return await Inspiration.findByIdAndUpdate(id, payload, { new: true });
+
+  const result = await Inspiration.findByIdAndUpdate(id, payload, { new: true });
+
+  return result;
 };
 
 const deleteInspiration = async (id: string) => {

@@ -3,7 +3,7 @@ import sendResponse from '../../utils/sendResponse';
 import httpStatus from 'http-status';
 import catchAsync from '../../utils/catchAsync';
 import { notificationService } from './notifications.service';
-import { emitNotificationToApplicantsOfJob, emitNotificationToFollowersOfBusiness, emitNotificationToInterestUsersOfEvent } from '../../../socketIo';
+import { emitDirectNotification, emitNotificationToApplicantsOfJob, emitNotificationToFollowersOfBusiness, emitNotificationToInterestUsersOfEvent, emitSearchNotificationToBusiness } from '../../../socketIo';
 import mongoose from 'mongoose';
 
 const createNotification = catchAsync(async (req: Request, res: Response) => {
@@ -21,18 +21,20 @@ const createNotification = catchAsync(async (req: Request, res: Response) => {
 
 const sentNotificationToDirect = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.userId;
-  const { message, type } = req.body;
 
-  // await emitNotificationToFollowersOfBusiness({
-  //   userId: new mongoose.Types.ObjectId(userId),
-  //   userMsg: message,
-  //   type: type || 'direct', // Default fallback
-  // });
+  console.log(req.body)
+  const { message, receiverId } = req.body;
+
+  await emitDirectNotification({
+    userId: new mongoose.Types.ObjectId(userId),
+    receiverId,
+    userMsg: message
+  });
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: 'Notifications sent to all followers of the business',
+    message: 'Direct notification sent successfully to the specified user',
     data: null,
   });
 });
@@ -87,6 +89,32 @@ const sentNotificationToApplicantsOfJob = catchAsync(async (req: Request, res: R
     statusCode: httpStatus.OK,
     success: true,
     message: 'Notifications sent to all applicants of the job',
+    data: null,
+  });
+});
+
+const sentSearchNotificationToBusinesses = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.userId;
+
+  console.log(req.body);
+  const { message, receiverIds } = req.body;
+
+  if (Array.isArray(receiverIds) && receiverIds.length > 0) {
+    await Promise.all(
+      receiverIds.map(async (receiver) => {
+        await emitSearchNotificationToBusiness({
+          userId: new mongoose.Types.ObjectId(userId),
+          receiverId: receiver,
+          userMsg: message
+        });
+      })
+    );
+  }
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Search notifications sent successfully to the selected businesses',
     data: null,
   });
 });
@@ -160,5 +188,6 @@ export const notificationController = {
   sentNotificationToFollowersOfBusiness,
   sentNotificationToInterestedUsersOfEvent,
   sentNotificationToApplicantsOfJob,
-  sentNotificationToDirect
+  sentNotificationToDirect,
+  sentSearchNotificationToBusinesses
 };

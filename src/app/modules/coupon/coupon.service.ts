@@ -43,10 +43,10 @@ const deleteCoupon = async (id: string): Promise<ICouponDocument | null> => {
 };
 
 export const couponService = {
-    createCoupon,
-    getAllCoupons,
-    getCouponById,
+  createCoupon,
+  getAllCoupons,
+  getCouponById,
   updateCoupon,
-    toggleCouponEnable,
-    deleteCoupon
+  toggleCouponEnable,
+  deleteCoupon
 }

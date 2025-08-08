@@ -34,6 +34,7 @@ import { subcriptionPaymentRoutes } from "../modules/subscriptionPayment/subscri
 import { faqRoutes } from "../modules/faq/faq.router";
 import { couponRoutes } from "../modules/coupon/coupon.route";
 import { mySubscriptionRoutes } from "../modules/mySubscription/mySubscription.route";
+import { staticPageRoutes } from "../modules/staticPages/staticPages.route";
 
 const router = Router();
 
@@ -210,6 +211,12 @@ const moduleRoutes = [
   {
     path: "/coupon",
     route: couponRoutes
+  },
+
+  // static page
+  {
+    path: "/static",
+    route: staticPageRoutes
   }
 ];
 

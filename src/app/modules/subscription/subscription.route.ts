@@ -5,6 +5,7 @@ import {
   getSubscriptionsByType,
   getSubscriptionById,
   deleteSubscription,
+  updateSubscriptionById,
 } from './subscription.controller';
 import auth from '../../middleware/auth';
 import { USER_ROLE } from '../user/user.constants';
@@ -28,7 +29,13 @@ router.post(
   .get(
     '/:id',
     getSubscriptionById
-  )
+)
+  .patch(
+    "/update/:subId",
+    auth(USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),
+    updateSubscriptionById
+)
+  
   .delete(
     '/:id',
     deleteSubscription

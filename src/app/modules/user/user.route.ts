@@ -76,6 +76,12 @@ userRoutes
   .get('/all-users', auth("admin"), userController.getAllUsersList)
 
   .get(
+    '/all-users-nameList',
+    auth(USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN),
+    userController.getAllUserQueryNameList
+  )
+
+  .get(
     '/all-business-users',
     auth("admin"),
     userController.getAllBusinessUsers

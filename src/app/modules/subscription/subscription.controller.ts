@@ -14,6 +14,18 @@ export const createSubscription = catchAsync(async (req: Request, res: Response)
   });
 });
 
+
+export const updateSubscriptionById = catchAsync(async (req: Request, res: Response) => {
+  const { subId } = req.params;
+  const result = await SubscriptionService.updateSubscriptionById(subId, req.body);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Subscription updated successfully',
+    data: result,
+  });
+});
+
 export const getAllSubscriptions = catchAsync(async (_req: Request, res: Response) => {
   const result = await SubscriptionService.getAllSubscriptions();
   sendResponse(res, {

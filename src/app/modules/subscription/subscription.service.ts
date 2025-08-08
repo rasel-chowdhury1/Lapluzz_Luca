@@ -6,6 +6,15 @@ const createSubscription = async (payload: ISubscription) => {
   return Subscription.create(payload);
 };
 
+
+const updateSubscriptionById = async (id: string, payload: Partial<ISubscription>) => {
+
+  const result = await Subscription.findByIdAndUpdate(id, payload, { new: true });
+
+  return result;
+};
+
+
 const getAllSubscriptions = async () => {
   return Subscription.find().sort({ priorityLevel: 1 });
 };
@@ -28,4 +37,5 @@ export const SubscriptionService = {
   getSubscriptionsByType,
   getSubscriptionById,
   deleteSubscription,
+  updateSubscriptionById
 };

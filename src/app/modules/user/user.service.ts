@@ -360,8 +360,9 @@ const getAllUserList = async () => {
 };
 
 
+
 const getAllUserQueryNameList = async (userId: string, query: Record<string, unknown>) => {
-  const userQuery = new QueryBuilder(User.find({ _id: { $ne: userId }, isDeleted: false}), query)
+  const userQuery = new QueryBuilder(User.find({ _id: { $ne: userId }, isDeleted: false}).select("name sureName email") as any, query)
     .search(['name', 'sureName', 'email'])
     .filter()
     .sort()
@@ -371,6 +372,13 @@ const getAllUserQueryNameList = async (userId: string, query: Record<string, unk
   const result = await userQuery.modelQuery;
   const meta = await userQuery.countTotal();
   return { meta, result };
+};
+
+const getAllUserNameList = async (userId: string, query: Record<string, unknown>) => {
+
+  const result = await User.find({ _id: { $ne: userId }, isDeleted: false}).select("name sureName email")
+  return result;
+  
 };
 
 

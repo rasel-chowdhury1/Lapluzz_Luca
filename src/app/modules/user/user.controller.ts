@@ -345,5 +345,6 @@ export const userController = {
   myReferrals,
   adminCreateAdmin,
   getSuperAdminLists,
-  deleteSuperAdmin
+  deleteSuperAdmin,
+  getAllUserQueryNameList
 };

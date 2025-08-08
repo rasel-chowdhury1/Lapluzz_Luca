@@ -10,6 +10,11 @@ messageRoutes
     '/send', 
     auth('user', 'admin'), 
     messageController.sendMessage
+)
+  
+  .post(
+    "/file-upload", 
+    auth(USER_ROLE.USER,USER_ROLE.ORGANIZER,USER_ROLE.SUPER_ADMIN,USER_ROLE.ADMIN),
   )
   .patch(
     '/update/:msgId', 

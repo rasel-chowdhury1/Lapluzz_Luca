@@ -272,7 +272,10 @@ const getBusinessList = async (userId: string) => {
   return result;
 };
 
+const getBusinessNameList = async () => {
 
+
+};
 
 
 const getSpecificCategoryBusiness = async (
@@ -1291,6 +1294,19 @@ const filterSearchBusinesses = async (
   });
 
   return enriched;
+};
+
+const getAllBusinessQueryNameList = async (userId: string, query: Record<string, unknown>) => {
+  const businessQuery = new QueryBuilder(Business.find({ author: { $ne: userId },isActive: true, isDeleted: false}).select("name author description email") as any, query)
+    .search(['name', 'description', 'email', "address"])
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
+
+  const result = await businessQuery.modelQuery;
+  const meta = await businessQuery.countTotal();
+  return { meta, result };
 };
 
 const calculateCompetitionScore = async (

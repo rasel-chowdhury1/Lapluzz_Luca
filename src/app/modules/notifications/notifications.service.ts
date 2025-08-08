@@ -43,6 +43,9 @@ const getMyNotifications = async (userId: string) => {
   return notifications;
 };
 
+
+
+
 const markAsRead = async (id: string) => {
   const notification = await Notification.findByIdAndUpdate(
     id,
