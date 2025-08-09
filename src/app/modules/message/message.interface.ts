@@ -2,7 +2,7 @@ import { Schema } from 'mongoose';
 
 export interface IMessage {
   text: string;
-  // images: string[];
+  images?: string[];
   readBy: Schema.Types.ObjectId[]; // Array of user IDs who read the message
   isLeft: boolean;
   seen: boolean;

@@ -7,6 +7,7 @@ import { IChat } from '../chat/chat.interface';
 import Chat from '../chat/chat.model';
 import AppError from '../../error/AppError';
 import { ChatService } from '../chat/chat.service';
+import { uploadMultipleFilesToS3 } from '../../utils/fileUploadS3';
 
 const sendMessage = catchAsync(async (req: Request, res: Response) => {
   const {text, chatId} = req.body;
@@ -31,6 +32,39 @@ const sendMessage = catchAsync(async (req: Request, res: Response) => {
     statusCode: httpStatus.CREATED,
     success: true,
     message: 'Message sent successfully',
+    data: result,
+  });
+});
+
+const fileUpload = catchAsync(async (req: Request, res: Response) => {
+
+    let result;
+    if (req.files) {
+      try {
+        
+        const uploadedFiles = await uploadMultipleFilesToS3(
+          req.files as { [fieldName: string]: Express.Multer.File[] }
+        );
+  
+  
+        if (uploadedFiles.images?.length) {
+          result = uploadedFiles.images;
+        }
+  
+      } catch (error: any) {
+        console.error('Error processing files:', error.message);
+        return sendResponse(res, {
+          statusCode: httpStatus.BAD_REQUEST,
+          success: false,
+          message: 'Failed to process uploaded files',
+          data: null,
+        });
+      }
+    }
+  sendResponse(res, {
+    statusCode: httpStatus.CREATED,
+    success: true,
+    message: 'file upload successfully',
     data: result,
   });
 });
@@ -118,6 +152,7 @@ const getMessagesForChat = catchAsync(async (req: Request, res: Response) => {
 
 export const messageController = {
   sendMessage,
+  fileUpload,
   getMessagesForChat,
   updateMessage,
   seenMessage,

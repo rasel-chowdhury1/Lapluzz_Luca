@@ -6,11 +6,11 @@ const MessageSchema = new Schema<IMessage>(
     text: {
       type: String,
     },
-    // images: [
-    //   {
-    //     type: String,
-    //   },
-    // ],
+    images: {
+      type: [String],
+      default: []
+    },
+
     readBy: {
       type: [Schema.Types.ObjectId],
       ref: 'User', // Reference to User model
