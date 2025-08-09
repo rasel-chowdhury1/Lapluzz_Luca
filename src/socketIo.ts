@@ -1,23 +1,22 @@
-import colors from 'colors';
 import express, { Application } from 'express';
 import { Server as HttpServer } from 'http';
 import httpStatus from 'http-status';
+import moment from 'moment-timezone';
 import mongoose from 'mongoose';
 import { Socket, Server as SocketIOServer } from 'socket.io';
 import config from './app/config';
 import AppError from './app/error/AppError';
+import BusinessEngagementStats from './app/modules/businessEngaagementStats/businessEngaagementStats.model';
 import Chat from './app/modules/chat/chat.model';
 import { ChatService } from './app/modules/chat/chat.service';
+import { EventInterestUserList } from './app/modules/eventInterest/eventInterest.model';
+import Friendship from './app/modules/friendShip/friendShip.model';
 import Message from './app/modules/message/message.model';
 import { messageService } from './app/modules/message/message.service';
 import Notification from './app/modules/notifications/notifications.model';
 import { User } from './app/modules/user/user.models';
 import { callbackFn } from './app/utils/callbackFn';
 import { verifyToken } from './app/utils/tokenManage';
-import moment from 'moment-timezone';
-import BusinessEngagementStats from './app/modules/businessEngaagementStats/businessEngaagementStats.model';
-import { EventInterestUserList } from './app/modules/eventInterest/eventInterest.model';
-import Friendship from './app/modules/friendShip/friendShip.model';
 
 // Define the socket server port
 const socketPort: number = parseInt(process.env.SOCKET_PORT || '9020', 10);
@@ -100,12 +99,12 @@ export const initSocketIO = async (server: HttpServer): Promise<void> => {
     });
 
     if (!userDetails) {
-      return next(new AppError(httpStatus.UNAUTHORIZED,'Authentication error: Invalid token'));
+      return next(new AppError(httpStatus.UNAUTHORIZED, 'Authentication error: Invalid token'));
     }
 
     const user = await User.findById(userDetails.userId);
     if (!user) {
-      return next(new AppError(httpStatus.NOT_FOUND,'Authentication error: User not found'));
+      return next(new AppError(httpStatus.NOT_FOUND, 'Authentication error: User not found'));
     }
 
     socket.user = {
@@ -135,7 +134,7 @@ export const initSocketIO = async (server: HttpServer): Promise<void> => {
         // console.log(`User ${userId} connected with socket ID: ${socket.id}`);
       });
 
-     
+
 
       //----------------------online array send for front end------------------------//
       io.emit('onlineUser', Array.from(connectedUsers));
@@ -146,40 +145,40 @@ export const initSocketIO = async (server: HttpServer): Promise<void> => {
       //----------------------user details and messages send end for front end -->(as need to use)------------------------//
 
       //----------------------active user list of specific user start------------------------//
-    //   socket.on('online-active-user', async ({}, callback) => {
-    //     // Query the Friendship collection to find a record for the specific user (userId)
-    //     const userList = await Friendship.findOne({
-    //       userId: (socket as any).user._id,
-    //     }).populate('friendship', 'fullName profileImage'); // Populate the 'friendship' field with 'fullName' and 'profileImage'
+      //   socket.on('online-active-user', async ({}, callback) => {
+      //     // Query the Friendship collection to find a record for the specific user (userId)
+      //     const userList = await Friendship.findOne({
+      //       userId: (socket as any).user._id,
+      //     }).populate('friendship', 'fullName profileImage'); // Populate the 'friendship' field with 'fullName' and 'profileImage'
 
-    //     // If no friends found, return an empty array
-    //     if (!userList || !userList.friendship) {
-    //       return callback({ success: true, data: [] });
-    //     }
+      //     // If no friends found, return an empty array
+      //     if (!userList || !userList.friendship) {
+      //       return callback({ success: true, data: [] });
+      //     }
 
-    //     // Filter the friends list to only include those who are currently connected
-    //     const connectedFriends = userList.friendship.filter((friend) => {
-    //       return connectedUsers.has((friend as any)._id.toString()); // Check if the friend is in the connectedUsers map
-    //     });
+      //     // Filter the friends list to only include those who are currently connected
+      //     const connectedFriends = userList.friendship.filter((friend) => {
+      //       return connectedUsers.has((friend as any)._id.toString()); // Check if the friend is in the connectedUsers map
+      //     });
 
-    //     console.log('connected user ->>>> ', connectedFriends);
+      //     console.log('connected user ->>>> ', connectedFriends);
 
-    //     const userSocket = connectedUsers.get((socket as any).user._id);
+      //     const userSocket = connectedUsers.get((socket as any).user._id);
 
-    //     if (userSocket) {
-    //       io.to(userSocket?.socketID).emit('active-users', {
-    //         success: true,
-    //         data: connectedFriends,
-    //       });
-    //     }
-    //     // Return the list of connected users
-    //     callback({ success: true, data: connectedFriends });
-    //   });
+      //     if (userSocket) {
+      //       io.to(userSocket?.socketID).emit('active-users', {
+      //         success: true,
+      //         data: connectedFriends,
+      //       });
+      //     }
+      //     // Return the list of connected users
+      //     callback({ success: true, data: connectedFriends });
+      //   });
       //----------------------active user list of specific user end------------------------//
 
 
       //----------------------chat list start------------------------//
-      socket.on('my-chat-list', async ({}, callback) => {
+      socket.on('my-chat-list', async ({ }, callback) => {
         try {
           const chatList = await ChatService.getMyChatList(
             (socket as any).user._id,
@@ -189,7 +188,7 @@ export const initSocketIO = async (server: HttpServer): Promise<void> => {
           const userSocket = connectedUsers.get((socket as any).user._id);
 
           if (userSocket) {
-            io.to(userSocket.socketID).emit('chat-list', chatList);
+            io.emit(`chat-list::${(socket as any).user._id}`, chatList);
             callbackFn(callback, { success: true, message: chatList });
           }
 
@@ -209,7 +208,7 @@ export const initSocketIO = async (server: HttpServer): Promise<void> => {
 
       socket.on(
         'send-message',
-        async (payload: { text: string; chatId: string }, callback) => {
+        async (payload: { text: string; images: string[], chatId: string }, callback) => {
           console.log({ payload });
           // Check if chatId is provided
           if (!payload.chatId) {
@@ -259,15 +258,16 @@ export const initSocketIO = async (server: HttpServer): Promise<void> => {
               }
             });
 
-            const userTimeZone =  'Asia/Dhaka'; // Dynamic time zone or default to Asia/Dhaka
-     
-              // Get the current time in the user's time zone
+            const userTimeZone = 'Asia/Dhaka'; // Dynamic time zone or default to Asia/Dhaka
+
+            // Get the current time in the user's time zone
             const messageTime = moment().tz(userTimeZone).format('YYYY-MM-DDTHH:mm:ss.SSS');
 
             socket.emit(`message_received::${payload.chatId}`, {
               success: true,
               sender: socket?.user?._id,
               message: payload.text,
+              images: payload.images,
               createdAt: messageTime
             });
 
@@ -278,19 +278,28 @@ export const initSocketIO = async (server: HttpServer): Promise<void> => {
               console.log("excute this -> ")
               // const messageTime = new Date()
 
-              
-              
-            console.log({messageTime})
+
+
+              console.log({ messageTime })
               io.to(userSocketIds).emit('newMessage', {
                 success: true,
                 chatId: payload.chatId,
                 message: payload.text,
+                images: payload.images,
                 createdAt: messageTime
               })
               io.to(userSocketIds).emit(`message_received`, {
                 success: true,
                 sender: socket?.user?._id,
                 message: payload.text,
+                images: payload.images,
+                createdAt: messageTime
+              });
+              io.to(userSocketIds).emit(`message_received::${payload.chatId}`, {
+                success: true,
+                sender: socket?.user?._id,
+                message: payload.text,
+                images: payload.images,
                 createdAt: messageTime
               });
             }
@@ -299,15 +308,16 @@ export const initSocketIO = async (server: HttpServer): Promise<void> => {
             await Message.create({
               sender: socket?.user?._id,
               text: payload.text,
+              images: payload.images,
               chat: payload.chatId,
             });
 
             // Send success callback to the sender
             callbackFn(callback, {
               success: true,
-              message: { message: payload.text, sender: socket?.user?._id, createdAt: messageTime },
+              message: { message: payload.text, images: payload.images, sender: socket?.user?._id, createdAt: messageTime },
             });
-            
+
           } catch (error) {
             // Handle any potential errors (e.g., database issues)
             console.error('Error sending message: ', error);
@@ -437,7 +447,7 @@ export const initSocketIO = async (server: HttpServer): Promise<void> => {
 
 // Export the Socket.IO instance
 export { io };
-  
+
 export const emitOnlineUser = async (userId: string) => {
   if (!io) throw new Error('Socket.IO is not initialized');
 
@@ -595,8 +605,8 @@ export const emitDirectNotification = async ({
   userId: mongoose.Types.ObjectId;
   receiverId: mongoose.Types.ObjectId;
   userMsg?: { image: string; text: string; };
-  }): Promise<void> => {
-  
+}): Promise<void> => {
+
   if (!io) {
     throw new Error('Socket.IO is not initialized');
   }
@@ -648,8 +658,8 @@ export const emitMassNotification = async ({
   receiverId: mongoose.Types.ObjectId;
   userMsg?: { image: string; text: string; photos?: string[] };
   type?: string;
-  }): Promise<void> => {
-  
+}): Promise<void> => {
+
   if (!io) {
     throw new Error('Socket.IO is not initialized');
   }
@@ -710,16 +720,16 @@ export const emitNotificationToFollowersOfBusiness = async ({
     businessId: userMsg?.notificationFor, // business ID
   }).select('followers');
 
-  console.log({engagement})
+  console.log({ engagement })
 
   const followers = engagement?.followers || [];
- console.log("engagement - followers ",engagement, followers)
+  console.log("engagement - followers ", engagement, followers)
   // 2. Loop through followers and send notifications individually
   for (const followerId of followers) {
     const userSocket = connectedUsers.get(followerId.toString());
 
 
-    console.log({followerId})
+    console.log({ followerId })
     // Count unread notifications for this user
     const unreadCount = await Notification.countDocuments({
       receiverId: followerId,
@@ -737,15 +747,15 @@ export const emitNotificationToFollowersOfBusiness = async ({
     }
 
     // 4. Save to DB
-   const result = await Notification.create({
+    const result = await Notification.create({
       userId, // sender
       receiverId: followerId, // follower is the receiver
       message: userMsg,
       type: type || 'BusinessNotification',
       isRead: false,
       timestamp: new Date(),
-   });
-    
+    });
+
     console.log("notification result =>>> ", result)
   }
 };
@@ -874,8 +884,8 @@ export const emitSearchNotificationToBusiness = async ({
   userId: mongoose.Types.ObjectId;
   receiverId: mongoose.Types.ObjectId;
   userMsg?: { image: string; text: string; };
-  }): Promise<void> => {
-  
+}): Promise<void> => {
+
   if (!io) {
     throw new Error('Socket.IO is not initialized');
   }
