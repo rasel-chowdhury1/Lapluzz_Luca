@@ -56,6 +56,7 @@ userRoutes
   auth(USER_ROLE.ADMIN),
   userController.getSuperAdminLists,
   )
+  
   .get(
     '/my-profile',
     auth(

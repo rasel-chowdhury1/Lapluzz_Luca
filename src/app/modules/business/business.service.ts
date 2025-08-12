@@ -1422,5 +1422,6 @@ export const businessService = {
   getMyParentBusiness,
   filterSearchBusinesses,
   getBusinessList,
-  activateBusinessById
+  activateBusinessById,
+  getAllBusinessQueryNameList
 };

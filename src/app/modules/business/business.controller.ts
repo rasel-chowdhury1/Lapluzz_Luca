@@ -361,6 +361,18 @@ const filterSearchBusinesses = catchAsync(async (req: Request, res: Response) =>
   });
 });
 
+const getAllBusinessQueryNameList = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.userId; // from JWT middleware
+  const result = await businessService.getAllBusinessQueryNameList(userId, req.query);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'All business query name list fetched sucessfully',
+    data: result
+  });
+});
+
 export const businessController = {
   createBusiness,
   getAllBusiness,
@@ -381,5 +393,6 @@ export const businessController = {
   getCalculateCompetitionScore,
   getMyParentBusiness,
   activateBusinessById,
-  getAllBusinessList
+  getAllBusinessList,
+  getAllBusinessQueryNameList
 };

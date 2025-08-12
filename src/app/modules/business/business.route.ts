@@ -132,6 +132,12 @@ router.post(
     businessController.filterSearchBusinesses
   )
 
+    .get(
+      '/all-business-nameList',
+      auth(USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN),
+      businessController.getAllBusinessQueryNameList
+    )
+
   .get(
     '/extra/:id',
     auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
