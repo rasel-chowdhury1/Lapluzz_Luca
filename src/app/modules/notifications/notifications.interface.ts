@@ -13,6 +13,8 @@ export interface INotification {
       notificationFor?: string;
     };
     type: "added" | "adminProvide" | "social" ; // Type of notification
+    channel: string;
+    status: string;
     isRead: boolean; // Whether the notification is read
     
   }

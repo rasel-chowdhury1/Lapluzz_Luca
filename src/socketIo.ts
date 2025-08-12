@@ -883,7 +883,7 @@ export const emitSearchNotificationToBusiness = async ({
 }: {
   userId: mongoose.Types.ObjectId;
   receiverId: mongoose.Types.ObjectId;
-  userMsg?: { image: string; text: string; };
+  userMsg?: { image?: string; text: string; };
 }): Promise<void> => {
 
   if (!io) {
@@ -912,6 +912,7 @@ export const emitSearchNotificationToBusiness = async ({
     });
   }
 
+
   // Save notification to the database
   const newNotification = {
     userId, // Ensure that userId is of type mongoose.Types.ObjectId
@@ -924,5 +925,5 @@ export const emitSearchNotificationToBusiness = async ({
 
   // Save notification to the database
   const result = await Notification.create(newNotification);
-  console.log({ result });
+
 };

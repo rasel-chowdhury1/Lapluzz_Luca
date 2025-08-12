@@ -130,6 +130,17 @@ const getAllNotifications = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getMassNotifications = catchAsync(async (req: Request, res: Response) => {
+  const result = await notificationService.getMassNotifications();
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    data: result,
+    message: 'Mass notifications fetched successfully!',
+  });
+});
+
 const getMyNotifications = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.userId;
   const result = await notificationService.getMyNotifications(userId);
@@ -189,5 +200,6 @@ export const notificationController = {
   sentNotificationToInterestedUsersOfEvent,
   sentNotificationToApplicantsOfJob,
   sentNotificationToDirect,
-  sentSearchNotificationToBusinesses
+  sentSearchNotificationToBusinesses,
+  getMassNotifications
 };

@@ -62,6 +62,12 @@ notificationRoutes
     notificationController.getMyNotifications
   )
 
+  .get(
+    "/mass",
+    auth(USER_ROLE.USER,USER_ROLE.ORGANIZER, USER_ROLE.SUPER_ADMIN,USER_ROLE.ADMIN), 
+    notificationController.getMassNotifications
+  )
+
   .patch(
     '/mark-read/:id', 
     auth('user'), 
@@ -73,6 +79,7 @@ notificationRoutes
     auth("user", "admin"), 
     notificationController.markAllAsRead
   )
+
 
   
   .delete(

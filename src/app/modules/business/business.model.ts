@@ -10,10 +10,6 @@ import {
   ISocialLinks,
 } from './business.interface';
 
-const GallerySchema = new Schema<IGallery>({
-  url: { type: String, required: true },
-  key: { type: String, required: true },
-});
 
 const SocialLinksSchema = new Schema<ISocialLinks>({
   facebook: { type: String, default: null },

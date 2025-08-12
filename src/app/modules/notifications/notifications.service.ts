@@ -2,8 +2,6 @@
 import AppError from '../../error/AppError';
 import httpStatus from 'http-status';
 import Notification from './notifications.model';
-import { emitNotificationToFollowersOfBusiness } from '../../../socketIo';
-import mongoose from 'mongoose';
 
 interface ICreateNotificationProps {
   userId: string;
@@ -43,7 +41,14 @@ const getMyNotifications = async (userId: string) => {
   return notifications;
 };
 
-
+const getMassNotifications = async () => {
+  return await Notification.find({
+    type: { $in: ["adminProvide", "mass", "direct"] }
+  })
+    .sort({ createdAt: -1 })
+    .lean()
+    .exec();
+};
 
 
 const markAsRead = async (id: string) => {
@@ -85,11 +90,10 @@ const deleteNotification = async (id: string) => {
 
 export const notificationService = {
   createNotification,
+  getMassNotifications,
   getAllNotifications,
   getMyNotifications,
   markAsRead,
   markAllAsRead,
   deleteNotification,
-
-
 };

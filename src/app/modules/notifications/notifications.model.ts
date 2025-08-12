@@ -27,8 +27,18 @@ const NotificationSchema = new Schema<INotification>(
     },
     type: {
       type: String,
-      enum: ["added","adminProvide", "social", "BusinessNotification", "EventNotification", "JobNotification", "direct", "mass"],
+      enum: ["added", "adminProvide", "social", "BusinessNotification", "EventNotification", "JobNotification", "direct", "mass"],
       required: true,
+    },
+    channel: {
+      type: String,
+      enum: ["Push Notification", "Email"],
+      default: "Push Notification"
+    },
+    status: {
+      type: String,
+      enum: ["Pending", "Sent", "Confirmed"],
+      default: "Sent"
     },
     isRead: {
       type: Boolean,
