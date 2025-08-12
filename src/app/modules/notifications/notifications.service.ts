@@ -2,12 +2,27 @@
 import AppError from '../../error/AppError';
 import httpStatus from 'http-status';
 import Notification from './notifications.model';
+import Business from '../business/business.model';
+import { emitMassNotification } from '../../../socketIo';
+import mongoose from 'mongoose';
+import Event from '../event/event.model';
 
 interface ICreateNotificationProps {
   userId: string;
   receiverId: string;
   message: string;
   type: 'info' | 'warning' | 'error' | 'success';
+}
+
+interface ISendMassNotificationParams {
+  location: { latitude: number; longitude: number };
+  rangeKm: number;
+  category: "all" | "event" | "business";
+  message: {
+    image?: string;
+    text: string;
+  };
+  senderId: string; // The user sending the notification
 }
 
 const createNotification = async ({
@@ -28,7 +43,62 @@ const createNotification = async ({
   return newNotification;
 };
 
+const sendMassNotification = async ({
+  location,
+  rangeKm,
+  category,
+  message,
+  senderId,
+}: ISendMassNotificationParams) => {
+  let receiverIds: string[] = [];
 
+  // 1️⃣ Build location query
+  const locationQuery = {
+    location: {
+      $geoWithin: {
+        $centerSphere: [
+          [location.longitude, location.latitude],
+          rangeKm / 6378.1,
+        ],
+      },
+    },
+  };
+
+  // 2️⃣ Fetch business authors
+  if (category === "business" || category === "all") {
+    const businesses = await Business.find(locationQuery, { author: 1 }).lean();
+    receiverIds.push(...businesses.map((b) => b.author.toString()));
+  }
+
+  // 3️⃣ Fetch event authors
+  if (category === "event" || category === "all") {
+    const events = await Event.find(locationQuery, { author: 1 }).lean();
+    receiverIds.push(...events.map((e) => e.author.toString()));
+  }
+
+  // 4️⃣ Remove duplicates
+  receiverIds = [...new Set(receiverIds)];
+
+  if (receiverIds.length === 0) {
+    return { count: 0, receivers: [] };
+  }
+
+  // 5️⃣ Emit notifications (handles DB insert + socket)
+  await Promise.all(
+    receiverIds.map((receiverId) =>
+      emitMassNotification({
+        userId: new mongoose.Types.ObjectId(senderId),
+        receiverId: new mongoose.Types.ObjectId(receiverId),
+        userMsg: {
+          image: message.image || "",
+          text: message.text,
+        },
+      })
+    )
+  );
+
+  return { count: receiverIds.length, receivers: receiverIds };
+};
 
 const getAllNotifications = async (query: Record<string, unknown>) => {
   // You can implement a query builder like in your `userService` for pagination, filtering, etc.
@@ -147,6 +217,7 @@ const deleteNotification = async (id: string) => {
 
 export const notificationService = {
   createNotification,
+  sendMassNotification,
   getMassNotifications,
   getAllNotifications,
   getMyNotifications,

@@ -130,6 +130,27 @@ const getAllNotifications = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const sentNotificationToMass = catchAsync(async (req: Request, res: Response) => {
+  const senderId = req.user.userId; // Current logged-in user
+
+  const { location, rangeKm, category, message } = req.body;
+
+  const result = await notificationService.sendMassNotification({
+    location,
+    rangeKm,
+    category,
+    message,
+    senderId,
+  });
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: `Mass notification sent to ${result.count} receivers`,
+    data: result, // Contains count & receivers list
+  });
+});
+
 const getMassNotifications = catchAsync(async (req: Request, res: Response) => {
   const result = await notificationService.getMassNotifications();
 
@@ -191,6 +212,7 @@ const deleteNotification = catchAsync(async (req: Request, res: Response) => {
 
 export const notificationController = {
   createNotification,
+  sentNotificationToMass,
   getAllNotifications,
   getMyNotifications,
   markAsRead,

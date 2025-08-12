@@ -656,7 +656,7 @@ export const emitMassNotification = async ({
 }: {
   userId: mongoose.Types.ObjectId;
   receiverId: mongoose.Types.ObjectId;
-  userMsg?: { image: string; text: string; photos?: string[] };
+  userMsg?: { image: string; text: string;  };
   type?: string;
 }): Promise<void> => {
 
@@ -691,7 +691,7 @@ export const emitMassNotification = async ({
     userId, // Ensure that userId is of type mongoose.Types.ObjectId
     receiverId, // Ensure that receiverId is of type mongoose.Types.ObjectId
     message: userMsg,
-    type: "direct", // Use the provided type (default to "FollowRequest")
+    type: "mass", // Use the provided type (default to "FollowRequest")
     isRead: false, // Set to false since the notification is unread initially
     timestamp: new Date(), // Timestamp of when the notification is created
   };
@@ -927,3 +927,5 @@ export const emitSearchNotificationToBusiness = async ({
   const result = await Notification.create(newNotification);
 
 };
+
+

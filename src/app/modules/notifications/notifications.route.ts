@@ -47,6 +47,12 @@ notificationRoutes
     notificationController.sentSearchNotificationToBusinesses
 )
   
+  .post(
+    "/mass-notification",
+    auth(USER_ROLE.ORGANIZER, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN),
+    notificationController.sentNotificationToMass
+)
+  
   
   .get(
     '/all-notifications', 
