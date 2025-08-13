@@ -130,12 +130,14 @@ const googleLogin = async (payload: { email: string, name: string, profileImage:
     return generateAndReturnTokens(user);
   }
 
+  console.log("google login payload ->>", payload)
+
   // If user does not exist, create a new one
   user = await User.create({
-    fullName: payload.name,
+    fullName: payload?.name || "",
     email: payload.email,
     password: "testing123",
-    profileImage: payload.profileImage,
+    profileImage: payload?.profileImage || "",
     role: payload.role || USER_ROLE.USER,
     loginWth: Login_With.google,
   });
