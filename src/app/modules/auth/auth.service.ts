@@ -132,7 +132,8 @@ const googleLogin = async (payload: { email: string, name: string, profileImage:
 
   console.log("google login payload ->>", payload)
 
-  // If user does not exist, create a new one
+try {
+    // If user does not exist, create a new one
   user = await User.create({
     fullName: payload?.name || "",
     email: payload.email,
@@ -141,6 +142,12 @@ const googleLogin = async (payload: { email: string, name: string, profileImage:
     role: payload.role || USER_ROLE.USER,
     loginWth: Login_With.google,
   });
+} catch (error) {
+  console.log({error});
+  return;
+}
+
+ 
 
    const ip =
       req.headers['x-forwarded-for']?.toString().split(',')[0] ||
