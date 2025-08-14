@@ -15,6 +15,7 @@ import { User } from '../user/user.models';
 import { CompetitionResult, IBusiness, WizardFilters } from './business.interface';
 import Business from './business.model';
 import { monthNames } from './business.utils';
+import WishList from '../wishlist/wishlist.model';
 
 const createBusiness = async (payload: IBusiness) => {
   const { longitude, latitude, ...rest } = payload;
@@ -148,6 +149,18 @@ const getAllBusiness = async (userId: string, query: Record<string, any>) => {
     };
   });
 
+    // ⭐ Fetch user wishlist events
+  const wishList = await WishList.findOne({ userId }).lean();
+  const wishListBusinessIds = new Set<string>();
+
+  if (wishList && wishList.folders?.length) {
+    wishList.folders.forEach((folder) => {
+      if (folder.businesses?.length) {
+        folder.businesses.forEach((eid) => wishListBusinessIds.add(eid.toString()));
+      }
+    });
+  }
+
   // 🔀 Merge all data together
   data = data.map((biz) => {
     const id = biz._id.toString();
@@ -169,6 +182,7 @@ const getAllBusiness = async (userId: string, query: Record<string, any>) => {
       ...ratingInfo,
       ...engagementInfo,
       blueVerifiedBadge: biz.subscriptionType === 'exclusive',
+      isWishlisted: wishListBusinessIds.has(id), // ✅ true if in wishlist, else false
     };
   });
 

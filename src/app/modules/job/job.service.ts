@@ -10,6 +10,7 @@ import JobEngagementStats from '../jobEngagementStats/jobEngagementStats.model';
 import { Types } from 'mongoose';
 import { monthNames } from '../business/business.utils';
 import JobApplicant from '../jobApplicant/jobApplicant.model';
+import WishList from '../wishlist/wishlist.model';
 
 const createJob = async (payload: IJob) => {
   const result = await Job.create(payload);
@@ -49,6 +50,27 @@ const getSubscriptionJobs = async (userId: string, query: Record<string, any>) =
 
   if (!data || data.length === 0) return { data, meta };
 
+    // 🟢 Fetch user wishlist jobs
+  const wishList = await WishList.findOne({ userId }).lean();
+  const wishListJobIds = new Set<string>();
+
+  if (wishList && wishList.folders?.length) {
+    wishList.folders.forEach((folder) => {
+      if (folder.jobs?.length) {
+        folder.jobs.forEach((jid) => wishListJobIds.add(jid.toString()));
+      }
+    });
+  }
+
+   // 🔀 Merge wishlist flag into jobs
+  data = data.map((job) => {
+    const id = job._id.toString();
+    return {
+      ...job.toObject(),
+      isWishlisted: wishListJobIds.has(id), // ✅ true if in wishlist
+    };
+  });
+  
   // 🟢 Add any future job-related aggregation logic here (e.g., applications, views, etc.)
 
   // 🔽 Sort by subscriptionType priority then latest
@@ -66,11 +88,10 @@ const getSubscriptionJobs = async (userId: string, query: Record<string, any>) =
 const getUnsubscriptionJobs = async (userId: string, query: Record<string, any>) => {
   query['isDeleted'] = false;
 
-  const baseQuery = Job.find({ author: { $ne: userId }, isSubscription: false });
-
-  console.log("get unsubscription query ->>> ", query);
-  // console.log("get unsubscription base query ->>> ", baseQuery);
-  console.log("get unsubscription userId ->>> ", userId);
+  const baseQuery = Job.find({
+    author: { $ne: userId },
+    isSubscription: false,
+  });
 
   const jobModel = new QueryBuilder(baseQuery, query)
     .search(['title', 'email', 'phoneNumber', 'category', 'address'])
@@ -78,18 +99,66 @@ const getUnsubscriptionJobs = async (userId: string, query: Record<string, any>)
     .paginate()
     .sort()
     .fields();
-  
-  
 
-  const data = await jobModel.modelQuery;
+  let data = await jobModel.modelQuery;
   const meta = await jobModel.countTotal();
 
-  console.log({data,meta})
+  if (!data?.length) {
+    return { data, meta };
+  }
 
-  // 🟢 You can enrich the data here if needed (e.g., job views, applicant stats)
+  // 🟢 Fetch user's wishlist job IDs
+  const wishList = await WishList.findOne({ userId }).lean();
+  const wishListJobIds = new Set<string>();
+
+  if (wishList?.folders?.length) {
+    wishList.folders.forEach((folder) => {
+      folder.jobs?.forEach((jid) => wishListJobIds.add(jid.toString()));
+    });
+  }
+
+  // 🔀 Merge wishlist flag into jobs
+  data = data.map((job) => {
+    const id = job._id.toString();
+    return {
+      ...job.toObject(),
+      isWishlisted: wishListJobIds.has(id),
+    };
+  });
+
+  // 🔽 Sort by newest first
+  data = data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   return { data, meta };
 };
+
+// const getUnsubscriptionJobs = async (userId: string, query: Record<string, any>) => {
+//   query['isDeleted'] = false;
+
+//   const baseQuery = Job.find({ author: { $ne: userId }, isSubscription: false });
+
+//   console.log("get unsubscription query ->>> ", query);
+//   // console.log("get unsubscription base query ->>> ", baseQuery);
+//   console.log("get unsubscription userId ->>> ", userId);
+
+//   const jobModel = new QueryBuilder(baseQuery, query)
+//     .search(['title', 'email', 'phoneNumber', 'category', 'address'])
+//     .filter()
+//     .paginate()
+//     .sort()
+//     .fields();
+  
+  
+
+//   const data = await jobModel.modelQuery;
+//   const meta = await jobModel.countTotal();
+
+//   console.log({data,meta})
+
+//   // 🟢 You can enrich the data here if needed (e.g., job views, applicant stats)
+
+//   return { data, meta };
+// };
 
 
 

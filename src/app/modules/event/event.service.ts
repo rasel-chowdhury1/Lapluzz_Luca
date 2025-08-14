@@ -12,6 +12,7 @@ import { User } from '../user/user.models';
 import { monthNames } from '../business/business.utils';
 import { EventInterestUserList } from '../eventInterest/eventInterest.model';
 import { enrichEvent } from './event.utils';
+import WishList from '../wishlist/wishlist.model';
 
 const createEvent = async (payload: IEvent) => {
   const { longitude, latitude, ...rest } = payload;
@@ -162,6 +163,7 @@ const getSubscrptionEvent = async (userId: string, query: Record<string, any>) =
     string,
     { averageRating: number; totalReviews: number }
   > = {};
+
   ratings.forEach((r) => {
     ratingMap[r._id.toString()] = {
       averageRating: parseFloat(r.averageRating.toFixed(1)),
@@ -188,6 +190,19 @@ const getSubscrptionEvent = async (userId: string, query: Record<string, any>) =
     };
   });
 
+
+  // ⭐ Fetch user wishlist events
+  const wishList = await WishList.findOne({ userId }).lean();
+  const wishListEventIds = new Set<string>();
+
+  if (wishList && wishList.folders?.length) {
+    wishList.folders.forEach((folder) => {
+      if (folder.events?.length) {
+        folder.events.forEach((eid) => wishListEventIds.add(eid.toString()));
+      }
+    });
+  }
+
   // 🔀 Merge into final response
   data = data.map((event) => {
     const id = event._id.toString();
@@ -203,11 +218,14 @@ const getSubscrptionEvent = async (userId: string, query: Record<string, any>) =
       isLiked: false,
     };
 
+    
+
     return {
       ...event.toObject(),
       ...ratingInfo,
       ...engagementInfo,
-      blueVerifiedBadge: ['diamond', 'emerald'].includes(event.subscriptionType), // you can change rule
+      blueVerifiedBadge: ['diamond', 'emerald'].includes(event.subscriptionType), 
+      isWishlisted: wishListEventIds.has(id), // ✅ true if in wishlist, else false
     };
   });
 
@@ -312,6 +330,18 @@ const getUnsubscriptionEvent = async (userId: string, query: Record<string, any>
     };
   });
 
+    // ⭐ Fetch user wishlist events
+  const wishList = await WishList.findOne({ userId }).lean();
+  const wishListEventIds = new Set<string>();
+
+  if (wishList && wishList.folders?.length) {
+    wishList.folders.forEach((folder) => {
+      if (folder.events?.length) {
+        folder.events.forEach((eid) => wishListEventIds.add(eid.toString()));
+      }
+    });
+  }
+
   // 🔀 Merge data
   data = data.map((event) => {
     const id = event._id.toString();
@@ -331,6 +361,7 @@ const getUnsubscriptionEvent = async (userId: string, query: Record<string, any>
       ...event.toObject(),
       ...ratingInfo,
       ...engagementInfo,
+      isWishlisted: wishListEventIds.has(id), // ✅ true if in wishlist, else false
     };
   });
 
