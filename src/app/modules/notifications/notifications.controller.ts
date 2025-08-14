@@ -43,6 +43,17 @@ const sentNotificationToFollowersOfBusiness = catchAsync(async (req: Request, re
   const userId = req.user.userId;
   const { message, type } = req.body;
 
+
+  const todayCount = await notificationService.getTodayHowManySentNotifications(userId);
+    if (todayCount >= 3) {
+    return sendResponse(res, {
+      statusCode: httpStatus.BAD_REQUEST,
+      success: false,
+      message: 'You have already sent the maximum of 3 notifications today.',
+      data: null,
+    });
+  }
+
   await emitNotificationToFollowersOfBusiness({
     userId: new mongoose.Types.ObjectId(userId),
     userMsg: message,
@@ -61,6 +72,16 @@ const sentNotificationToInterestedUsersOfEvent = catchAsync(async (req: Request,
   const userId = req.user.userId;
   const { message, type } = req.body;
 
+    const todayCount = await notificationService.getTodayHowManySentNotifications(userId);
+    if (todayCount >= 3) {
+    return sendResponse(res, {
+      statusCode: httpStatus.BAD_REQUEST,
+      success: false,
+      message: 'You have already sent the maximum of 3 notifications today.',
+      data: null,
+    });
+  }
+
   await emitNotificationToInterestUsersOfEvent({
     userId: new mongoose.Types.ObjectId(userId),
     userMsg: message,
@@ -78,6 +99,16 @@ const sentNotificationToInterestedUsersOfEvent = catchAsync(async (req: Request,
 const sentNotificationToApplicantsOfJob = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.userId;
   const { message, type } = req.body;
+
+    const todayCount = await notificationService.getTodayHowManySentNotifications(userId);
+    if (todayCount >= 3) {
+    return sendResponse(res, {
+      statusCode: httpStatus.BAD_REQUEST,
+      success: false,
+      message: 'You have already sent the maximum of 3 notifications today.',
+      data: null,
+    });
+  }
 
   await emitNotificationToApplicantsOfJob({
     userId: new mongoose.Types.ObjectId(userId),
