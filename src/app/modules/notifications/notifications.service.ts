@@ -6,6 +6,7 @@ import Business from '../business/business.model';
 import { emitMassNotification } from '../../../socketIo';
 import mongoose from 'mongoose';
 import Event from '../event/event.model';
+import { startOfDay, endOfDay } from 'date-fns';
 
 interface ICreateNotificationProps {
   userId: string;
@@ -109,6 +110,19 @@ const getAllNotifications = async (query: Record<string, unknown>) => {
 const getMyNotifications = async (userId: string) => {
   const notifications = await Notification.find({ receiverId: userId }).sort({ createdAt: -1 });
   return notifications;
+};
+
+
+const getTodayHowManySentNotifications = async (userId: string) => {
+  const todayStart = startOfDay(new Date());
+  const todayEnd = endOfDay(new Date());
+
+  const count = await Notification.countDocuments({
+    userId,
+    createdAt: { $gte: todayStart, $lte: todayEnd }
+  });
+
+  return count || 0;
 };
 
 const getMassNotifications = async () => {
@@ -219,6 +233,7 @@ export const notificationService = {
   createNotification,
   sendMassNotification,
   getMassNotifications,
+  getTodayHowManySentNotifications,
   getAllNotifications,
   getMyNotifications,
   markAsRead,

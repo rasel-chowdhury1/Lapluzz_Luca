@@ -53,6 +53,7 @@ notificationRoutes
     notificationController.sentNotificationToMass
 )
   
+
   
   .get(
     '/all-notifications', 
@@ -72,6 +73,11 @@ notificationRoutes
     "/mass",
     auth(USER_ROLE.USER,USER_ROLE.ORGANIZER, USER_ROLE.SUPER_ADMIN,USER_ROLE.ADMIN), 
     notificationController.getMassNotifications
+  )
+  .get(
+    "/today-count",
+    auth(USER_ROLE.USER,USER_ROLE.ORGANIZER, USER_ROLE.SUPER_ADMIN,USER_ROLE.ADMIN), 
+    notificationController.getTodayHowManySentNotifications
   )
 
   .patch(

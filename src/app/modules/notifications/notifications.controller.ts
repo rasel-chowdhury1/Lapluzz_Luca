@@ -174,6 +174,19 @@ const getMyNotifications = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getTodayHowManySentNotifications = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.userId;
+  const count = await notificationService.getTodayHowManySentNotifications(userId);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    data: { count },
+    message: 'Total notifications sent to you today retrieved successfully!',
+  });
+});
+
+
 const markAsRead = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await notificationService.markAsRead(id);
@@ -218,6 +231,7 @@ export const notificationController = {
   markAsRead,
   markAllAsRead,
   deleteNotification,
+  getTodayHowManySentNotifications,
   sentNotificationToFollowersOfBusiness,
   sentNotificationToInterestedUsersOfEvent,
   sentNotificationToApplicantsOfJob,
