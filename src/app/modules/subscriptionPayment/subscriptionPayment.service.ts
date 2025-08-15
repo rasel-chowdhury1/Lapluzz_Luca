@@ -4,6 +4,7 @@ import { User } from '../user/user.models';
 import SubscriptionPayment from './subscriptionPayment.model';
 import Business from '../business/business.model';
 import { differenceInDays } from 'date-fns'; // install with: npm i date-fns
+import MySubscription from '../mySubscription/mySubscription.mdel';
 
 const findPaymentData = async (paymentDataBody: any) => {
   const paymentData = await SubscriptionPayment.findOne({
