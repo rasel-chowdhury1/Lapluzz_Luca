@@ -258,6 +258,7 @@ const getEarningList = async () => {
       plan: subscription?.title || 'Unknown',
       amount: payment.amount,
       status: payment.status,
+      userStatus: payment.userStatus,
       woo_order_id: payment.woo_order_id || '',
       paymentMethod: payment.payment_method,
       createAt: payment.createdAt

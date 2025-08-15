@@ -5,6 +5,7 @@ import { SubscriptionForType } from "../subscriptionPayment/subscriptionpayment.
 export interface IMySubscription {
     _id?: string;
     user: ObjectId;
+    subscriptionPaymentId: ObjectId;
     expiryDate: Date;
     subscriptionFor: Types.ObjectId;
     subscriptionForType: SubscriptionForType;

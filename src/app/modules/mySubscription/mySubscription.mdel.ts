@@ -4,6 +4,11 @@ import { IMySubscription } from "./mySubscription.interface";
 
 const mySubscriptionSchema = new Schema<IMySubscription>({
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    subscriptionPaymentId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'SubscriptionPayment',
+        unique: true
+    },
     expiryDate: { type: Date, required: true },
     // 👇 Dynamic reference field
     subscriptionFor: {

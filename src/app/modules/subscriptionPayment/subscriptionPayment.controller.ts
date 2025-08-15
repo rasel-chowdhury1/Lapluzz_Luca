@@ -428,6 +428,7 @@ const handleWooPaymentWebhook = catchAsync(async (req: Request, res: Response) =
       payment_method,
       payment_status,
       status,
+      userStatus: "notActivate"
     },
     { new: true }
   );
