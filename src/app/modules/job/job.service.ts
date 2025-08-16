@@ -168,7 +168,7 @@ const getUnsubscriptionJobs = async (userId: string, query: Record<string, any>)
 //   return result;
 // };
 const getJobById = async (userId: string, id: string) => {
-  const job = await Job.findById(id);
+  const job = await Job.findById(id).populate("author", "name sureName");
 
   if (!job || job.isDeleted) {
     // throw new AppError(httpStatus.NOT_FOUND, 'Job not found');

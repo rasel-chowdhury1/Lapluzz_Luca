@@ -9,7 +9,10 @@ router.post(
   '/comment',
   auth(USER_ROLE.USER),
   jobEngagementStatsController.addComment
-);
+)
+
+.get(
+    "/comments/:jobId", jobEngagementStatsController.getJobComments)
 
 router.get(
   '/:jobId',

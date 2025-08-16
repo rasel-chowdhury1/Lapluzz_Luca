@@ -17,6 +17,18 @@ const addComment = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getJobComments = catchAsync(async (req: Request, res: Response) => {
+  const result = await jobEngagementStatsService.getJobComments(req.params.jobId);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Specific job comments fetched',
+    data: result
+  });
+});
+
+
 const getEngagementStats = catchAsync(async (req: Request, res: Response) => {
   const jobId = req.params.jobId;
 
@@ -32,5 +44,6 @@ const getEngagementStats = catchAsync(async (req: Request, res: Response) => {
 
 export const jobEngagementStatsController = {
   addComment,
-  getEngagementStats
+  getEngagementStats,
+  getJobComments
 };

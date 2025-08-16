@@ -27,7 +27,21 @@ const getEngagementStats = async (jobId: string) => {
   return stats;
 };
 
+
+const getJobComments = async (jobId: string) => {
+  const stats = await JobEngagementStats.findOne({ jobId })
+    .select('comments') // only select comments
+    .populate('comments.user', 'name profileImage');
+
+  // if (!stats) {
+  //   throw new AppError(httpStatus.NOT_FOUND, 'No engagement stats found for this business');
+  // }
+
+  return stats?.comments || null;
+};
+
 export const jobEngagementStatsService = {
   addComment,
-  getEngagementStats
+  getEngagementStats,
+  getJobComments
 };
