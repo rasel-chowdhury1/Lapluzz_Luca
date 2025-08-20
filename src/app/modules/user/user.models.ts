@@ -10,6 +10,10 @@ const userSchema = new Schema<TUser>(
       type: String, //surename
       default: '',
     },
+    lastName: {
+      type: String,
+      default: ""
+    },
     name: {
       type: String, //surename
       default: '',

@@ -36,7 +36,7 @@ export interface OTPVerifyAndCreateUserProps {
 const createUserToken = async (payload: TUserCreate) => {
   console.log('payload service user');
 
-  const { role, email, sureName, name, password, dateOfBirth, gender, customId, address, longitude, latitude, enableNotification } =
+  const { role, email, sureName, lastName, name, password, dateOfBirth, gender, customId, address, longitude, latitude, enableNotification } =
     payload;
 
   // user exist check
@@ -75,6 +75,7 @@ const createUserToken = async (payload: TUserCreate) => {
   const otpBody: Partial<TUserCreate> = {
     email,
     sureName,
+    lastName,
     name,
     password,
     role,

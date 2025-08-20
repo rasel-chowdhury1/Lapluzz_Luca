@@ -68,6 +68,12 @@ notificationRoutes
     auth(USER_ROLE.USER,USER_ROLE.ORGANIZER, USER_ROLE.SUPER_ADMIN,USER_ROLE.ADMIN), 
     notificationController.getMyNotifications
   )
+  
+  .get(
+    '/my-sented-notifications', 
+    auth(USER_ROLE.USER,USER_ROLE.ORGANIZER, USER_ROLE.SUPER_ADMIN,USER_ROLE.ADMIN), 
+    notificationController.getMySentedNotifications
+  )
 
   .get(
     "/mass",
