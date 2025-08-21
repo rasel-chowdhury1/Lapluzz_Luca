@@ -133,7 +133,7 @@ const otpVerifyAndCreateUser = async ({
     throw new AppError(httpStatus.BAD_REQUEST, 'You are not authorised');
   }
   console.log("decode dota ->> ", { decodeData })
-  const { password, email, role, sureName, name, gender, customId, address, longitude, latitude, enableNotification } =
+  const { password, email, role, sureName, lastName, name, gender, customId, address, longitude, latitude, enableNotification } =
     decodeData;
 
   console.log({ otp })
@@ -167,6 +167,7 @@ const otpVerifyAndCreateUser = async ({
 
   const userData = {
     sureName,
+    lastName,
     name,
     password,
     email,
