@@ -3,6 +3,7 @@ import { Model, ObjectId } from 'mongoose';
 
 export interface TUserCreate {
   sureName?: string;
+  lastName?: string;
   name?: string;
   email: string;
   customId: string;

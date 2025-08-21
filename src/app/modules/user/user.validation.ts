@@ -6,6 +6,10 @@ const userValidationSchema = z.object({
       .string()
       .min(1, { message: 'Full name is required' })
       .optional(),
+    lastName: z
+      .string()
+      .min(1, { message: 'Last name is required' })
+      .optional(),
     name: z
       .string()
       .min(1, { message: 'Full name is required' })

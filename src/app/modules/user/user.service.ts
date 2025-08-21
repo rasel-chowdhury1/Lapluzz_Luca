@@ -21,6 +21,8 @@ import { Types } from 'mongoose';
 import Business from '../business/business.model';
 import BusinessEngagementStats from '../businessEngaagementStats/businessEngaagementStats.model';
 import BusinessReview from '../businessReview/businessReview.model';
+import { generateAndReturnTokens } from './user.utils';
+import { Request } from 'express';
 
 export type IFilter = {
   searchTerm?: string;
@@ -36,7 +38,7 @@ export interface OTPVerifyAndCreateUserProps {
 const createUserToken = async (payload: TUserCreate) => {
   console.log('payload service user');
 
-  const { role, email, sureName, name, password, dateOfBirth, gender, customId, address, longitude, latitude, enableNotification } =
+  const { role, email, sureName, lastName, name, password, dateOfBirth, gender, customId, address, longitude, latitude, enableNotification } =
     payload;
 
   // user exist check
@@ -75,6 +77,7 @@ const createUserToken = async (payload: TUserCreate) => {
   const otpBody: Partial<TUserCreate> = {
     email,
     sureName,
+    lastName,
     name,
     password,
     role,
@@ -118,7 +121,7 @@ const createUserToken = async (payload: TUserCreate) => {
 const otpVerifyAndCreateUser = async ({
   otp,
   token,
-}: OTPVerifyAndCreateUserProps) => {
+}: OTPVerifyAndCreateUserProps, req: Request) => {
   if (!token) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Token not found');
   }
@@ -132,7 +135,7 @@ const otpVerifyAndCreateUser = async ({
     throw new AppError(httpStatus.BAD_REQUEST, 'You are not authorised');
   }
   console.log("decode dota ->> ", { decodeData })
-  const { password, email, role, sureName, name, gender, customId, address, longitude, latitude, enableNotification } =
+  const { password, email, role, sureName, lastName, name, gender, customId, address, longitude, latitude, enableNotification } =
     decodeData;
 
   console.log({ otp })
@@ -166,6 +169,7 @@ const otpVerifyAndCreateUser = async ({
 
   const userData = {
     sureName,
+    lastName,
     name,
     password,
     email,
@@ -220,29 +224,59 @@ const otpVerifyAndCreateUser = async ({
   //   }
 
 
-  const jwtPayload: {
-    userId: string;
-    role: string;
-    email: string;
-  } = {
-    email: user.email,
-    userId: user?._id?.toString() as string,
-    role: user?.role,
-  };
+  // const jwtPayload: {
+  //   userId: string;
+  //   role: string;
+  //   email: string;
+  // } = {
+  //   email: user.email,
+  //   userId: user?._id?.toString() as string,
+  //   role: user?.role,
+  // };
 
-  // console.log({ jwtPayload });
-  const expityTime = role === "organizer" ? '30m' : "15m";
-  let accessToken;
+  // // console.log({ jwtPayload });
+  // const expityTime = role === "organizer" ? '30m' : "15m";
+  // let accessToken;
 
-  if (expityTime) {
-    accessToken = createToken({
-      payload: jwtPayload,
-      access_secret: config.jwt_access_secret as string,
-      expity_time: expityTime,
-    });
-  }
+  // if (expityTime) {
+  //   accessToken = createToken({
+  //     payload: jwtPayload,
+  //     access_secret: config.jwt_access_secret as string,
+  //     expity_time: expityTime,
+  //   });
+  // }
 
-  const notificationData = {
+    if (user) {
+      // Validate user status and permissions
+      if (user.isDeleted) throw new AppError(httpStatus.FORBIDDEN, 'This user is deleted');
+      if (user.isBlocked) throw new AppError(httpStatus.FORBIDDEN, 'User account is blocked');
+  
+       const ip =
+        req.headers['x-forwarded-for']?.toString().split(',')[0] ||
+        req.socket.remoteAddress ||
+        '';
+       
+      const userAgent = req.headers['user-agent'] || '';
+      //@ts-ignore
+      const parser = new UAParser(userAgent);
+      const result = parser.getResult();
+  
+      const device = {
+        ip: ip,
+        browser: result.browser.name,
+        os: result.os.name,
+        device: result.device.model || 'Desktop',
+        lastLogin: new Date().toISOString(),
+      };
+  
+      await User.findByIdAndUpdate(
+        user?._id,
+        { device },
+        { new: true, upsert: false },
+      );
+
+
+        const notificationData = {
     userId: user?._id,
     receiverId: getAdminId(),
     userMsg: {
@@ -255,8 +289,12 @@ const otpVerifyAndCreateUser = async ({
 
   emitNotification(notificationData);
 
+  return generateAndReturnTokens(user);
 
-  return { role, accessToken };
+
+    }
+
+
 };
 
 const adminCreateAdmin = async (userData: {name: string,email:string,password:string, role: string}) => {
