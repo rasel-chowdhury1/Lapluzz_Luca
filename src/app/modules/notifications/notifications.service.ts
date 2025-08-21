@@ -7,6 +7,7 @@ import { emitMassNotification } from '../../../socketIo';
 import mongoose from 'mongoose';
 import Event from '../event/event.model';
 import { startOfDay, endOfDay } from 'date-fns';
+import Job from '../job/job.model';
 
 interface ICreateNotificationProps {
   userId: string;
@@ -109,6 +110,38 @@ const getAllNotifications = async (query: Record<string, unknown>) => {
 
 const getMyNotifications = async (userId: string) => {
   const notifications = await Notification.find({ receiverId: userId }).sort({ createdAt: -1 });
+  return notifications;
+};
+
+
+const getMySentedNotifications = async (userId: string) => {
+  let notifications = await Notification.find({ userId }).sort({ createdAt: -1 }).lean();
+
+  // Loop through notifications and attach names
+  notifications = await Promise.all(
+    notifications.map(async (notification) => {
+      if (notification.message?.types && notification.message?.notificationFor) {
+        let model;
+        if (notification.message.types === "business") {
+          model = Business;
+        } else if (notification.message.types === "event") {
+          model = Event;
+        } else if (notification.message.types === "job") {
+          model = Job;
+        }
+
+        if (model) {
+          const doc = await model.findById(notification.message.notificationFor).select("name title").lean();
+          if (doc) {
+            // For businesses we use `name`, for events/jobs `title`
+            notification.message.name = doc.name || doc.title || "";
+          }
+        }
+      }
+      return notification;
+    })
+  );
+
   return notifications;
 };
 
@@ -236,6 +269,7 @@ export const notificationService = {
   getTodayHowManySentNotifications,
   getAllNotifications,
   getMyNotifications,
+  getMySentedNotifications,
   markAsRead,
   markAllAsRead,
   deleteNotification,

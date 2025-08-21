@@ -5,10 +5,10 @@ import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 
 export const createTicket = catchAsync(async (req: Request, res: Response) => {
-  const { userId } = req.user; // assuming req.user is populated by auth middleware
+  const { userId,fullName,email,phone } = req.user; // assuming req.user is populated by auth middleware
   const { typeOfIssue, description } = req.body;
 
-  const result = await TicketSupportService.createTicket({ userId, typeOfIssue, description });
+  const result = await TicketSupportService.createTicket({ fullName, email, phone,userId, typeOfIssue, description });
   
   sendResponse(res, {
     statusCode: httpStatus.CREATED,

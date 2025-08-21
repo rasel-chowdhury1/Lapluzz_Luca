@@ -15,6 +15,7 @@ export interface INotification {
     type: "added" | "adminProvide" | "social" ; // Type of notification
     channel: string;
     status: string;
+    sentCount: number;
     isRead: boolean; // Whether the notification is read
     
   }

@@ -40,6 +40,10 @@ const NotificationSchema = new Schema<INotification>(
       enum: ["Pending", "Sent", "Confirmed"],
       default: "Sent"
     },
+    sentCount: {
+      type: Number,
+      default: 0,
+    },
     isRead: {
       type: Boolean,
       default: false,

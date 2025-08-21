@@ -205,6 +205,18 @@ const getMyNotifications = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getMySentedNotifications = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.userId;
+  const result = await notificationService.getMySentedNotifications(userId);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    data: result,
+    message: 'My sented notifications fetched successfully!',
+  });
+});
+
 const getTodayHowManySentNotifications = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.userId;
   const count = await notificationService.getTodayHowManySentNotifications(userId);
@@ -259,6 +271,7 @@ export const notificationController = {
   sentNotificationToMass,
   getAllNotifications,
   getMyNotifications,
+  getMySentedNotifications,
   markAsRead,
   markAllAsRead,
   deleteNotification,

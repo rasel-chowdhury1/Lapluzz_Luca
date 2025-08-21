@@ -11,8 +11,8 @@ const userSchema = new Schema<TUser>(
       default: '',
     },
     lastName: {
-      type: String, //surename
-      default: '',
+      type: String,
+      default: ""
     },
     name: {
       type: String, //surename

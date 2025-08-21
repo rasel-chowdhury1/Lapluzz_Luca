@@ -1,8 +1,22 @@
 import TicketSupport from './ticketSupport.model';
 import { ITicketSupport } from './ticketSupport.interface';
 
-const createTicket = async (payload: ITicketSupport) => {
-  const ticket = await TicketSupport.create(payload);
+const createTicket = async (payload: { 
+  fullName: string; 
+  email: string; 
+  phone: string; 
+  userId: string; 
+  typeOfIssue: string; 
+  description: string; 
+}) => {
+  const { userId, typeOfIssue, description, fullName, email, phone } = payload;
+   // Save ticket in DB
+  const ticket = await TicketSupport.create({
+    userId,
+    issue: typeOfIssue,
+    description,
+  });
+  
   return ticket;
 };
 
