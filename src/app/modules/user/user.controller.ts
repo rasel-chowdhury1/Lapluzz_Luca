@@ -314,6 +314,18 @@ const adminCreateAdmin = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getMyTotalCredits = catchAsync(async (req: Request, res: Response) => {
+  const {userId} = req.user;
+  const result = await userService.getMyTotalCredits(userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'My total credits fetched successfully',
+    data: result ,
+  });
+});
+
 const getSuperAdminLists = catchAsync(async (req: Request, res: Response) => {
  
   const result = await userService.getAdminList(req.user.userId);
@@ -346,5 +358,6 @@ export const userController = {
   adminCreateAdmin,
   getSuperAdminLists,
   deleteSuperAdmin,
-  getAllUserQueryNameList
+  getAllUserQueryNameList,
+  getMyTotalCredits
 };

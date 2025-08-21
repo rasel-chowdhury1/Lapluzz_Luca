@@ -822,6 +822,13 @@ const myReferrals = async (userId: string) => {
   }
 }
 
+
+const getMyTotalCredits = async (userId: string) => {
+  const totalCredits = await User.findById(userId).select("totalCredits");
+
+  return totalCredits;
+};
+
 const getAdminList = async (userId: string) => {
   const adminList = await User.find({
     _id: { $ne: userId },
@@ -858,5 +865,6 @@ export const userService = {
   getBusinessUserList,
   adminCreateAdmin,
   getAdminList,
+  getMyTotalCredits,
   deleteSuperAdmin
 };
