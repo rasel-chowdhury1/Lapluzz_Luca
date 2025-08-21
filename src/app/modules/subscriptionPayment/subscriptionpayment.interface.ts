@@ -18,6 +18,7 @@ export interface ISubscriptionPayment extends Document {
   subscriptionOptionIndex?: Number;
   payment_method: string;
   payment_status: string;
+  paymentType: string;
   status: string;
   userStatus: string;
   currentStatus: string;

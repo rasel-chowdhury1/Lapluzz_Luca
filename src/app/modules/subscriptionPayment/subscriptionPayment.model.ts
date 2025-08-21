@@ -67,6 +67,10 @@ const subscriptionPaymentSchema: Schema = new Schema<ISubscriptionPayment>(
       type: String,
       default: "",
     },
+    paymentType: {
+      type: String,
+      enum: ["credit","payment" ],
+    },
     status: {
       type: String,
       enum: ["pending", "processing", "on-hold","cancelled","completed", "refunded","failed"  ],

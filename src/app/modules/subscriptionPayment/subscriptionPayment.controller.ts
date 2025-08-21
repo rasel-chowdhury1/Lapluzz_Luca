@@ -301,6 +301,7 @@ const initiateSubscriptionPayment = catchAsync(async (req: Request, res: Respons
     subscriptionForType,
     subscription: subscription._id,
     subscriptionOptionIndex,
+    paymentType: 'payment',
     status: 'pending',
     expireDate,
     ...(couponCode && { appliedCoupon: couponCode }), // optionally store applied coupon
@@ -370,8 +371,8 @@ const buySubscriptionByCredits = catchAsync(async (req: Request, res: Response) 
     subscriptionForType,
     subscription: subscription._id,
     subscriptionOptionIndex,
-    paymentType: 'Credit',
-    status: 'Completed',
+    paymentType: 'credit',
+    status: 'completed',
     expireDate,
   });
 
