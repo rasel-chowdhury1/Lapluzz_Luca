@@ -321,6 +321,8 @@ const initiateSubscriptionPayment = catchAsync(async (req: Request, res: Respons
 });
 
 const buySubscriptionByCredits = catchAsync(async (req: Request, res: Response) => {
+
+  console.log("buy subscription body data ->>> ",req.body);
   const { subscriptionId, subscriptionOptionIndex, subscriptionFor, subscriptionForType } = req.body;
   const { userId } = req.user;
 
@@ -341,6 +343,7 @@ const buySubscriptionByCredits = catchAsync(async (req: Request, res: Response) 
   // 🔍 Validate subscription option index
   const selectedOption = subscription.options?.[subscriptionOptionIndex];
   if (!selectedOption) {
+    console.log("'Invalid subscription option index provided.'")
     throw new AppError(400, 'Invalid subscription option index provided.');
   }
 
