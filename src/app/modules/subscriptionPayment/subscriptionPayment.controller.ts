@@ -302,6 +302,7 @@ const initiateSubscriptionPayment = catchAsync(async (req: Request, res: Respons
     subscription: subscription._id,
     subscriptionOptionIndex,
     paymentType: 'payment',
+    
     status: 'pending',
     expireDate,
     ...(couponCode && { appliedCoupon: couponCode }), // optionally store applied coupon
@@ -376,6 +377,21 @@ const buySubscriptionByCredits = catchAsync(async (req: Request, res: Response) 
     expireDate,
   });
 
+
+    
+  // ✅ Create MySubscription using updated fields
+  await MySubscription.create({
+    user: userId,
+    subscriptionPaymentId: payment._id,
+    expiryDate: expireDate,
+    subscriptionFor: subscriptionFor,
+    subscriptionForType: subscriptionForType,
+    subscription: subscription,
+    subscriptionOptionIndex: subscriptionOptionIndex,
+    paymentType: "credit",
+    status: 'notActivate',
+  });
+
    // 🧾 Update user's credits without using .save()
   await User.findByIdAndUpdate(userId, {
     $inc: { totalCredits: -selectedOption.price },
@@ -445,6 +461,7 @@ const handleWooPaymentWebhook = catchAsync(async (req: Request, res: Response) =
   // ✅ Create MySubscription using updated fields
   await MySubscription.create({
     user: updated.userId,
+    subscriptionPaymentId: subscription_payment_id,
     expiryDate: updated.expireDate,
     subscriptionFor: updated.subscriptionFor,
     subscriptionForType: updated.subscriptionForType,

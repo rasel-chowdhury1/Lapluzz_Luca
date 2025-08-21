@@ -38,6 +38,10 @@ const mySubscriptionSchema = new Schema<IMySubscription>({
         type: String,
         default: '',
     },
+    paymentType: {
+      type: String,
+      enum: ["credit","payment"],
+    },
     status: {
         type: String,
         enum: ["notActivate", "activate", "stop", "gotCredits"],

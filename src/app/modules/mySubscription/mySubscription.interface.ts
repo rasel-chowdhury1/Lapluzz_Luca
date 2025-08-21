@@ -13,6 +13,7 @@ export interface IMySubscription {
     subscriptionOptionIndex?: Number;
     payment_method: string;
     payment_status: string;
+    paymentType: string;
     status: string;
     isExpired?: boolean;
     isNotified?: boolean;
