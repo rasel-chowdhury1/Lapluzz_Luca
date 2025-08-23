@@ -14,7 +14,7 @@ const getAllPosts = async (query: Record<string, any>) => {
   if (query.category) filters.category = query.category;
   if (query.region) filters.region = query.region;
 
-  const posts = await PostCommunity.find(filters).populate('creator', 'name email');
+  const posts = await PostCommunity.find(filters).populate('creator', 'name profileImage email role');
   return posts;
 };
 
@@ -117,7 +117,8 @@ const getPostById = async (id: string, userId: string) => {
                   in: {
                     _id: '$$matchedUser._id',
                     name: '$$matchedUser.name',
-                    profileImage: '$$matchedUser.profileImage'
+                    profileImage: '$$matchedUser.profileImage',
+                    role: '$$matchedUser.role',
                   }
                 }
               }
@@ -263,7 +264,8 @@ const getLatestPosts = async (userId: string, limit: number = 10) => {
             $project: {
               name: 1,
               sureName: 1,
-              profileImage: 1
+              profileImage: 1,
+              role: 1
             }
           }
         ],
@@ -347,6 +349,7 @@ const getSpecificCategoryOrRegionPosts = async (
               name: 1,
               sureName: 1,
               profileImage: 1,
+              role: 1
             },
           },
         ],

@@ -256,6 +256,16 @@ const blockedUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const deletedUser = catchAsync(async (req: Request, res: Response) => {
+  const result = await userService.deletedUser(req.params.userId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: `User ${result.status ? 'deleted' : 'unDeleted'} successfully`,
+    data: result.user,
+  });
+});
+
 const deleteMyAccount = catchAsync(async (req: Request, res: Response) => {
   const result = await userService.deleteMyAccount(req.user?.userId, req.body);
   sendResponse(res, {
@@ -346,6 +356,7 @@ export const userController = {
   getMyProfile,
   getAdminProfile,
   updateMyProfile,
+  deletedUser,
   blockedUser,
   deleteMyAccount,
   getDashboardOverview,

@@ -11,21 +11,6 @@ const router = express.Router();
 // Add a new chat
 router.post(
   '/create',
-  // upload.single('file'),
-  // parseData(),
-  // auth(USER_ROLE.ADMIN), // Authorization middleware
-  // FileUploadHelper.upload.single('file'), // Single file uploads
-  // (req: Request, res: Response, next: NextFunction) => {
-  //   console.log('before data add new chat -> ', req.body);
-  //   console.log('before data add new file -> ', req.file);
-  //   // req.body = productValidations.addProductValidationSchema.parse(
-  //   //   JSON.parse(req.body.data),
-  //   // );
-  //   console.log(JSON.parse(req.body.data));
-  //   return ChatController.addNewChat(req, res, next);
-  // },
-  // validateRequest(productValidations.addProductValidationSchema),
-
   auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
   ChatController.addNewChat,
 );

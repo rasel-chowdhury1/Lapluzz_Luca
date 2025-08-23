@@ -538,6 +538,16 @@ export const emitNotification = async ({
     });
   }
 
+
+  console.log({receiverId})
+  io.emit(`notification::${receiverId}`, {
+      // userId,
+      // message: userMsg,
+      statusCode: 200,
+      success: true,
+      unreadCount: unreadCount >= 0 ? unreadCount + 1 : 1,
+    });
+
   // Save notification to the database
   const newNotification = {
     userId, // Ensure that userId is of type mongoose.Types.ObjectId

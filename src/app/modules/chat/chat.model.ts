@@ -30,6 +30,20 @@ const ChatSchema = new Schema<IChat>(
       ref: 'User',
       default: null, // Set default to null
     },
+    contextType: { // Optional field for business, event, or job
+      type: String,
+      enum: ['business', 'event', 'job', null],
+      default: null,
+    },
+    contextId: { // ID for the specific context (businessId, eventId, jobId)
+      type: Schema.Types.ObjectId,
+      default: null,
+    },
+    status: { // Chat status (open, closed)
+      type: String,
+      enum: ['open', 'closed'],
+      default: 'open',
+    },
   },
   {
     timestamps: true,

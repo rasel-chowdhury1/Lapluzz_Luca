@@ -21,6 +21,11 @@ export interface TUserCreate {
   dateOfBirth?: Date;
   wishlist?: [string];
   referralsUserList: ObjectId[];
+  referredBy?: ObjectId;
+  referralStats: {
+    earned: number,
+    used: number
+  },
   totalCredits: number;
   isSubBusiness: boolean;
   parentBusiness?: ObjectId;

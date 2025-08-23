@@ -100,6 +100,11 @@ const userSchema = new Schema<TUser>(
       type: [{ type: Schema.Types.ObjectId, ref: 'User', required: true }],
       default: [],
     },
+    referredBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+    referralStats: {
+      earned: { type: Number, default: 0 },
+      used: { type: Number, default: 0 },
+    },
     totalCredits: {
       type: Number,
       default: 0,

@@ -44,6 +44,12 @@ userRoutes
     userController.blockedUser,
   )
 
+  .patch(
+    '/delete/:userId',
+    auth('admin'),
+    userController.deletedUser,
+  )
+
 
   .post(
     '/complete',

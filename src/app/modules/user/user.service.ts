@@ -17,11 +17,10 @@ import { generateOptAndExpireTime } from '../otp/otp.utils';
 import SubscriptionPayment from '../subscriptionPayment/subscriptionPayment.model';
 import { DeleteAccountPayload, TUser, TUserCreate } from './user.interface';
 import { User } from './user.models';
-import { Types } from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import Business from '../business/business.model';
 import BusinessEngagementStats from '../businessEngaagementStats/businessEngaagementStats.model';
 import BusinessReview from '../businessReview/businessReview.model';
-import { generateAndReturnTokens } from './user.utils';
 import { Request } from 'express';
 
 export type IFilter = {
@@ -118,56 +117,66 @@ const createUserToken = async (payload: TUserCreate) => {
 
 };
 
-const otpVerifyAndCreateUser = async ({
-  otp,
-  token,
-}: OTPVerifyAndCreateUserProps, req: Request) => {
+const otpVerifyAndCreateUser = async (
+  { otp, token }: OTPVerifyAndCreateUserProps,
+  _req?: Request
+) => {
   if (!token) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Token not found');
   }
 
-  const decodeData = verifyToken({
+  // 1) Decode sign-up payload from your short-lived token
+  const decoded = verifyToken({
     token,
     access_secret: config.jwt_access_secret as string,
-  });
+  }) as Partial<{
+    password: string;
+    email: string;
+    role: string;
+    sureName: string;
+    lastName: string;
+    name: string;
+    gender: 'male' | 'female' | 'others' | '';
+    customId?: string; // referrer's customId (your referral code)
+    address?: string;
+    longitude?: number;
+    latitude?: number;
+    enableNotification?: boolean;
+  }>;
 
-  if (!decodeData) {
+  if (!decoded?.email || !decoded?.password) {
     throw new AppError(httpStatus.BAD_REQUEST, 'You are not authorised');
   }
-  console.log("decode dota ->> ", { decodeData })
-  const { password, email, role, sureName, lastName, name, gender, customId, address, longitude, latitude, enableNotification } =
-    decodeData;
 
-  console.log({ otp })
+  const {
+    password,
+    email,
+    role,
+    sureName,
+    lastName,
+    name,
+    gender,
+    customId, // referral code of referrer (maps to User.customId)
+    // address, longitude, latitude, enableNotification
+  } = decoded;
 
+  // 2) OTP check
   const isOtpMatch = await otpServices.otpMatch(email, otp);
-
   if (!isOtpMatch) {
     throw new AppError(httpStatus.BAD_REQUEST, 'OTP did not match');
   }
 
-  process.nextTick(async () => {
-    await otpServices.updateOtpByEmail(email, {
-      status: 'verified',
-    });
-  });
+  // mark verified now (await it, don’t nextTick)
+  await otpServices.updateOtpByEmail(email, { status: 'verified' });
 
-
-  const isExist = await User.isUserExist(email as string);
-
-  if (isExist) {
-    throw new AppError(
-      httpStatus.FORBIDDEN,
-      'User already exists with this email',
-    );
+  // 3) Prevent duplicate
+  const existing = await User.isUserExist(email);
+  if (existing) {
+    throw new AppError(httpStatus.FORBIDDEN, 'User already exists with this email');
   }
 
-  // let location;
-  // if(longitude !== undefined && latitude !== undefined){
-  //   location = generateLocation(longitude, latitude);
-  // }
-
-  const userData = {
+  // 4) Create user (password hashing handled by your pre-save hook)
+  const user = await User.create({
     sureName,
     lastName,
     name,
@@ -175,108 +184,90 @@ const otpVerifyAndCreateUser = async ({
     email,
     role,
     gender,
-    // address,
-    // location,
-    // enableNotification
-  };
-
-
-  const user = await User.create(userData);
-
-  console.log({ user })
+  });
 
   if (!user) {
     throw new AppError(httpStatus.BAD_REQUEST, 'User creation failed');
   }
 
+  // 5) Referral logic (transactional): +5 to referrer and +5 to claimant
   if (customId) {
-    const referringUser = await User.findOne({ customId });
+    const session = await mongoose.startSession();
+    try {
+      await session.withTransaction(async () => {
+        const referrer = await User.findOne({ customId }).session(session);
+        if (!referrer) return; // invalid code; skip silently
 
-    if (referringUser) {
-      const updatePayload: any = {
-        $push: { referralsUserList: user._id },
-        $inc: { totalCredits: 1 },
-      };
+        // block self-referral
+        if (referrer._id.toString() === user._id.toString()) {
+          throw new AppError(httpStatus.BAD_REQUEST, 'You cannot refer yourself');
+        }
 
-      const referralsCount = referringUser.referralsUserList.length + 1; // since we're about to push
+        // double-claim guard
+        const freshUser = await User.findById(user._id).session(session);
+        if (!freshUser) throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, 'User not found after create');
+        if (freshUser.referredBy) return; // already referred; skip
 
-      if (referralsCount % 3 === 0) {
-        updatePayload.$inc!.totalCredits += 2; // add 2 bonus credits
-      }
+        const REWARD = 5;
 
-      // Update user in background (non-blocking)
-      process.nextTick(() => {
-        User.updateOne(
-          { _id: referringUser._id },
-          updatePayload
-        ).catch(err => console.error('Referral update failed:', err));
+        // Count BEFORE push to compute “every 3rd referral +2”
+        const prevCount = Array.isArray(referrer.referralsUserList)
+          ? referrer.referralsUserList.length
+          : 0;
+
+        // 5a) Update referrer
+        await User.updateOne(
+          { _id: referrer._id },
+          {
+            $addToSet: { referralsUserList: user._id },
+            $inc: { totalCredits: REWARD, 'referralStats.earned': REWARD },
+          },
+          { session }
+        );
+
+        const newCount = prevCount + 1;
+
+        if (newCount % 3 === 0) {
+          await User.updateOne(
+            { _id: referrer._id },
+            { $inc: { totalCredits: 2 } },
+            { session }
+          );
+        }
+
+        // 5b) Update claimant (the new user)
+        await User.updateOne(
+          { _id: user._id },
+          {
+            $set: { referredBy: referrer._id },
+            $inc: { totalCredits: REWARD, 'referralStats.earned': REWARD },
+          },
+          { session }
+        );
       });
+    } finally {
+      session.endSession();
     }
   }
-  // Create user profile
-  // const profileData: IProfile = {
-  //     user: user._id as any,
-  //   };
 
-  //   const profile = await Profile.create(profileData);
-  //   if (!profile) {
-  //     throw new AppError(httpStatus.BAD_REQUEST, 'Profile creation failed');
-  //   }
+  // 6) Issue access token (expiry: organizer 30m, others 15m)
+  const isOrganizer = (user.role || '').toString().toLowerCase() === 'organizer';
+  const expiryTime = isOrganizer ? '30m' : '15m';
 
+  const jwtPayload = {
+    email: user.email,
+    userId: user._id.toString(),
+    role: user.role,
+  };
 
-  // const jwtPayload: {
-  //   userId: string;
-  //   role: string;
-  //   email: string;
-  // } = {
-  //   email: user.email,
-  //   userId: user?._id?.toString() as string,
-  //   role: user?.role,
-  // };
-
-  // // console.log({ jwtPayload });
-  // const expityTime = role === "organizer" ? '30m' : "15m";
-  // let accessToken;
-
-  // if (expityTime) {
-  //   accessToken = createToken({
-  //     payload: jwtPayload,
-  //     access_secret: config.jwt_access_secret as string,
-  //     expity_time: expityTime,
-  //   });
-  // }
-
-    if (user) {
-      // Validate user status and permissions
-      if (user.isDeleted) throw new AppError(httpStatus.FORBIDDEN, 'This user is deleted');
-      if (user.isBlocked) throw new AppError(httpStatus.FORBIDDEN, 'User account is blocked');
-  
-       const ip =
-        req.headers['x-forwarded-for']?.toString().split(',')[0] ||
-        req.socket.remoteAddress ||
-        '';
-       
-      const userAgent = req.headers['user-agent'] || '';
-      //@ts-ignore
-      const parser = new UAParser(userAgent);
-      const result = parser.getResult();
-  
-      const device = {
-        ip: ip,
-        browser: result.browser.name,
-        os: result.os.name,
-        device: result.device.model || 'Desktop',
-        lastLogin: new Date().toISOString(),
-      };
-  
-      await User.findByIdAndUpdate(
-        user?._id,
-        { device },
-        { new: true, upsert: false },
-      );
+  const accessToken = createToken({
+    payload: jwtPayload,
+    access_secret: config.jwt_access_secret as string,
+    expity_time: expiryTime, // your util uses `expity_time`, keeping as-is
+  });
 
 
-        const notificationData = {
+    const notificationData = {
     userId: user?._id,
     receiverId: getAdminId(),
     userMsg: {
@@ -287,14 +278,14 @@ const otpVerifyAndCreateUser = async ({
     type: 'added',
   } as any;
 
-  emitNotification(notificationData);
+  // Fire-and-forget
+  void emitNotification(notificationData);
 
-  return generateAndReturnTokens(user);
-
-
-    }
-
-
+  // 7) EXACT return shape you requested
+  return {
+    role: user.role,      // e.g., "organizer"
+    accessToken,          // JWT string
+  };
 };
 
 const adminCreateAdmin = async (userData: {name: string,email:string,password:string, role: string}) => {
@@ -763,10 +754,41 @@ const blockedUser = async (id: string) => {
   );
 
   if (!user) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'user blocking failed');
+  }
+
+  return { status, user };
+};
+
+
+const deletedUser = async (id: string) => {
+  const singleUser = await User.IsUserExistById(id);
+
+  if (!singleUser) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  // let status;
+
+  // if (singleUser?.isActive) {
+  //   status = false;
+  // } else {
+  //   status = true;
+  // }
+  let status = !singleUser.isDeleted;
+  console.log('status', status);
+  const user = await User.findByIdAndUpdate(
+    id,
+    { isDeleted: status },
+    { new: true },
+  );
+
+  if (!user) {
     throw new AppError(httpStatus.BAD_REQUEST, 'user deleting failed');
   }
 
   return { status, user };
+
 };
 
 const getEarningOverview = async (year: number) => {
@@ -852,6 +874,7 @@ export const userService = {
   getUserByEmail,
   updateUser,
   deleteMyAccount,
+  deletedUser,
   blockedUser,
   getAllUserQuery,
   getAllUserCount,

@@ -13,7 +13,7 @@ const getAllPolls = async (query: Record<string, any>) => {
   if (query.category) filters.category = query.category;
   if (query.region) filters.region = query.region;
 
-  return await PollCommunity.find(filters).populate('creator', 'name email');
+  return await PollCommunity.find(filters).populate('creator', 'name profileImage email role');
 };
 
 const getLatestPolls = async (userId: string) => {
@@ -101,7 +101,8 @@ const getLatestPolls = async (userId: string) => {
         creator: {
           _id: '$creatorInfo._id',
           name: '$creatorInfo.name',
-          profileImage: '$creatorInfo.profileImage'
+          profileImage: '$creatorInfo.profileImage',
+          role: '$creatorInfo.role',
         }
       }
     }
@@ -195,7 +196,8 @@ const getMyLatestPolls = async (userId: string) => {
         creator: {
           _id: '$creatorInfo._id',
           name: '$creatorInfo.name',
-          profileImage: '$creatorInfo.profileImage'
+          profileImage: '$creatorInfo.profileImage',
+          role: '$creatorInfo.role',
         }
       }
     }

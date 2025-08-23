@@ -14,7 +14,7 @@ const createInspiration = async (payload: IInspiration) => {
 const getAllInspirations = async (query: Record<string, any>) => {
   const inspirationQuery = new QueryBuilder(
     Inspiration.find({ isBlocked: false, isDeleted: false })
-               .populate('author', 'name description role')
+               .populate('author', 'name profileImage role')
                .populate('category', 'name description'),
     query
   )
@@ -27,6 +27,8 @@ const getAllInspirations = async (query: Record<string, any>) => {
   const data = await inspirationQuery.modelQuery;
   const meta = await inspirationQuery.countTotal();
 
+
+
   return {
     data,
     meta,
@@ -35,7 +37,9 @@ const getAllInspirations = async (query: Record<string, any>) => {
 
 const getMyInspirations = async (userId: string, query: Record<string, any>) => {
   const inspirationQuery = new QueryBuilder(
-    Inspiration.find({ author: userId, isBlocked: false, isDeleted: false }).populate('category', 'name description'),
+    Inspiration.find({ author: userId, isBlocked: false, isDeleted: false })
+                   .populate('author', 'name profileImage role')
+                   .populate('category', 'name description'),
     query
   )
     .search(['title']) // searchable fields
@@ -68,6 +72,20 @@ const getAllInspirationsGroupedByCategory = async () => {
     {
       $unwind: '$categoryInfo'
     },
+
+    // Step 2: Lookup author info
+    {
+      $lookup: {
+        from: 'users', // Assuming you have a 'users' collection
+        localField: 'author',
+        foreignField: '_id',
+        as: 'authorInfo'
+      }
+    },
+    {
+      $unwind: '$authorInfo'
+    },
+
     {
       $group: {
         _id: '$category',
@@ -81,6 +99,12 @@ const getAllInspirationsGroupedByCategory = async () => {
             description: '$description',
             coverImage: '$coverImage',
             imageGallery: '$imageGallery',
+            author: {
+              _id: '$authorInfo._id',
+              name: '$authorInfo.name',
+              profileImage: '$authorInfo.profileImage',
+              role: '$authorInfo.role'
+            },
             createdAt: '$createdAt',
             updatedAt: '$updatedAt'
           }
@@ -112,7 +136,9 @@ const getSpecificCategoryInspiration = async (
   };
 
   const inspirationQuery = new QueryBuilder(
-    Inspiration.find({ category: categoryId }).populate('category', 'name description'),
+    Inspiration.find({ category: categoryId })
+                  .populate('author', 'name profileImage role')
+                  .populate('category', 'name description'),
     filterQuery
   )
     .search(['title'])
@@ -131,7 +157,7 @@ const getSpecificCategoryInspiration = async (
 };
 
 const getInspirationById = async (id: string) => {
-  return await Inspiration.findById(id).populate('category', 'name');
+  return await Inspiration.findById(id).populate('author', 'name profileImage role').populate('category', 'name');
 };
 
 const updateInspiration = async (id: string, payload: Partial<IInspiration>) => {

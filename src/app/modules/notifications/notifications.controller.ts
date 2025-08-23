@@ -254,6 +254,18 @@ const markAllAsRead = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getUnreadCount = catchAsync(async (req: Request, res: Response) => {
+  const {userId} = req.user;
+  const result = await notificationService.getUnreadCount(userId);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Notification unread count fetched successfully!',
+    data: result,
+  });
+});
+
 const deleteNotification = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await notificationService.deleteNotification(id);
@@ -281,5 +293,6 @@ export const notificationController = {
   sentNotificationToApplicantsOfJob,
   sentNotificationToDirect,
   sentSearchNotificationToBusinesses,
+  getUnreadCount,
   getMassNotifications
 };

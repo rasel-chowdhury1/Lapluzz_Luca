@@ -8,6 +8,7 @@ import mongoose from 'mongoose';
 import Event from '../event/event.model';
 import { startOfDay, endOfDay } from 'date-fns';
 import Job from '../job/job.model';
+import { Types } from 'mongoose';
 
 interface ICreateNotificationProps {
   userId: string;
@@ -109,7 +110,22 @@ const getAllNotifications = async (query: Record<string, unknown>) => {
 };
 
 const getMyNotifications = async (userId: string) => {
-  const notifications = await Notification.find({ receiverId: userId }).sort({ createdAt: -1 });
+  if (!Types.ObjectId.isValid(userId)) {
+    throw new Error('Invalid userId');
+  }
+  const receiverObjectId = new Types.ObjectId(userId);
+
+  // 1) Mark all unread as read (and optionally confirm status)
+  await Notification.updateMany(
+    { receiverId: receiverObjectId, isRead: false },
+    { $set: { isRead: true, status: 'Confirmed' } } // remove status if you don't need it
+  );
+
+  // 2) Return all notifications for the user (sorted)
+  const notifications = await Notification.find({ receiverId: receiverObjectId })
+    .sort({ createdAt: -1 })
+    .lean();
+
   return notifications;
 };
 
@@ -195,6 +211,15 @@ const markAllAsRead = async (receiverId: string) => {
   return;
 };
 
+const getUnreadCount = async (receiverId: string) => {
+  const unreadCount = await Notification.countDocuments({
+    receiverId: receiverId,
+    isRead: false, // Filter by unread notifications
+  });
+
+  return unreadCount || 0;
+};
+
 // const sendMassNotification = async ({
 //   location,
 //   rangeKm,
@@ -272,5 +297,6 @@ export const notificationService = {
   getMySentedNotifications,
   markAsRead,
   markAllAsRead,
+  getUnreadCount,
   deleteNotification,
 };
