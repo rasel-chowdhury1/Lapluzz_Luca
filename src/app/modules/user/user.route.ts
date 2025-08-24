@@ -140,7 +140,7 @@ userRoutes
 
   .delete(
     '/delete-my-account',
-    auth('user'
+    auth(USER_ROLE.USER,USER_ROLE.ORGANIZER
     ),
     userController.deleteMyAccount,
   )
