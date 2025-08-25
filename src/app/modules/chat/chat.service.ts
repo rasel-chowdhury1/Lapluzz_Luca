@@ -282,6 +282,13 @@ const getMyChatList = async (userId: string, query: any) => {
 
     // Sorting the data by lastMessageCreatedAt
     data.sort((a, b) => {
+    // Prioritize "support" chatType but only if status is not "closed"
+    if (a.chat.status !== "closed" && a.chat.chatType === 'support' && (b.chat.status === "closed" || b.chat.chatType !== 'support')) {
+      return -1; // "support" chats come first unless status is closed
+    }
+    if (b.chat.status !== "closed" && b.chat.chatType === 'support' && (a.chat.status === "closed" || a.chat.chatType !== 'support')) {
+      return 1; // "support" chats come first unless status is closed
+    }
       const dateA = a.lastMessageCreatedAt ? new Date(a.lastMessageCreatedAt).getTime() : 0;
       const dateB = b.lastMessageCreatedAt ? new Date(b.lastMessageCreatedAt).getTime() : 0;
       return dateB - dateA;  // Sort in descending order
