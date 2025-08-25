@@ -11,6 +11,13 @@ router.post(
   wishListController.createOrUpdateFolder
 )
 
+
+.post(
+  '/remove-item',
+  auth(USER_ROLE.USER,USER_ROLE.ORGANIZER),
+  wishListController.removeServiceFromFolder
+)
+
 .patch(
   '/update',
   auth(USER_ROLE.USER),

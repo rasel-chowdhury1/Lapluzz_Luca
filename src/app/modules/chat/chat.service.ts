@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { connectedUsers } from '../../../socketIo';
+import { connectedUsers, emitNotificationOfReview } from '../../../socketIo';
 import AppError from '../../error/AppError';
 // import GroupChat from '../groupChat/groupChat.model';
 import Message from '../message/message.model';
@@ -12,62 +12,138 @@ import { ensureFriendship } from './chat.utils';
 const toObjectId = (id: string): mongoose.Types.ObjectId =>
   new mongoose.Types.ObjectId(id);
 
-const addNewChat = async (
-  // file: Express.Multer.File,
-  userId: string,
-  data: IChat,
-) => {
-  // Check if the creator exists
-  const isCreatorExist = await User.findOne({ _id: data?.createdBy });
+// const addNewChat = async (
+//   // file: Express.Multer.File,
+//   userId: string,
+//   data: IChat,
+// ) => {
+//   // Check if the creator exists
+//   const isCreatorExist = await User.findOne({ _id: data?.createdBy });
 
+//   if (!isCreatorExist) {
+//     throw new Error('Creator not found');
+//   }
+
+//   // Check if another user in the chat exist
+//   const anotherUser = await User.findOne({ _id: data?.users[0] });
+
+//   if (!anotherUser) {
+//     throw new Error('Another user not found');
+//   }
+
+//   // **Check for existing individual chat (not a group chat)**
+//   if (!data?.isGroupChat) {
+//     const existingChat = await Chat.findOne({
+//       users: { $all: data.users, $size: 2 }, // Ensure both users exist in the chat
+//       isGroupChat: false, // Must be an individual chat
+//     }).populate({
+//       path: 'users',
+//       select: 'sureName name email profileImage', // Select only what you need
+//     });
+
+//     console.log('=========existing chat ====>>>>> ', existingChat);
+
+//     if (existingChat) {
+//       // Exclude current user from response
+//       const filteredUsers = existingChat.users.filter(
+//         (user: any) => user._id.toString() !== userId.toString()
+//       );
+
+//       return {
+//         ...existingChat.toObject(),
+//         users: filteredUsers,
+//       };
+//     }
+//   }
+
+//   await ensureFriendship(isCreatorExist._id, anotherUser._id);
+//   // Create the chat in the database
+//   const result = await Chat.create(data);
+
+//   if (!result) return;
+//     // Populate users like existingChat
+//   const populatedResult = await Chat.findById(result._id).populate({
+//     path: 'users',
+//     select: 'sureName name email profileImage',
+//   });
+
+//     // Exclude current user from response
+//   const filteredUsers = populatedResult?.users.filter(
+//     (user: any) => user._id.toString() !== userId.toString()
+//   );
+
+//   return {
+//     ...populatedResult?.toObject(),
+//     users: filteredUsers,
+//   };
+// };
+
+
+
+const addNewChat = async (userId: string, chatData: IChat) => {
+  // Check if the creator exists
+  const isCreatorExist = await User.findById(chatData.createdBy);
   if (!isCreatorExist) {
     throw new Error('Creator not found');
   }
 
-  // Check if another user in the chat exist
-  const anotherUser = await User.findOne({ _id: data?.users[0] });
-
+  // Check if another user in the chat exists
+  const anotherUser = await User.findById(chatData.users[0]);
   if (!anotherUser) {
     throw new Error('Another user not found');
   }
 
-  // **Check for existing individual chat (not a group chat)**
-  if (!data?.isGroupChat) {
-    const existingChat = await Chat.findOne({
-      users: { $all: data.users, $size: 2 }, // Ensure both users exist in the chat
-      isGroupChat: false, // Must be an individual chat
-    }).populate({
-      path: 'users',
-      select: 'sureName name email profileImage', // Select only what you need
-    });
+  // Build the query for finding existing chats
+  const chatQuery: any = {
+    users: { $all: chatData.users, $size: 2 }, // Ensure both users are in the chat
+  };
 
-    console.log('=========existing chat ====>>>>> ', existingChat);
-
-    if (existingChat) {
-      // Exclude current user from response
-      const filteredUsers = existingChat.users.filter(
-        (user: any) => user._id.toString() !== userId.toString()
-      );
-
-      return {
-        ...existingChat.toObject(),
-        users: filteredUsers,
-      };
-    }
+  // Add context-specific filters if present
+  if (chatData.contextType && chatData.contextId) {
+    chatQuery.contextType = chatData.contextType;
+    chatQuery.contextId = chatData.contextId;
+  } else if (chatData.contextType && !chatData.contextId) {
+    throw new Error('contextId must be provided when contextType is set');
+  } else {
+    chatQuery.isGroupChat = false; // For individual chats, ensure it's not a group chat
   }
 
-  await ensureFriendship(isCreatorExist._id, anotherUser._id);
-  // Create the chat in the database
-  const result = await Chat.create(data);
+  // Find existing chat based on the query
+  const existingChat = await Chat.findOne(chatQuery).populate({
+    path: 'users',
+    select: 'sureName name email profileImage', // Select only necessary fields
+  });
 
-  if (!result) return;
-    // Populate users like existingChat
-  const populatedResult = await Chat.findById(result._id).populate({
+  // If an existing chat is found, return it with the current user excluded
+  if (existingChat) {
+    const filteredUsers = existingChat.users.filter(
+      (user: any) => user._id.toString() !== userId.toString()
+    );
+
+    return {
+      ...existingChat.toObject(),
+      users: filteredUsers,
+    };
+  }
+
+
+       // Create the new chat in the database
+  const newChat = new Chat({
+    ...chatData,
+    createdBy: userId, // Set the createdBy field to the current userId
+    ...(chatData.contextId && { chatType: 'custom' }),
+  });
+
+  // Save the chat to the database
+  const savedChat = await newChat.save();
+
+  // Populate the users for the newly created chat
+  const populatedResult = await Chat.findById(savedChat._id).populate({
     path: 'users',
     select: 'sureName name email profileImage',
   });
 
-    // Exclude current user from response
+  // Exclude the current user from the response
   const filteredUsers = populatedResult?.users.filter(
     (user: any) => user._id.toString() !== userId.toString()
   );
@@ -78,6 +154,59 @@ const addNewChat = async (
   };
 };
 
+// =========== deal close by chat id  ===========
+const dealCloseByChatById = async (userId: string, chatId: string, profileImage: string) => {
+  try {
+    // 1. Check if chat exists
+    const isExistChat = await Chat.findById(chatId).exec();
+    if (!isExistChat) {
+      throw new AppError(httpStatus.NOT_FOUND, 'Chat not found');
+    }
+
+    // 2. Check if the current user is the contextOwner
+    if (isExistChat.contextOwner && isExistChat.contextOwner.toString() !== userId) {
+    throw new AppError(httpStatus.FORBIDDEN, 'You are not authorized to close this chat');
+    }
+
+    // 3. Update chat status to "closed"
+    await Chat.findByIdAndUpdate(chatId, { status: 'closed' }).exec();
+
+    // 4. Determine the other user in the chat (the receiver)
+    const receiverId = userId !== isExistChat.users[0].toString()
+      ? isExistChat.users[0]
+      : isExistChat.users[1];
+ 
+
+       const contextId = isExistChat?.contextId ? new mongoose.Types.ObjectId(isExistChat?.contextId) : undefined;
+    // 5. Prepare the notification message
+    const userMsg = {
+      image: profileImage,
+      text: `✅ Deal closed! You can now leave feedback for ${isExistChat.chatName}`,
+      name: isExistChat.chatName,
+      types: isExistChat.contextType,
+      notificationFor: contextId, // Represents the action or event type
+      fullName: '', // optional, can be added if needed
+    };
+
+    // 6. Emit the notification to the receiver
+    await emitNotificationOfReview({
+      userId: new mongoose.Types.ObjectId(userId),
+      receiverId: receiverId.toString(),
+      userMsg,
+      type: 'review',
+    });
+
+    // 7. Return success message
+    return {
+      success: true,
+      message: 'Chat successfully closed and notification sent to the receiver.',
+    };
+  } catch (error) {
+    // Handle unexpected errors
+    console.error('Error closing chat:', error);
+    throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, 'An error occurred while trying to close the chat');
+  }
+};
 
 // =========== Get my chat list start ===========
 const getMyChatList = async (userId: string, query: any) => {
@@ -221,6 +350,7 @@ const getChatById = async (chatId: string) => {
 
   return result;
 };
+
 
 const leaveUserFromSpecific = async (payload: any) => {
   const { chatId, userId, fullName } = payload; // Expect chatId and userId in the payload
@@ -451,6 +581,7 @@ const leaveUserFromSpecific = async (payload: any) => {
 
 export const ChatService = {
   addNewChat,
+  dealCloseByChatById,
   getMyChatList,
   // getConnectionUsersOfSpecificUser,
   // getOnlineConnectionUsersOfSpecificUser,

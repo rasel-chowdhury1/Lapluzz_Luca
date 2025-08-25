@@ -365,12 +365,52 @@ const getWishlistFolderDetailsByName = async (
   };
 };
 
+const removeServiceFromFolder = async (
+  userId: string,
+  folderName: string,
+  serviceType: 'businesses' | 'events' | 'jobs',
+  serviceId: string
+) => {
+  // Find the wishlist for the user
+  const wishlist = await WishList.findOne({ userId });
 
+  if (!wishlist) {
+    throw new AppError(httpStatus.NOT_FOUND, 'No wishlist found for this user');
+  }
+
+  // Find the folder with the given folderName
+  const folder = wishlist.folders.find(f => f.folderName === folderName);
+
+  if (!folder) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Folder not found');
+  }
+
+  // Remove the service from the corresponding array (businesses, events, or jobs)
+  switch (serviceType) {
+    case 'businesses':
+      folder.businesses.pull(serviceId);
+      break;
+    case 'events':
+      folder.events.pull(serviceId);
+      break;
+    case 'jobs':
+      folder.jobs.pull(serviceId);
+      break;
+    default:
+      throw new AppError(httpStatus.BAD_REQUEST, 'Invalid service type');
+  }
+
+  // Save the updated wishlist
+  await wishlist.save();
+  
+  return wishlist;
+};
 
 export const wishListService = {
   createOrUpdateFolder,
   getWishlistByUser,
   getCheckWishlistByUser,
   updateFolderIsActive,
-  getWishlistFolderDetailsByName
+  getWishlistFolderDetailsByName,
+  removeServiceFromFolder
 };

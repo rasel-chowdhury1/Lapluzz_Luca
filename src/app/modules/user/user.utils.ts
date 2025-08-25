@@ -21,8 +21,8 @@ export const generateLocation = (longitude: string, latitude: string) => {
     };
   
 }
-export const generateTokens = (userId: string, role: string, fullName?: string, email?: string, phone?: string) => {
-  const jwtPayload = { userId, role, fullName, email, phone };
+export const generateTokens = (userId: string, role: string, email?: string, fullName?: string, phone?: string, profileImage?: string) => {
+  const jwtPayload = { userId, role, fullName, email, phone, profileImage };
 
   const accessToken = createToken({
     payload: jwtPayload,
@@ -40,6 +40,6 @@ export const generateTokens = (userId: string, role: string, fullName?: string, 
 };
 
 export const generateAndReturnTokens = (user: any) => {
-    const { accessToken, refreshToken } = generateTokens(user._id.toString(), user.role, user.fullName, user.email);
+    const { accessToken, refreshToken } = generateTokens(user._id.toString(), user.role, user.email, user.fullName, user?.phone, user?.profileImage);
     return { user, accessToken, refreshToken };
   };

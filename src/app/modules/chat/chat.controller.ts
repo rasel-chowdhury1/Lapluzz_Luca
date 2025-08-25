@@ -4,10 +4,13 @@ import catchAsync from '../../utils/catchAsync';
 import { storeFile } from '../../utils/fileHelper';
 import sendResponse from '../../utils/sendResponse';
 import { ChatService } from './chat.service';
+import Business from '../business/business.model';
+import Job from '../job/job.model';
 
 const addNewChat = catchAsync(async (req: Request, res: Response) => {
-  const { userId } = req.user;
-  const { users = [], isGroupChat = false } = req.body;
+  const { userId, fullName } = req.user;
+  const { users = [], isGroupChat = false, contextType, contextId } = req.body;
+
   // Ensure the current userId is included in the `users` array if not already present
   if (!users.includes(userId)) {
     users.push(userId); // Add the current userId to the users array
@@ -15,7 +18,7 @@ const addNewChat = catchAsync(async (req: Request, res: Response) => {
 
   // Check if the users array has exactly 2 users
   if (users.length !== 2) {
-    sendResponse(res, {
+    return sendResponse(res, {
       statusCode: httpStatus.BAD_REQUEST,
       success: false,
       message: 'Chat can only be created with exactly two users.',
@@ -23,24 +26,72 @@ const addNewChat = catchAsync(async (req: Request, res: Response) => {
     });
   }
 
-  // Creating chat data to be saved
+  // Validate contextType and contextId
+  const validContextTypes = ['business', 'event', 'job'];
+  if (contextType && !validContextTypes.includes(contextType)) {
+    return sendResponse(res, {
+      statusCode: httpStatus.BAD_REQUEST,
+      success: false,
+      message: 'Invalid contextType provided',
+      data: '',
+    });
+  }
+
+  if (contextType && !contextId) {
+    return sendResponse(res, {
+      statusCode: httpStatus.BAD_REQUEST,
+      success: false,
+      message: 'contextId must be provided when contextType is set',
+      data: '',
+    });
+  }
+
+  // Validate contextId based on contextType
+  const contextValidationMap: { [key: string]: any } = {
+    business: Business,
+    event: Event,
+    job: Job,
+  };
+
+  if (contextType) {
+    const contextModel = contextValidationMap[contextType];
+    const context = await contextModel.findById(contextId);
+    
+    if (!context) {
+      return sendResponse(res, {
+        statusCode: httpStatus.BAD_REQUEST,
+        success: false,
+        message: `Invalid contextId for ${contextType}.`,
+        data: '',
+      });
+    }
+
+    req.body.contextOwner = context.author;
+  }
+
+  // Prepare chat data to be saved
   const chatData = {
-    ...req.body, // Spread the original request body
-    createdBy: userId, // Set the `createdBy` to the current userId
-    users, // Use the modified users array
-    isGroupChat, // Ensure isGroupChat is false as per the body or passed explicitly
+    ...req.body,
+    userName: fullName,
+    createdBy: userId,
+    users, // Modified users array
+    isGroupChat, // Group chat status
   };
 
   console.log('chat data ====>>>> ', { chatData });
+
+  // Call the service to add the new chat
   const result = await ChatService.addNewChat(userId, chatData);
 
-  sendResponse(res, {
+  // Send response after chat is created
+  return sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,
     message: 'Chat is created successfully!',
     data: result,
   });
 });
+
 
 
 
@@ -70,6 +121,24 @@ const getMyChatList = catchAsync(async (req: Request, res: Response) => {
     statusCode: 200,
     success: true,
     message: 'Chat retrieved successfully',
+    data: result,
+  });
+});
+
+
+
+const dealCloseByChatById = catchAsync(async (req: Request, res: Response) => {
+  const { userId, profileImage } = req.user;
+  const { chatId } = req.params;
+
+  // Call the service to close the deal by chat ID
+  const result = await ChatService.dealCloseByChatById(userId, chatId, profileImage);
+
+  // Send a success response with a meaningful message
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'The chat has been successfully closed. The deal is now complete and no further action is needed.',
     data: result,
   });
 });
@@ -243,6 +312,7 @@ const getChatById = async (req: Request, res: Response, next: NextFunction) => {
 
 export const ChatController = {
   addNewChat,
+  dealCloseByChatById,
   // getUserChats,
   // getConnectionUsersOfSpecificUser,
   // getOnlineConnectionUsersOfSpecificUser,

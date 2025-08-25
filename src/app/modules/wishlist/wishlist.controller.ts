@@ -23,6 +23,38 @@ const createOrUpdateFolder = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+
+const removeServiceFromFolder = catchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.user; // Get user ID from the request (assuming it's set by auth middleware)
+  const { folderName, businessId, eventId, jobId } = req.body;
+
+  // Validate that at least one of businessId, eventId, or jobId is provided
+  const hasValidInput = businessId || eventId || jobId;
+  if (!hasValidInput) {
+    sendResponse(res, {
+    statusCode: 400,
+    success: false,
+    message: 'You must provide at least one ID: businessId, eventId, or jobId',
+    data: ""
+  });
+  }
+
+    // Call the remove service function from the service layer
+  const result = await wishListService.removeServiceFromFolder(
+    userId,
+    folderName,
+    businessId ? 'businesses' : eventId ? 'events' : 'jobs', // Identify service type dynamically
+    businessId || eventId || jobId // Pass the appropriate ID
+  );
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Wishlist item remove successfully',
+    data: result
+  });
+});
+
 const getWishlist = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user;
 
@@ -83,5 +115,6 @@ export const wishListController = {
   getWishlist,
   getWishlistWithTotals,
   updateFolderIsActive,
-  getWishlistFolderDetailsByName
+  getWishlistFolderDetailsByName,
+  removeServiceFromFolder
 };

@@ -939,3 +939,55 @@ export const emitSearchNotificationToBusiness = async ({
 };
 
 
+export const emitNotificationOfReview = async ({
+  userId,
+  receiverId,
+  userMsg,
+  type,
+}: {
+  userId: mongoose.Types.ObjectId;
+  receiverId: string;
+  userMsg?: {
+    image?: string;
+    text: string;
+    name: string;
+    types?: string;
+    notificationFor?: mongoose.Types.ObjectId;
+    fullName?: string;
+  };
+  type?: string;
+}): Promise<void> => {
+
+  if (!io) throw new Error('Socket.IO is not initialized');
+
+    const userSocket = connectedUsers.get(receiverId.toString());
+
+    const unreadCount = await Notification.countDocuments({
+      receiverId: receiverId,
+      isRead: false,
+    });
+
+    // 3. Emit socket if online
+    if (userMsg && userSocket) {
+      io.to(userSocket.socketID).emit('notification', {
+        success: true,
+        statusCode: 200,
+        unreadCount: unreadCount + 1,
+        message: userMsg,
+      });
+    }
+
+    // 4. Save notification
+    await Notification.create({
+      userId, // sender
+      receiverId, // receiver is the interested user
+      message: userMsg,
+      type: type ,
+      isRead: false,
+      timestamp: new Date(),
+    });
+
+
+  }
+
+

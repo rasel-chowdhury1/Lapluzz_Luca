@@ -12,6 +12,14 @@ const ChatSchema = new Schema<IChat>(
         required: true,
       },
     ],
+    userName: {
+      type: String,
+      default: ""
+    },
+    chatName: {
+      type: String,
+      default: ""
+    },
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: 'User',
@@ -30,6 +38,10 @@ const ChatSchema = new Schema<IChat>(
       ref: 'User',
       default: null, // Set default to null
     },
+    contextOwner: {
+      type: Schema.Types.ObjectId,
+      default: null,
+    },
     contextType: { // Optional field for business, event, or job
       type: String,
       enum: ['business', 'event', 'job', null],
@@ -44,6 +56,11 @@ const ChatSchema = new Schema<IChat>(
       enum: ['open', 'closed'],
       default: 'open',
     },
+    chatType: {
+      type: String,
+      enum: ["custom", "support"],
+      default: "support"
+    }
   },
   {
     timestamps: true,

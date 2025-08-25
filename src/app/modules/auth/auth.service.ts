@@ -35,12 +35,14 @@ const login = async ( payload: TLogin, req: Request) => {
     fullName?: string;
     email: string;
     phone?: string;
+    profileImage?: string;
   } = {
     fullName: user?.name,
     email: user.email,
     phone: user.phone,
     userId: user?._id?.toString() as string,
     role: user?.role,
+    profileImage: user?.profileImage
   };
 
 

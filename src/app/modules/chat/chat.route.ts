@@ -13,7 +13,15 @@ router.post(
   '/create',
   auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
   ChatController.addNewChat,
+)
+
+
+.patch(
+  '/dealClose/:chatId',
+  auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
+  ChatController.dealCloseByChatById,
 );
+
 
 
 
