@@ -34,8 +34,7 @@ router.post(
     
     .get(
         '/:eventId',
-        eventEngagementStatsController.getStats
-    
+        eventEngagementStatsController.getStats    
 );
 
 export const eventEngagementStatsRoutes = router;

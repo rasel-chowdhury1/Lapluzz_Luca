@@ -185,10 +185,25 @@ const getSubscrptionEvent = async (userId: string, query: Record<string, any>) =
     const id = stat.eventId.toString();
     engagementMap[id] = {
       totalLikes: stat.likes?.length || 0,
-      totalComments: stat.comments?.length || 0,
+      totalComments: 0,
       isLiked: stat.likes?.some((like) => like.toString() === userId) || false,
     };
 
+    // ⭐ Calculate total comments including replies
+    const totalCommentsWithReplies = stat.comments.reduce((acc, comment) => {
+      // Count the comment itself
+      acc += 1;
+
+      // Count the replies for this comment
+      if (comment.replies && Array.isArray(comment.replies)) {
+        acc += comment.replies.length;
+      }
+
+      return acc;
+    }, 0);
+
+    // Update totalComments to include both comments and replies
+    engagementMap[id].totalComments = totalCommentsWithReplies;
     
   });
 
@@ -327,9 +342,26 @@ const getUnsubscriptionEvent = async (userId: string, query: Record<string, any>
     const id = stat.eventId.toString();
     engagementMap[id] = {
       totalLikes: stat.likes?.length || 0,
-      totalComments: stat.comments?.length || 0,
+      totalComments: 0,
       isLiked: stat.likes?.some((like) => like.toString() === userId) || false,
     };
+
+
+    // ⭐ Calculate total comments including replies
+    const totalCommentsWithReplies = stat.comments.reduce((acc, comment) => {
+      // Count the comment itself
+      acc += 1;
+
+      // Count the replies for this comment
+      if (comment.replies && Array.isArray(comment.replies)) {
+        acc += comment.replies.length;
+      }
+
+      return acc;
+    }, 0);
+
+    // Update totalComments to include both comments and replies
+    engagementMap[id].totalComments = totalCommentsWithReplies;
   });
 
     // ⭐ Fetch user wishlist events
@@ -417,13 +449,26 @@ const getEventById = async (userId: string, id: string) => {
     totalReviews: 0,
   };
 
-  // ⭐ Get Engagement Stats
+    // ⭐ Get Engagement Stats (likes/comments)
   const engagement = await EventEngagementStats.findOne({ eventId })
     .select('likes comments');
 
+  // Calculate total comments, including replies
+  const totalCommentsWithReplies = engagement?.comments.reduce((acc, comment) => {
+    // Count the comment itself
+    acc += 1;
+
+    // Count the replies for this comment
+    if (comment.replies && Array.isArray(comment.replies)) {
+      acc += comment.replies.length;
+    }
+
+    return acc;
+  }, 0) || 0;
+
   const engagementInfo = {
     totalLikes: engagement?.likes?.length || 0,
-    totalComments: engagement?.comments?.length || 0,
+    totalComments: totalCommentsWithReplies,
     isLiked: engagement?.likes?.some((u) => u.toString() === userId) || false,
   };
 
@@ -495,12 +540,26 @@ const getMyEvents = async (userId: string) => {
       // ⭐ Get engagement stats
       const engagement = await EventEngagementStats.findOne({ eventId }).select('likes comments');
 
+      // Calculate total comments, including replies
+      const totalCommentsWithReplies = engagement?.comments.reduce((acc, comment) => {
+        // Count the comment itself
+        acc += 1;
+
+        // Count the replies for this comment
+        if (comment.replies && Array.isArray(comment.replies)) {
+          acc += comment.replies.length;
+        }
+
+        return acc;
+      }, 0) || 0;
+
       const engagementInfo = {
         totalLikes: engagement?.likes?.length || 0,
-        totalComments: engagement?.comments?.length || 0,
+        totalComments: totalCommentsWithReplies,
         isLiked: engagement?.likes?.some((u) => u.toString() === userId) || false,
       };
 
+      
       // ⭐ Get reviews
       const reviews = await EventReview.find({ eventId })
         .populate('userId', 'name profileImage')
