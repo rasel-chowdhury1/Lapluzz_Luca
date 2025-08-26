@@ -30,6 +30,12 @@ router.post(
     auth(USER_ROLE.USER, USER_ROLE.ORGANIZER), 
     businessEngagementStatsController.comment
 )
+
+.post(
+    '/comment/reply', 
+    auth(USER_ROLE.USER, USER_ROLE.ORGANIZER), 
+    businessEngagementStatsController.replyCommentofSpecificComment
+)
     
 .get(
     "/comments/:businessId", businessEngagementStatsController.getBusinessComments)

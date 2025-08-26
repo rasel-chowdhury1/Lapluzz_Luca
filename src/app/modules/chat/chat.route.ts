@@ -1,10 +1,8 @@
 import express, { NextFunction, Request, Response } from 'express';
 import fileUpload from '../../middleware/fileUpload';
-import parseData from '../../middleware/parseData';
 import { ChatController } from './chat.controller';
 import auth from '../../middleware/auth';
 import { USER_ROLE } from '../user/user.constants';
-const upload = fileUpload('./public/uploads/chat');
 
 const router = express.Router();
 

@@ -18,44 +18,181 @@ const getAllPosts = async (query: Record<string, any>) => {
   return posts;
 };
 
-// const getPostById = async (id: string) => {
-//   const post = await PostCommunity.findById(id).populate('creator', 'name email');
-//   if (!post) throw new AppError(httpStatus.NOT_FOUND, 'Post not found');
-//   return post;
+
+// const getPostById = async (id: string, userId: string) => {
+//   const posts = await PostCommunity.aggregate([
+//     {
+//       $match: {
+//         _id: new mongoose.Types.ObjectId(id)
+//       }
+//     },
+//     {
+//       $lookup: {
+//         from: 'postcommunityengagementstats',
+//         localField: '_id',
+//         foreignField: 'postId',
+//         as: 'engagement'
+//       }
+//     },
+//     {
+//       $addFields: {
+//         engagementStats: { $arrayElemAt: ['$engagement', 0] }
+//       }
+//     },
+//     {
+//       $addFields: {
+//         totalLikes: {
+//           $size: { $ifNull: ['$engagementStats.likes', []] }
+//         },
+//         totalComments: {
+//           $add: [
+//             { $size: { $ifNull: ['$engagementStats.comments', []] } }, // Count the comments
+//             { 
+//               $sum: { // Sum the replies for each comment
+//                 $map: {
+//                   input: { $ifNull: ['$engagementStats.comments.replies', []] },
+//                   as: 'reply',
+//                   in: { $size: { $ifNull: ['$$reply', []] } } // Count replies for each comment
+//                 }
+//               }
+//             },
+//           ],
+//         },
+//         isLiked: {
+//           $in: [new mongoose.Types.ObjectId(userId), { $ifNull: ['$engagementStats.likes', []] }]
+//         }
+//       }
+//     },
+//     // 👤 Populate creator details
+//     {
+//       $lookup: {
+//         from: 'users',
+//         let: { creatorId: '$creator' },
+//         pipeline: [
+//           { $match: { $expr: { $eq: ['$_id', '$$creatorId'] } } },
+//           {
+//             $project: {
+//               name: 1,
+//               sureName: 1,
+//               profileImage: 1
+//             }
+//           }
+//         ],
+//         as: 'creator'
+//       }
+//     },
+//     {
+//       $unwind: {
+//         path: '$creator',
+//         preserveNullAndEmptyArrays: true
+//       }
+//     },
+//     // 💬 Populate comments.user details
+//     {
+//       $lookup: {
+//         from: 'users',
+//         localField: 'engagementStats.comments.user',
+//         foreignField: '_id',
+//         as: 'commentUsers'
+//       }
+//     },
+//     {
+//       $addFields: {
+//         comments: {
+//           $map: {
+//             input: { $ifNull: ['$engagementStats.comments', []] },
+//             as: 'comment',
+//             in: {
+//               text: '$$comment.text',
+//               user: {
+//                 $let: {
+//                   vars: {
+//                     matchedUser: {
+//                       $arrayElemAt: [
+//                         {
+//                           $filter: {
+//                             input: '$commentUsers',
+//                             as: 'u',
+//                             cond: { $eq: ['$$u._id', '$$comment.user'] }
+//                           }
+//                         },
+//                         0
+//                       ]
+//                     }
+//                   },
+//                   in: {
+//                     _id: '$$matchedUser._id',
+//                     name: '$$matchedUser.name',
+//                     profileImage: '$$matchedUser.profileImage',
+//                     role: '$$matchedUser.role',
+//                   }
+//                 }
+//               }
+//             }
+//           }
+//         }
+//       }
+//     },
+//     {
+//       $project: {
+//         engagement: 0,
+//         engagementStats: 0,
+//         commentUsers: 0
+//       }
+//     }
+//   ]);
+
+//   if (!posts.length) {
+//     throw new AppError(httpStatus.NOT_FOUND, 'Post not found');
+//   }
+
+//   return posts[0];
 // };
+
 
 const getPostById = async (id: string, userId: string) => {
   const posts = await PostCommunity.aggregate([
     {
       $match: {
-        _id: new mongoose.Types.ObjectId(id)
-      }
+        _id: new mongoose.Types.ObjectId(id),
+      },
     },
     {
       $lookup: {
         from: 'postcommunityengagementstats',
         localField: '_id',
         foreignField: 'postId',
-        as: 'engagement'
-      }
+        as: 'engagement',
+      },
     },
     {
       $addFields: {
-        engagementStats: { $arrayElemAt: ['$engagement', 0] }
-      }
+        engagementStats: { $arrayElemAt: ['$engagement', 0] },
+      },
     },
     {
       $addFields: {
         totalLikes: {
-          $size: { $ifNull: ['$engagementStats.likes', []] }
+          $size: { $ifNull: ['$engagementStats.likes', []] },
         },
         totalComments: {
-          $size: { $ifNull: ['$engagementStats.comments', []] }
+          $add: [
+            { $size: { $ifNull: ['$engagementStats.comments', []] } }, // Count the comments
+            {
+              $sum: { // Sum the replies for each comment
+                $map: {
+                  input: { $ifNull: ['$engagementStats.comments.replies', []] },
+                  as: 'reply',
+                  in: { $size: { $ifNull: ['$$reply', []] } }, // Count replies for each comment
+                },
+              },
+            },
+          ],
         },
         isLiked: {
-          $in: [new mongoose.Types.ObjectId(userId), { $ifNull: ['$engagementStats.likes', []] }]
-        }
-      }
+          $in: [new mongoose.Types.ObjectId(userId), { $ifNull: ['$engagementStats.likes', []] }],
+        },
+      },
     },
     // 👤 Populate creator details
     {
@@ -68,18 +205,18 @@ const getPostById = async (id: string, userId: string) => {
             $project: {
               name: 1,
               sureName: 1,
-              profileImage: 1
-            }
-          }
+              profileImage: 1,
+            },
+          },
         ],
-        as: 'creator'
-      }
+        as: 'creator',
+      },
     },
     {
       $unwind: {
         path: '$creator',
-        preserveNullAndEmptyArrays: true
-      }
+        preserveNullAndEmptyArrays: true,
+      },
     },
     // 💬 Populate comments.user details
     {
@@ -87,8 +224,17 @@ const getPostById = async (id: string, userId: string) => {
         from: 'users',
         localField: 'engagementStats.comments.user',
         foreignField: '_id',
-        as: 'commentUsers'
-      }
+        as: 'commentUsers',
+      },
+    },
+    // 💬 Populate replies.user details inside comments
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'engagementStats.comments.replies.user',
+        foreignField: '_id',
+        as: 'replyUsers',
+      },
     },
     {
       $addFields: {
@@ -107,33 +253,67 @@ const getPostById = async (id: string, userId: string) => {
                           $filter: {
                             input: '$commentUsers',
                             as: 'u',
-                            cond: { $eq: ['$$u._id', '$$comment.user'] }
-                          }
+                            cond: { $eq: ['$$u._id', '$$comment.user'] },
+                          },
                         },
-                        0
-                      ]
-                    }
+                        0,
+                      ],
+                    },
                   },
                   in: {
                     _id: '$$matchedUser._id',
                     name: '$$matchedUser.name',
                     profileImage: '$$matchedUser.profileImage',
                     role: '$$matchedUser.role',
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                  },
+                },
+              },
+              replies: {
+                $map: {
+                  input: { $ifNull: ['$$comment.replies', []] },
+                  as: 'reply',
+                  in: {
+                    text: '$$reply.text',
+                    user: {
+                      $let: {
+                        vars: {
+                          matchedReplyUser: {
+                            $arrayElemAt: [
+                              {
+                                $filter: {
+                                  input: '$replyUsers',
+                                  as: 'ru',
+                                  cond: { $eq: ['$$ru._id', '$$reply.user'] },
+                                },
+                              },
+                              0,
+                            ],
+                          },
+                        },
+                        in: {
+                          _id: '$$matchedReplyUser._id',
+                          name: '$$matchedReplyUser.name',
+                          profileImage: '$$matchedReplyUser.profileImage',
+                          role: '$$matchedReplyUser.role',
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     },
     {
       $project: {
         engagement: 0,
         engagementStats: 0,
-        commentUsers: 0
-      }
-    }
+        commentUsers: 0,
+        replyUsers: 0,
+      },
+    },
   ]);
 
   if (!posts.length) {
@@ -175,8 +355,23 @@ const getMyPosts = async (userId: string) => {
         totalLikes: {
           $size: { $ifNull: ['$engagementStats.likes', []] }
         },
+        // totalComments: {
+        //   $size: { $ifNull: ['$engagementStats.comments', []] }
+        // },
+        // Counting comments and replies
         totalComments: {
-          $size: { $ifNull: ['$engagementStats.comments', []] }
+          $add: [
+            { $size: { $ifNull: ['$engagementStats.comments', []] } }, // Count the comments
+            { 
+              $sum: { // Sum the replies for each comment
+                $map: {
+                  input: { $ifNull: ['$engagementStats.comments.replies', []] },
+                  as: 'reply',
+                  in: { $size: { $ifNull: ['$$reply', []] } } // Count replies for each comment
+                }
+              }
+            },
+          ],
         },
         isLiked: {
           $in: [new mongoose.Types.ObjectId(userId), { $ifNull: ['$engagementStats.likes', []] }]
@@ -217,6 +412,8 @@ const getMyPosts = async (userId: string) => {
   return posts;
 };
 
+
+
 // ✅ Get latest posts with total likes/comments (sorted by createdAt DESC)
 const getLatestPosts = async (userId: string, limit: number = 10) => {
   const posts = await PostCommunity.aggregate([
@@ -246,7 +443,18 @@ const getLatestPosts = async (userId: string, limit: number = 10) => {
           $size: { $ifNull: ['$engagementStats.likes', []] }
         },
         totalComments: {
-          $size: { $ifNull: ['$engagementStats.comments', []] }
+          $add: [
+            { $size: { $ifNull: ['$engagementStats.comments', []] } }, // Count the comments
+            { 
+              $sum: { // Sum the replies for each comment
+                $map: {
+                  input: { $ifNull: ['$engagementStats.comments.replies', []] },
+                  as: 'reply',
+                  in: { $size: { $ifNull: ['$$reply', []] } } // Count replies for each comment
+                }
+              }
+            },
+          ],
         },
         isLiked: {
           $in: [new mongoose.Types.ObjectId(userId), { $ifNull: ['$engagementStats.likes', []] }]
@@ -330,9 +538,18 @@ const getSpecificCategoryOrRegionPosts = async (
         totalLikes: {
           $size: { $ifNull: ['$engagementStats.likes', []] },
         },
-        totalComments: {
-          $size: { $ifNull: ['$engagementStats.comments', []] },
-        },
+        $add: [
+            { $size: { $ifNull: ['$engagementStats.comments', []] } }, // Count the comments
+            { 
+              $sum: { // Sum the replies for each comment
+                $map: {
+                  input: { $ifNull: ['$engagementStats.comments.replies', []] },
+                  as: 'reply',
+                  in: { $size: { $ifNull: ['$$reply', []] } } // Count replies for each comment
+                }
+              }
+            },
+          ],
         isLiked: {
           $in: [new mongoose.Types.ObjectId(userId), { $ifNull: ['$engagementStats.likes', []] }],
         },
@@ -400,7 +617,18 @@ const getMostViewedPosts = async (userId: string, limit: number = 10) => {
           $size: { $ifNull: ['$engagementStats.likes', []] }
         },
         totalComments: {
-          $size: { $ifNull: ['$engagementStats.comments', []] }
+          $add: [
+            { $size: { $ifNull: ['$engagementStats.comments', []] } }, // Count the comments
+            { 
+              $sum: { // Sum the replies for each comment
+                $map: {
+                  input: { $ifNull: ['$engagementStats.comments.replies', []] },
+                  as: 'reply',
+                  in: { $size: { $ifNull: ['$$reply', []] } } // Count replies for each comment
+                }
+              }
+            },
+          ],
         },
         isLiked: {
           $in: [new mongoose.Types.ObjectId(userId), { $ifNull: ['$engagementStats.likes', []] }]
@@ -476,7 +704,18 @@ const getMostCommentedPosts = async (userId: string, limit: number = 10) => {
           $size: { $ifNull: ['$engagementStats.likes', []] }
         },
         totalComments: {
-          $size: { $ifNull: ['$engagementStats.comments', []] }
+          $add: [
+            { $size: { $ifNull: ['$engagementStats.comments', []] } }, // Count the comments
+            { 
+              $sum: { // Sum the replies for each comment
+                $map: {
+                  input: { $ifNull: ['$engagementStats.comments.replies', []] },
+                  as: 'reply',
+                  in: { $size: { $ifNull: ['$$reply', []] } } // Count replies for each comment
+                }
+              }
+            },
+          ],
         },
         isLiked: {
           $in: [new mongoose.Types.ObjectId(userId), { $ifNull: ['$engagementStats.likes', []] }]

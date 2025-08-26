@@ -30,6 +30,12 @@ router.get(
         '/comment',
         auth(USER_ROLE.USER, USER_ROLE.ORGANIZER),
         postCommunityEngagementStatsController.comment
-    );
+    )
+
+    .post(
+        "/reply",
+        auth(USER_ROLE.USER, USER_ROLE.ORGANIZER),
+        postCommunityEngagementStatsController.addReplyOfSpecificComment
+    )
 
 export const PostCommunityEngagementStatsRoutes = router;

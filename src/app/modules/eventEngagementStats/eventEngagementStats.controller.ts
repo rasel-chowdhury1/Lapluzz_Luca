@@ -45,6 +45,32 @@ const comment = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const replyCommentofSpecificComment = catchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.user; // Extract the user ID from the request user object
+  const { eventId, commentId, text } = req.body; // Extract businessId, commentId, and reply text from the request body
+
+  // Check if any required fields are missing
+    if (!eventId || !commentId || !text) {
+      sendResponse(res, {
+        statusCode: 400,
+        success: false,
+        message: 'Event ID, Comment ID, and reply text are required.',
+        data: ""
+      });
+    }
+
+  // Call the service to reply to the comment
+  const result = await eventEngagementStatsService.replyCommentofSpecificComment(eventId, commentId, userId, text);
+
+  // Send a response indicating that the reply was successfully added
+  sendResponse(res, {
+    statusCode: 201,
+    success: true,
+    message: 'Reply to the comment was successfully added', // Clear and meaningful message
+    data: result
+  });
+});
+
 const getStats = catchAsync(async (req: Request, res: Response) => {
   const result = await eventEngagementStatsService.getStats(req.params.eventId);
 
@@ -73,5 +99,6 @@ export const eventEngagementStatsController = {
   unlike,
   comment,
   getStats,
+  replyCommentofSpecificComment,
   getEventComments
 };

@@ -81,51 +81,58 @@ const toObjectId = (id: string): mongoose.Types.ObjectId =>
 
 
 const addNewChat = async (userId: string, chatData: IChat) => {
-  // Check if the creator exists
-  const isCreatorExist = await User.findById(chatData.createdBy);
-  if (!isCreatorExist) {
-    throw new Error('Creator not found');
-  }
+    // Check if the creator exists
+    const isCreatorExist = await User.findById(chatData.createdBy);
+    if (!isCreatorExist) {
+      throw new Error('Creator not found');
+    }
 
-  // Check if another user in the chat exists
-  const anotherUser = await User.findById(chatData.users[0]);
-  if (!anotherUser) {
-    throw new Error('Another user not found');
-  }
+    // Check if another user in the chat exists
+    const anotherUser = await User.findById(chatData.users[0]);
+    if (!anotherUser) {
+      throw new Error('Another user not found');
+    }
 
-  // Build the query for finding existing chats
-  const chatQuery: any = {
-    users: { $all: chatData.users, $size: 2 }, // Ensure both users are in the chat
-  };
-
-  // Add context-specific filters if present
-  if (chatData.contextType && chatData.contextId) {
-    chatQuery.contextType = chatData.contextType;
-    chatQuery.contextId = chatData.contextId;
-  } else if (chatData.contextType && !chatData.contextId) {
-    throw new Error('contextId must be provided when contextType is set');
-  } else {
-    chatQuery.isGroupChat = false; // For individual chats, ensure it's not a group chat
-  }
-
-  // Find existing chat based on the query
-  const existingChat = await Chat.findOne(chatQuery).populate({
-    path: 'users',
-    select: 'sureName name email profileImage', // Select only necessary fields
-  });
-
-  // If an existing chat is found, return it with the current user excluded
-  if (existingChat) {
-    const filteredUsers = existingChat.users.filter(
-      (user: any) => user._id.toString() !== userId.toString()
-    );
-
-    return {
-      ...existingChat.toObject(),
-      users: filteredUsers,
+    // Build the query for finding existing chats
+    const chatQuery: any = {
+      users: { $all: chatData.users, $size: 2 }, // Ensure both users are in the chat
     };
-  }
 
+    // Add context-specific filters if present
+    if (chatData.contextType && chatData.contextId) {
+      chatQuery.contextType = chatData.contextType;
+      chatQuery.contextId = chatData.contextId;
+      chatQuery.status = "open";
+    } else if (chatData.contextType && !chatData.contextId) {
+      throw new Error('contextId must be provided when contextType is set');
+    } else {
+      chatQuery.isGroupChat = false; // For individual chats, ensure it's not a group chat
+    }
+
+    // Find existing chat based on the query
+    const existingChat = await Chat.findOne(chatQuery).populate({
+      path: 'users',
+      select: 'sureName name email profileImage', // Select only necessary fields
+    });
+
+    // If an existing chat is found, return it with the current user excluded
+    if (existingChat) {
+      const filteredUsers = existingChat.users.filter(
+        (user: any) => user._id.toString() !== userId.toString()
+      );
+
+      return {
+        ...existingChat.toObject(),
+        users: filteredUsers,
+      };
+    }
+
+
+  console.log({
+    ...chatData,
+    createdBy: userId, // Set the createdBy field to the current userId
+    ...(chatData.contextId && { chatType: 'custom' }),
+  })
 
        // Create the new chat in the database
   const newChat = new Chat({
@@ -136,6 +143,8 @@ const addNewChat = async (userId: string, chatData: IChat) => {
 
   // Save the chat to the database
   const savedChat = await newChat.save();
+
+  console.log("new chat ->>> ", newChat)
 
   // Populate the users for the newly created chat
   const populatedResult = await Chat.findById(savedChat._id).populate({
@@ -163,6 +172,7 @@ const dealCloseByChatById = async (userId: string, chatId: string, profileImage:
       throw new AppError(httpStatus.NOT_FOUND, 'Chat not found');
     }
 
+    console.log("chaekc ->>> ",isExistChat.contextOwner, userId)
     // 2. Check if the current user is the contextOwner
     if (isExistChat.contextOwner && isExistChat.contextOwner.toString() !== userId) {
     throw new AppError(httpStatus.FORBIDDEN, 'You are not authorized to close this chat');

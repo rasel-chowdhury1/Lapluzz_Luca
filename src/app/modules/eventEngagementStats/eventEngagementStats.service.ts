@@ -1,6 +1,7 @@
 import EventEngagementStats from './eventEngagementStats.model';
 import httpStatus from 'http-status';
 import AppError from '../../error/AppError';
+import mongoose from 'mongoose';
 
 const likeEvent = async (eventId: string, userId: string) => {
   const engagement = await EventEngagementStats.findOneAndUpdate(
@@ -29,6 +30,24 @@ const addComment = async (eventId: string, userId: string, text: string) => {
   return engagement;
 };
 
+const replyCommentofSpecificComment = async (
+  eventId: string,
+  commentId: string,
+  userId: string,
+  text: string
+) => {
+  return await EventEngagementStats.findOneAndUpdate(
+    { 
+      eventId, 
+      'comments._id': new mongoose.Types.ObjectId(commentId) // Match the comment by ID within the comments array
+    },
+    { 
+      $push: { 'comments.$.replies': { user: userId, text } } // Push the reply to the specific comment's replies array
+    },
+    { upsert: true, new: true } // Create the document if it doesn't exist and return the updated document
+  );
+};
+
 const getStats = async (eventId: string) => {
   const stats = await EventEngagementStats.findOne({ eventId })
     .populate('likes', 'name email')
@@ -45,14 +64,15 @@ const getStats = async (eventId: string) => {
 const getEventComments = async (eventId: string) => {
   const stats = await EventEngagementStats.findOne({ eventId })
     .select('comments') // only select comments
-    .populate('comments.user', 'name profileImage');
+    .populate('comments.user', 'name profileImage')
+    .populate({
+      path: 'comments.replies.user', // Populate user data for replies inside comments
+      select: 'name profileImage'
+    });
 
-  if (!stats) {
-    return null;
-    // throw new AppError(httpStatus.NOT_FOUND, 'No engagement stats found for this business');
-  }
 
-  return stats.comments;
+
+  return stats?.comments || [];
 };
 
 
@@ -63,5 +83,6 @@ export const eventEngagementStatsService = {
   unlikeEvent,
   addComment,
   getStats,
+  replyCommentofSpecificComment,
   getEventComments
 };

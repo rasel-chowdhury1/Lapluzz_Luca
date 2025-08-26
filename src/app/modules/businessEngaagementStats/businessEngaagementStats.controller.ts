@@ -73,6 +73,32 @@ const comment = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const replyCommentofSpecificComment = catchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.user; // Extract the user ID from the request user object
+  const { businessId, commentId, text } = req.body; // Extract businessId, commentId, and reply text from the request body
+
+  // Check if any required fields are missing
+    if (!businessId || !commentId || !text) {
+      sendResponse(res, {
+        statusCode: 400,
+        success: false,
+        message: 'Business ID, Comment ID, and reply text are required.',
+        data: ""
+      });
+    }
+
+  // Call the service to reply to the comment
+  const result = await businessEngagementStatsService.replyCommentofSpecificComment(businessId, commentId, userId, text);
+
+  // Send a response indicating that the reply was successfully added
+  sendResponse(res, {
+    statusCode: 201,
+    success: true,
+    message: 'Reply to the comment was successfully added', // Clear and meaningful message
+    data: result
+  });
+});
+
 const getStats = catchAsync(async (req: Request, res: Response) => {
   const result = await businessEngagementStatsService.getStats(req.params.businessId);
 
@@ -103,5 +129,6 @@ export const businessEngagementStatsController = {
   unfollow,
   comment,
   getStats,
-  getBusinessComments
+  getBusinessComments,
+  replyCommentofSpecificComment
 };

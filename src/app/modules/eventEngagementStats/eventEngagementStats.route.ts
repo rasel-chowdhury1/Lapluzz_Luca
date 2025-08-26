@@ -19,6 +19,12 @@ router.post(
         '/comment',
         auth(USER_ROLE.USER, USER_ROLE.ORGANIZER),
         eventEngagementStatsController.comment)
+
+    .post(
+        '/comment/reply', 
+        auth(USER_ROLE.USER, USER_ROLE.ORGANIZER), 
+        eventEngagementStatsController.replyCommentofSpecificComment
+    )
     
     .get(
         "/comments/:eventId",

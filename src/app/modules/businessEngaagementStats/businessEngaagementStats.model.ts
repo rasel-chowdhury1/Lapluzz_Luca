@@ -1,12 +1,24 @@
 import { Schema, model } from 'mongoose';
 import { IBusinessEngagementStats, IBusinessEngagementStatsModel } from './businessEngaagementStats.interface';
 
+
+const ReplySchema = new Schema(
+  {
+    user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    text: { type: String, required: true },
+    createdAt: { type: Date, default: Date.now }
+  },
+  { _id: true }
+);
+
 const CommentSchema = new Schema(
   {
     user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    text: { type: String, required: true }
+    text: { type: String, required: true },
+    createdAt: { type: Date, default: Date.now },
+    replies: [ReplySchema]
   },
-  { _id: false }
+  { _id: true }
 );
 
 const BusinessEngagementStatsSchema = new Schema<IBusinessEngagementStats>(

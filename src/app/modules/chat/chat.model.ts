@@ -20,6 +20,10 @@ const ChatSchema = new Schema<IChat>(
       type: String,
       default: ""
     },
+    chatImage: {
+      type: String,
+      default: ""
+    },
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: 'User',

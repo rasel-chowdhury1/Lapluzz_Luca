@@ -8,8 +8,8 @@ import Business from '../business/business.model';
 import Job from '../job/job.model';
 
 const addNewChat = catchAsync(async (req: Request, res: Response) => {
-  const { userId, fullName } = req.user;
-  const { users = [], isGroupChat = false, contextType, contextId } = req.body;
+  const { userId, fullName,profileImage } = req.user;
+  const { users = [], chatImage, isGroupChat = false, contextType, contextId } = req.body;
 
   // Ensure the current userId is included in the `users` array if not already present
   if (!users.includes(userId)) {
@@ -53,6 +53,7 @@ const addNewChat = catchAsync(async (req: Request, res: Response) => {
     job: Job,
   };
 
+  console.log("testing ->>> ", req.body)
   if (contextType) {
     const contextModel = contextValidationMap[contextType];
     const context = await contextModel.findById(contextId);
@@ -72,6 +73,94 @@ const addNewChat = catchAsync(async (req: Request, res: Response) => {
   // Prepare chat data to be saved
   const chatData = {
     ...req.body,
+    chatImage: chatImage? profileImage : chatImage, 
+    userName: fullName,
+    createdBy: userId,
+    users, // Modified users array
+    isGroupChat, // Group chat status
+  };
+
+  console.log('chat data ====>>>> ', { chatData });
+
+  // Call the service to add the new chat
+  const result = await ChatService.addNewChat(userId, chatData);
+
+  // Send response after chat is created
+  return sendResponse(res, {
+    statusCode: httpStatus.CREATED,
+    success: true,
+    message: 'Chat is created successfully!',
+    data: result,
+  });
+});
+
+const create = catchAsync(async (req: Request, res: Response) => {
+  const { userId, fullName,profileImage } = req.user;
+  const { users = [], chatImage, isGroupChat = false, contextType, contextId } = req.body;
+
+  // Ensure the current userId is included in the `users` array if not already present
+  if (!users.includes(userId)) {
+    users.push(userId); // Add the current userId to the users array
+  }
+
+  // Check if the users array has exactly 2 users
+  if (users.length !== 2) {
+    return sendResponse(res, {
+      statusCode: httpStatus.BAD_REQUEST,
+      success: false,
+      message: 'Chat can only be created with exactly two users.',
+      data: '',
+    });
+  }
+
+  // Validate contextType and contextId
+  const validContextTypes = ['business', 'event', 'job'];
+  if (contextType && !validContextTypes.includes(contextType)) {
+    return sendResponse(res, {
+      statusCode: httpStatus.BAD_REQUEST,
+      success: false,
+      message: 'Invalid contextType provided',
+      data: '',
+    });
+  }
+
+  if (contextType && !contextId) {
+    return sendResponse(res, {
+      statusCode: httpStatus.BAD_REQUEST,
+      success: false,
+      message: 'contextId must be provided when contextType is set',
+      data: '',
+    });
+  }
+
+  // Validate contextId based on contextType
+  const contextValidationMap: { [key: string]: any } = {
+    business: Business,
+    event: Event,
+    job: Job,
+  };
+
+  console.log("testing ->>> ", req.body)
+  if (contextType) {
+    const contextModel = contextValidationMap[contextType];
+    const context = await contextModel.findById(contextId);
+    
+    if (!context) {
+      return sendResponse(res, {
+        statusCode: httpStatus.BAD_REQUEST,
+        success: false,
+        message: `Invalid contextId for ${contextType}.`,
+        data: '',
+      });
+    }
+
+    req.body.contextOwner = context.author;
+  }
+
+  // Prepare chat data to be saved
+  const chatData = {
+    ...req.body,
+    chatImage: chatImage? profileImage : chatImage, 
     userName: fullName,
     createdBy: userId,
     users, // Modified users array

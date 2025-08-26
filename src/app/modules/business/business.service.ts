@@ -143,10 +143,26 @@ const getAllBusiness = async (userId: string, query: Record<string, any>) => {
     const id = stat.businessId.toString();
     engagementMap[id] = {
       totalLikes: stat.likes?.length || 0,
-      totalComments: stat.comments?.length || 0,
+      totalComments:0,
       isLiked: stat.likes?.some((like) => like.toString() === userId) || false,
       isFollowed: stat.followers?.some((f) => f.toString() === userId) || false,
     };
+
+        // Counting total comments including replies
+    const totalCommentsWithReplies = stat.comments.reduce((acc, comment) => {
+      // Count the comment itself
+      acc += 1;
+
+      // Count the replies to this comment
+      if (comment.replies && Array.isArray(comment.replies)) {
+        acc += comment.replies.length;
+      }
+
+      return acc;
+    }, 0);
+
+    engagementMap[id].totalComments = totalCommentsWithReplies;
+  
   });
 
     // ⭐ Fetch user wishlist events
@@ -361,6 +377,8 @@ const getSpecificCategoryBusiness = async (
     }
   > = {};
 
+
+
   engagementStats.forEach((stat) => {
     const id = stat.businessId.toString();
     engagementMap[id] = {
@@ -519,10 +537,27 @@ const getBusinessById = async (userId: string, id: string) => {
   const engagementInfo = {
     totalFollowers: engagement?.followers?.length || 0,
     totalLikes: engagement?.likes?.length || 0,
-    totalComments: engagement?.comments?.length || 0,
+    totalComments:  0,
     isLiked: engagement?.likes?.some((u) => u.toString() === userId) || false,
     isFollowed: engagement?.followers?.some((u) => u.toString() === userId) || false,
   };
+
+
+  // Count comments and replies
+      const totalCommentsWithReplies = engagement?.comments.reduce((acc, comment) => {
+        // Count the comment itself
+        acc += 1;
+
+        // Count the replies to this comment
+        if (comment.replies && Array.isArray(comment.replies)) {
+          acc += comment.replies.length;
+        }
+
+        return acc;
+      }, 0) || 0;
+
+      engagementInfo.totalComments = totalCommentsWithReplies;
+
 
   // ⭐ Get All Reviews (sorted newest first) with user data
   const reviews = await BusinessReview.find({ businessId })
@@ -594,10 +629,25 @@ const getMyBusinesses = async (userId: string) => {
       const engagementInfo = {
         totalFollowers: engagement?.followers?.length || 0,
         totalLikes: engagement?.likes?.length || 0,
-        totalComments: engagement?.comments?.length || 0,
+        totalComments: 0,
         isLiked: engagement?.likes?.some((u) => u.toString() === userId) || false,
         isFollowed: engagement?.followers?.some((u) => u.toString() === userId) || false,
       };
+
+      // Count comments and replies
+      const totalCommentsWithReplies = engagement?.comments.reduce((acc, comment) => {
+        // Count the comment itself
+        acc += 1;
+
+        // Count the replies to this comment
+        if (comment.replies && Array.isArray(comment.replies)) {
+          acc += comment.replies.length;
+        }
+
+        return acc;
+      }, 0) || 0;
+
+      engagementInfo.totalComments = totalCommentsWithReplies;
 
       // ⭐ Get reviews
       const reviews = await BusinessReview.find({ businessId })
