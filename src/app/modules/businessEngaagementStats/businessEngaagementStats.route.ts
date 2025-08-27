@@ -15,11 +15,13 @@ router.post(
     auth(USER_ROLE.USER, USER_ROLE.ORGANIZER), 
     businessEngagementStatsController.unlike
 )
+
 .post(
     '/follow', 
     auth(USER_ROLE.USER, USER_ROLE.ORGANIZER), 
     businessEngagementStatsController.follow
 )
+
 .post(
     '/unfollow', 
     auth(USER_ROLE.USER, USER_ROLE.ORGANIZER), 

@@ -63,7 +63,7 @@ const activateSubscription = async (userId: string, mySubId: string) => {
           isSubscription: true,
           subscriptionPriorityLevel: mySubscription.subscriptionPriorityLevel,
           subscriptionType: mySubscription.subscriptionType,
-          subscriptionStatus: "activated",
+          subcriptionStatus: "activated",
           expireSubscriptionTime: mySubscription.expireDate,
         },
         { session }

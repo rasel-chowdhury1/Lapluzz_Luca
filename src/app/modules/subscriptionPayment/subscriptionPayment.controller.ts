@@ -292,6 +292,14 @@ const initiateSubscriptionPayment = catchAsync(async (req: Request, res: Respons
   const expireDate = new Date();
   expireDate.setDate(expireDate.getDate() + (selectedOption.expirationDays || 30));
 
+  // Set subscriptionType to one of 'exclusive', 'elite', 'prime', or 'custom'
+  let subscriptionType = '';
+  if (['EXCLUSIVE', 'ELITE', 'PRIME'].includes(subscription.title.toUpperCase())) {
+    subscriptionType = subscription.title.toLowerCase(); // 'exclusive', 'elite', or 'prime'
+  } else {
+    subscriptionType = 'custom'; // For any other title
+  }
+
   // 💳 Create payment record
   const payment = await SubscriptionPayment.create({
     paymentId: `woo-${Date.now()}`, // temp ID for now
@@ -302,7 +310,7 @@ const initiateSubscriptionPayment = catchAsync(async (req: Request, res: Respons
     subscription: subscription._id,
     subscriptionOptionIndex,
     subscriptionPriorityLevel: subscription.priorityLevel,
-    subscriptionType: subscription.type,
+    subscriptionType: subscriptionType,
     paymentType: 'payment',
     status: 'pending',
     expireDate,
