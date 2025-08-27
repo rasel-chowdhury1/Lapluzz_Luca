@@ -734,9 +734,13 @@ console.log({existingEvent})
   const now = new Date();
 
   // 2. Fetch comments (engagement)
-  const commentStats = await EventEngagementStats.findOne({ eventId })
+const commentStats = await EventEngagementStats.findOne({ eventId })
     .select('comments')
-    .populate('comments.user', 'name profileImage') || { comments: [] };
+    .populate('comments.user', 'name profileImage')  // Populate user details for the comment
+    .populate('comments.replies.user', 'name profileImage') // Populate user details for each reply
+    || { comments: [] };
+
+  console.log({commentStats})
 
   // 3. Fetch all events from the same author (excluding deleted ones)
   const authorEvents = await Event.find({
@@ -767,6 +771,11 @@ console.log({existingEvent})
     })
   ) || [];
 
+    // 5. Check if the user is already interested in the event
+  const eventInterest = await EventInterestUserList.findOne({ eventId }).select('interestUsers');
+  const isInterested = eventInterest?.interestUsers.some((interest) => interest.user.toString() === userId) || false;
+
+
   // 🧃 Final return
   return {
     author: {
@@ -776,6 +785,7 @@ console.log({existingEvent})
     comments: commentStats.comments || [],
     currentEvents,
     relatedEvents,
+    isInterested,
   };
 };
 

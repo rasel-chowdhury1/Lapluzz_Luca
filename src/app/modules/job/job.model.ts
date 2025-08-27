@@ -104,8 +104,17 @@ const JobSchema = new Schema<IJob>(
     },
     subscriptionType: {
       type: String,
-      enum: ['none', 'visualTop', 'visualMedia', 'visualBase'],
+      enum: ['none', 'visualTop', 'visualMedia', 'visualBase', "custom"],
       default: 'none'
+    },
+    subsciptionPriorityLevel:{
+      type: Number,
+      default: 0
+    },
+    subcriptionStatus: {
+      type: String,
+      enum: ["activated", "deactivated", null],
+      default: null
     },
     expireSubscriptionTime: {
       type: Date,

@@ -30,6 +30,15 @@ const mySubscriptionSchema = new Schema<IMySubscription>({
         type: Number,
         required: true
     },
+    subscriptionPriorityLevel: { 
+        type: Number, 
+        required: true 
+    },
+    subscriptionType: { 
+        type: String, 
+        enum: ['none','exclusive','elite','prime', 'custom'],
+        required: true 
+    },
     payment_method: {
         type: String,
         default: '',
@@ -46,6 +55,10 @@ const mySubscriptionSchema = new Schema<IMySubscription>({
         type: String,
         enum: ["notActivate", "activate", "stop", "gotCredits"],
         default: "notActivate"
+    },
+    expireDate: {
+      type: Date,
+      required: true
     },
     isExpired: {
         type: Boolean,

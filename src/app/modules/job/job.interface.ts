@@ -33,7 +33,10 @@ export interface IJob {
   subscriptionList: IJobSubscription[];
   isSubscription: boolean;
   subscriptionType: string;
+  subsciptionPriorityLevel?: number;
+  subcriptionStatus?: string;
   expireSubscriptionTime?: Date;
+  subscriptionEndTime?: Date;
   isActive: boolean;
   isDeleted: boolean;
 }

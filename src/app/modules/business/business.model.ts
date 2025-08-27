@@ -30,7 +30,7 @@ const AvailabilitiesSchema = new Schema<IAvailabilities>({
 });
 
 const IBusinessSubscriptionSchema = new Schema<IBusinessSubscription>({
-  type: {type: String, enum: ['exclusive','elite','prime'], default: null},
+  type: {type: String, enum: ['exclusive','elite','prime','another'], default: null},
   buyDate: {type: Date, default: null},
   expireDate: {type: Date, default: null}
 })
@@ -153,13 +153,27 @@ const businessSchema = new Schema<IBusiness>(
     },
     subscriptionType: {
       type: String,
-      enum: ['none','exclusive','elite','prime'],
+      enum: ['none','exclusive','elite','prime', 'custom'],
       default: 'none'
+    },
+    subsciptionPriorityLevel:{
+      type: Number,
+      default: 0
+    },
+    subcriptionStatus: {
+      type: String,
+      enum: ["activated", "deactivated", null],
+      default: null
     },
     expireSubscriptionTime: { 
         type: Date, 
         default: null 
     },
+    subscriptionEndTime: { 
+        type: Date, 
+        default: null 
+    },
+
     advertisingCreditsList: {
       type: [BusinessAdvertisingCreditsSchema],
       default: []

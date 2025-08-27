@@ -1,11 +1,11 @@
 import { NextFunction, Request, Response } from 'express';
 import httpStatus from 'http-status';
 import catchAsync from '../../utils/catchAsync';
-import { storeFile } from '../../utils/fileHelper';
 import sendResponse from '../../utils/sendResponse';
 import { ChatService } from './chat.service';
 import Business from '../business/business.model';
 import Job from '../job/job.model';
+import Event from '../event/event.model';
 
 const addNewChat = catchAsync(async (req: Request, res: Response) => {
   const { userId, fullName,profileImage } = req.user;
@@ -53,7 +53,6 @@ const addNewChat = catchAsync(async (req: Request, res: Response) => {
     job: Job,
   };
 
-  console.log("testing ->>> ", req.body)
   if (contextType) {
     const contextModel = contextValidationMap[contextType];
     const context = await contextModel.findById(contextId);
@@ -73,7 +72,7 @@ const addNewChat = catchAsync(async (req: Request, res: Response) => {
   // Prepare chat data to be saved
   const chatData = {
     ...req.body,
-    chatImage: chatImage? profileImage : chatImage, 
+    chatImage: chatImage? chatImage : profileImage, 
     userName: fullName,
     createdBy: userId,
     users, // Modified users array

@@ -59,6 +59,15 @@ const subscriptionPaymentSchema: Schema = new Schema<ISubscriptionPayment>(
       type: Number,
       required: true
     },
+    subscriptionPriorityLevel: { 
+        type: Number, 
+        required: true 
+    },
+    subscriptionType: { 
+        type: String, 
+        enum: ['exclusive','elite','prime', 'custom'],
+        required: true 
+    },
     payment_method: {
       type: String,
       default: "",

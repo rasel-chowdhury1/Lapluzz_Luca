@@ -10,11 +10,14 @@ export interface IMySubscription {
     subscriptionFor: Types.ObjectId;
     subscriptionForType: SubscriptionForType;
     subscription: Types.ObjectId;
-    subscriptionOptionIndex?: Number;
+    subscriptionOptionIndex?: number;
+    subscriptionPriorityLevel?: number;
+    subscriptionType?: string;
     payment_method: string;
     payment_status: string;
     paymentType: string;
     status: string;
+    expireDate: Date;
     isExpired?: boolean;
     isNotified?: boolean;
 }

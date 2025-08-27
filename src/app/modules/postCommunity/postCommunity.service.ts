@@ -150,6 +150,181 @@ const getAllPosts = async (query: Record<string, any>) => {
 // };
 
 
+// const getPostById = async (id: string, userId: string) => {
+//   const posts = await PostCommunity.aggregate([
+//     {
+//       $match: {
+//         _id: new mongoose.Types.ObjectId(id),
+//       },
+//     },
+//     {
+//       $lookup: {
+//         from: 'postcommunityengagementstats',
+//         localField: '_id',
+//         foreignField: 'postId',
+//         as: 'engagement',
+//       },
+//     },
+//     {
+//       $addFields: {
+//         engagementStats: { $arrayElemAt: ['$engagement', 0] },
+//       },
+//     },
+//     {
+//       $addFields: {
+//         totalLikes: {
+//           $size: { $ifNull: ['$engagementStats.likes', []] },
+//         },
+//         totalComments: {
+//           $add: [
+//             { $size: { $ifNull: ['$engagementStats.comments', []] } }, // Count the comments
+//             {
+//               $sum: { // Sum the replies for each comment
+//                 $map: {
+//                   input: { $ifNull: ['$engagementStats.comments.replies', []] },
+//                   as: 'reply',
+//                   in: { $size: { $ifNull: ['$$reply', []] } }, // Count replies for each comment
+//                 },
+//               },
+//             },
+//           ],
+//         },
+//         isLiked: {
+//           $in: [new mongoose.Types.ObjectId(userId), { $ifNull: ['$engagementStats.likes', []] }],
+//         },
+//       },
+//     },
+//     // 👤 Populate creator details
+//     {
+//       $lookup: {
+//         from: 'users',
+//         let: { creatorId: '$creator' },
+//         pipeline: [
+//           { $match: { $expr: { $eq: ['$_id', '$$creatorId'] } } },
+//           {
+//             $project: {
+//               name: 1,
+//               sureName: 1,
+//               profileImage: 1,
+//             },
+//           },
+//         ],
+//         as: 'creator',
+//       },
+//     },
+//     {
+//       $unwind: {
+//         path: '$creator',
+//         preserveNullAndEmptyArrays: true,
+//       },
+//     },
+//     // 💬 Populate comments.user details
+//     {
+//       $lookup: {
+//         from: 'users',
+//         localField: 'engagementStats.comments.user',
+//         foreignField: '_id',
+//         as: 'commentUsers',
+//       },
+//     },
+//     // 💬 Populate replies.user details inside comments
+//     {
+//       $lookup: {
+//         from: 'users',
+//         localField: 'engagementStats.comments.replies.user',
+//         foreignField: '_id',
+//         as: 'replyUsers',
+//       },
+//     },
+//     {
+//       $addFields: {
+//         comments: {
+//           $map: {
+//             input: { $ifNull: ['$engagementStats.comments', []] },
+//             as: 'comment',
+//             in: {
+//               text: '$$comment.text',
+//               user: {
+//                 $let: {
+//                   vars: {
+//                     matchedUser: {
+//                       $arrayElemAt: [
+//                         {
+//                           $filter: {
+//                             input: '$commentUsers',
+//                             as: 'u',
+//                             cond: { $eq: ['$$u._id', '$$comment.user'] },
+//                           },
+//                         },
+//                         0,
+//                       ],
+//                     },
+//                   },
+//                   in: {
+//                     _id: '$$matchedUser._id',
+//                     name: '$$matchedUser.name',
+//                     profileImage: '$$matchedUser.profileImage',
+//                     role: '$$matchedUser.role',
+//                   },
+//                 },
+//               },
+//               replies: {
+//                 $map: {
+//                   input: { $ifNull: ['$$comment.replies', []] },
+//                   as: 'reply',
+//                   in: {
+//                     text: '$$reply.text',
+//                     user: {
+//                       $let: {
+//                         vars: {
+//                           matchedReplyUser: {
+//                             $arrayElemAt: [
+//                               {
+//                                 $filter: {
+//                                   input: '$replyUsers',
+//                                   as: 'ru',
+//                                   cond: { $eq: ['$$ru._id', '$$reply.user'] },
+//                                 },
+//                               },
+//                               0,
+//                             ],
+//                           },
+//                         },
+//                         in: {
+//                           _id: '$$matchedReplyUser._id',
+//                           name: '$$matchedReplyUser.name',
+//                           profileImage: '$$matchedReplyUser.profileImage',
+//                           role: '$$matchedReplyUser.role',
+//                         },
+//                       },
+//                     },
+//                   },
+//                 },
+//               },
+//             },
+//           },
+//         },
+//       },
+//     },
+//     {
+//       $project: {
+//         engagement: 0,
+//         engagementStats: 0,
+//         commentUsers: 0,
+//         replyUsers: 0,
+//       },
+//     },
+//   ]);
+
+//   if (!posts.length) {
+//     throw new AppError(httpStatus.NOT_FOUND, 'Post not found');
+//   }
+
+//   return posts[0];
+// };
+
+
+//update code for comment id
 const getPostById = async (id: string, userId: string) => {
   const posts = await PostCommunity.aggregate([
     {
@@ -190,7 +365,7 @@ const getPostById = async (id: string, userId: string) => {
           ],
         },
         isLiked: {
-          $in: [new mongoose.Types.ObjectId(userId), { $ifNull: ['$engagementStats.likes', []] }],
+          $in: [new mongoose.Types.ObjectId(userId), { $ifNull: ['$engagementStats.likes', []] }], // Check if the post is liked by the user
         },
       },
     },
@@ -243,6 +418,7 @@ const getPostById = async (id: string, userId: string) => {
             input: { $ifNull: ['$engagementStats.comments', []] },
             as: 'comment',
             in: {
+              _id: '$$comment._id', // Include _id of the comment
               text: '$$comment.text',
               user: {
                 $let: {

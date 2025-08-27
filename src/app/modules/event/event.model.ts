@@ -130,8 +130,21 @@ const EventSchema = new Schema<IEvent>(
         default: false },
     subscriptionType: {
       type: String,
-      enum: ['none','diamond','emerald','ruby'],
+      enum: ['none','diamond','emerald','ruby', "custom"],
       default: 'none'
+    },
+    subsciptionPriorityLevel:{
+      type: Number,
+      default: 0
+    },
+    subcriptionStatus: {
+      type: String,
+      enum: ["activated", "deactivated", null],
+      default: null
+    },
+    subscriptionEndTime: { 
+        type: Date, 
+        default: null 
     },
     expireSubscriptionTime: { 
         type: Date, 

@@ -301,8 +301,9 @@ const initiateSubscriptionPayment = catchAsync(async (req: Request, res: Respons
     subscriptionForType,
     subscription: subscription._id,
     subscriptionOptionIndex,
+    subscriptionPriorityLevel: subscription.priorityLevel,
+    subscriptionType: subscription.type,
     paymentType: 'payment',
-    
     status: 'pending',
     expireDate,
     ...(couponCode && { appliedCoupon: couponCode }), // optionally store applied coupon
@@ -467,8 +468,11 @@ const handleWooPaymentWebhook = catchAsync(async (req: Request, res: Response) =
     subscriptionForType: updated.subscriptionForType,
     subscription: updated.subscription,
     subscriptionOptionIndex: updated.subscriptionOptionIndex,
+    subscriptionPriorityLevel: updated.subscriptionPriorityLevel,
+    subscriptionType: updated.subscriptionType,
     payment_method: updated.payment_method,
     payment_status: updated.payment_status,
+    expireDate: updated.expireDate,
     status: 'notActivate',
   });
 
