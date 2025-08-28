@@ -319,7 +319,20 @@ const adminCreateAdmin = async (userData: {name: string,email:string,password:st
   return user;
 };
 
+const updateFcmTokenByUserId = async (userId: string, fcmToken: stringt) => {
 
+
+
+  const user = await User.findByIdAndUpdate(userId, {} { new: true });
+
+  if (!user) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'User completing failed');
+  }
+
+  console.log({ user })
+
+  return user;
+};
 
 const completedUser = async (id: string, payload: Partial<TUser>) => {
   const { role, email, isBlocked, isDeleted, password, longitude, latitude, ...rest } = payload;
