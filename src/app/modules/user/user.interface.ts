@@ -29,6 +29,7 @@ export interface TUserCreate {
   totalCredits: number;
   isSubBusiness: boolean;
   parentBusiness?: ObjectId;
+  fcmToken: string;
   isBlocked: boolean;
   isDeleted: boolean;
   role: string;

@@ -66,12 +66,12 @@ const checkOtpByNumber = async (phone: string) => {
 };
 
 const otpMatch = async (email: string, otp: string) => {
-  console.log(email, otp);
+  console.log(email, otp, { $gt: new Date().toISOString() });
   const isOtpMatch = await Otp.findOne({
     sentTo: email,
     otp,
+    expiredAt: { $gt: new Date().toISOString() },
     status: 'pending',
-    expiredAt: { $gt: new Date() },
   });
 
   console.log({ isOtpMatch });

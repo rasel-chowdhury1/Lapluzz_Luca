@@ -109,6 +109,7 @@ const userSchema = new Schema<TUser>(
       type: Number,
       default: 0,
     },
+    fcmToken: { type: String, required: false, default: "" },
     isBlocked: {
       type: Boolean,
       default: false,

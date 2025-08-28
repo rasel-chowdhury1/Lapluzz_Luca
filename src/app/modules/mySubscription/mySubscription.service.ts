@@ -24,6 +24,7 @@ const activateSubscription = async (userId: string, mySubId: string) => {
   try {
     // Fetch the subscription document
     const mySubscription = await MySubscription.findById(mySubId).session(session);
+    console.log({mySubscription})
     if (!mySubscription) {
       throw new AppError(httpStatus.NOT_FOUND, "Subscription not found");
     }
@@ -122,6 +123,8 @@ const activateSubscription = async (userId: string, mySubId: string) => {
     throw error; // Rethrow the error after rolling back
   }
 };
+
+
 
 const stopSubscription = async (userId: string, mySubId: string) => {
   const session = await mongoose.startSession(); // Start a session for the transaction

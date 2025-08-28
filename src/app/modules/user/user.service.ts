@@ -49,7 +49,7 @@ const createUserToken = async (payload: TUserCreate) => {
 
   const { isExist, isExpireOtp } = await otpServices.checkOtpByEmail(email);
 
-  const { otp, expiredAt } = generateOptAndExpireTime("1");
+  const { otp, expiredAt } = generateOptAndExpireTime(config.otp_expire_time);
 
   let otpPurpose: TPurposeType = 'email-verification';
 
@@ -96,9 +96,10 @@ const createUserToken = async (payload: TUserCreate) => {
     await otpSendEmail({
       sentTo: email,
       subject: 'Your one time otp for email  verification',
-      name: "Customer",
+      name: name || "Customer",
       otp,
       expiredAt: expiredAt,
+      expireTime: config.otp_expire_time as string || "2"
     });
   });
   console.log('after otp send email');
@@ -272,6 +273,7 @@ const otpVerifyAndCreateUser = async (
     receiverId: getAdminId(),
     userMsg: {
       fullName: user.name || "",
+      name: user.name || "",
       image: user.profileImage || "", // Placeholder image URL (adjust this)
       text: "New user added in your app"
     },

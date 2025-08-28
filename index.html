@@ -1,32 +1,12 @@
-import { sendEmail } from "./mailSender";
-
-
-
-interface OtpSendEmailParams {
-  sentTo: string;
-  subject: string;
-  name: string;
-  otp: string | number;
-  expiredAt: string;
-  expireTime: string;
-}
-
-const otpSendEmail = async ({
-  sentTo,
-  subject,
-  name,
-  otp,
-  expiredAt,
-  expireTime,
-}: OtpSendEmailParams): Promise<void> => {
-
-
-
-  // Send the email
-  await sendEmail(
-    sentTo,
-    subject,
-    `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px; background-color: #FAF4FF;">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px; background-color: #FAF4FF;">
   <h1 style="color: #333; font-size: 24px; font-weight: bold; text-align: center; margin-bottom: 10px;">Email OTP</h1>
   <hr style="border: 0; border-top: 2px solid #6A0DAD; margin: 20px 0;" />
   <p style="font-size: 16px; color: #333; line-height: 1.5;">Dear ${name},</p>
@@ -40,8 +20,6 @@ const otpSendEmail = async ({
   <div style="margin-top: 30px; font-size: 14px; color: #333; text-align: center;">
     <p style="margin: 0;">Thank you for using Pianofesta's platform. We are here to support your business growth!</p>
   </div>
-</div>`
-  );
-};
-
-export { otpSendEmail };
+</div>
+</body>
+</html>

@@ -31,6 +31,12 @@ userRoutes
   )
 
   .patch(
+    "/update-fcmToken",
+    auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN),
+    
+  )
+
+  .patch(
     '/update-my-profile',
     auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN),
     upload.single('image'),

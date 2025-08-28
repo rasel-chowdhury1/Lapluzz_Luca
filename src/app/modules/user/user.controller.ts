@@ -35,6 +35,20 @@ const userCreateVarification = catchAsync(async (req, res) => {
   });
 });
 
+const updatefcmToken = catchAsync(async (req: Request, res: Response) => {
+
+  const {fcmToken} = req.body;
+
+  const result = await userService.completedUser(req?.user?.userId, fcmToken);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'profile completed successfully',
+    data: result,
+  });
+});
+
+
 const completedProfile = catchAsync(async (req: Request, res: Response) => {
 
   const result = await userService.completedUser(req?.user?.userId, req.body);

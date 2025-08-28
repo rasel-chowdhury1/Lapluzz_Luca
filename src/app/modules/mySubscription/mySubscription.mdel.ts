@@ -9,7 +9,7 @@ const mySubscriptionSchema = new Schema<IMySubscription>({
         ref: 'SubscriptionPayment',
         unique: true
     },
-    expiryDate: { type: Date, required: true },
+    expireDate: { type: Date, required: true },
     // 👇 Dynamic reference field
     subscriptionFor: {
         type: mongoose.Schema.Types.ObjectId,
