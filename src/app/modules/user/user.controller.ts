@@ -39,12 +39,12 @@ const updatefcmToken = catchAsync(async (req: Request, res: Response) => {
 
   const {fcmToken} = req.body;
 
-  const result = await userService.completedUser(req?.user?.userId, fcmToken);
+   await userService.updateFcmTokenByUserId(req?.user?.userId, fcmToken);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
     message: 'profile completed successfully',
-    data: result,
+    data: null,
   });
 });
 
@@ -384,5 +384,6 @@ export const userController = {
   getSuperAdminLists,
   deleteSuperAdmin,
   getAllUserQueryNameList,
-  getMyTotalCredits
+  getMyTotalCredits,
+  updatefcmToken
 };

@@ -2,6 +2,7 @@ import PostCommunity from './postCommunity.model';
 import httpStatus from 'http-status';
 import AppError from '../../error/AppError';
 import mongoose from 'mongoose';
+import { UpdatePostCommunityPayload } from './postCommunity.interface';
 
 const createPost = async (payload: any) => {
   const post = await PostCommunity.create(payload);
@@ -9,10 +10,51 @@ const createPost = async (payload: any) => {
   return post;
 };
 
+const updatePostCommunityById = async (
+  userId: string,
+  postId: string,
+  payload: Partial<UpdatePostCommunityPayload>
+) => {
+  // Only update the post if the creator matches userId
+  const updatedPost = await PostCommunity.findOneAndUpdate(
+    { _id: postId, creator: userId }, // query ensures only creator can update
+    payload,
+    { new: true }
+  );
+
+  if (!updatedPost) {
+    throw new AppError(httpStatus.BAD_REQUEST,'Post not found or you are not authorized');
+  }
+
+  return updatedPost;
+};
+
+const deletePostCommunityById = async (userId: string, postId: string) => {
+
+  console.log({userId,postId})
+  // Find the post by postId and ensure that the user is the creator and the post is not already deleted
+  const deletePost = await PostCommunity.findOneAndUpdate(
+    { _id: postId, creator: userId, isDeleted: false }, // query ensures only creator can delete the post and it is not already deleted
+    { isDeleted: true }, // mark the post as deleted
+    { new: true } // return the updated post
+  );
+
+  if (!deletePost) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Post not found, or you are not authorized to delete this post.'
+    );
+  }
+
+  return deletePost; // return the deleted post with updated isDeleted status
+};
+
+
 const getAllPosts = async (query: Record<string, any>) => {
-  const filters: any = {};
+  const filters: any = {isDeleted: false};
   if (query.category) filters.category = query.category;
   if (query.region) filters.region = query.region;
+  
 
   const posts = await PostCommunity.find(filters).populate('creator', 'name profileImage email role');
   return posts;
@@ -330,6 +372,7 @@ const getPostById = async (id: string, userId: string) => {
     {
       $match: {
         _id: new mongoose.Types.ObjectId(id),
+        isDeleted: false
       },
     },
     {
@@ -499,11 +542,7 @@ const getPostById = async (id: string, userId: string) => {
   return posts[0];
 };
 
-const deletePost = async (id: string) => {
-  const result = await PostCommunity.findByIdAndDelete(id);
-  if (!result) throw new AppError(httpStatus.BAD_REQUEST, 'Failed to delete post');
-  return result;
-};
+
 
 
 
@@ -512,7 +551,7 @@ const getMyPosts = async (userId: string) => {
 
   console.log("Post community ", {userId})
   const posts = await PostCommunity.aggregate([
-    { $match: { creator: new mongoose.Types.ObjectId(userId) } },
+    { $match: { creator: new mongoose.Types.ObjectId(userId),isDeleted: false } },
     {
       $lookup: {
         from: 'postcommunityengagementstats',
@@ -521,6 +560,7 @@ const getMyPosts = async (userId: string) => {
         as: 'engagement'
       }
     },
+
     {
       $addFields: {
         engagementStats: { $arrayElemAt: ['$engagement', 0] }
@@ -595,7 +635,7 @@ const getLatestPosts = async (userId: string, limit: number = 10) => {
   const posts = await PostCommunity.aggregate([
     {
       $match: {
-        creator: { $ne: new mongoose.Types.ObjectId(userId) } // Exclude my own posts
+        creator: { $ne: new mongoose.Types.ObjectId(userId),isDeleted: false } // Exclude my own posts
       }
     },
     { $sort: { createdAt: -1 } },
@@ -679,7 +719,7 @@ const getSpecificCategoryOrRegionPosts = async (
   filters?: { category?: string; region?: string }
 ) => {
   const matchStage: any = {
-    creator: { $ne: new mongoose.Types.ObjectId(userId) },
+    creator: { $ne: new mongoose.Types.ObjectId(userId),isDeleted: false },
   };
 
   if (filters?.category) {
@@ -770,7 +810,7 @@ const getMostViewedPosts = async (userId: string, limit: number = 10) => {
   const posts = await PostCommunity.aggregate([
     {
       $match: {
-        creator: { $ne: new mongoose.Types.ObjectId(userId) }
+        creator: { $ne: new mongoose.Types.ObjectId(userId),isDeleted: false }
       }
     },
 
@@ -856,7 +896,7 @@ const getMostCommentedPosts = async (userId: string, limit: number = 10) => {
   const posts = await PostCommunity.aggregate([
     {
       $match: {
-        creator: { $ne: new mongoose.Types.ObjectId(userId) }
+        creator: { $ne: new mongoose.Types.ObjectId(userId),isDeleted: false }
       }
     },
 
@@ -943,12 +983,13 @@ const getMostCommentedPosts = async (userId: string, limit: number = 10) => {
 
 export const postCommunityService = {
   createPost,
+  updatePostCommunityById,
   getAllPosts,
   getPostById,
-  deletePost,
   getMyPosts,
   getLatestPosts,
   getMostViewedPosts,
   getMostCommentedPosts,
-  getSpecificCategoryOrRegionPosts
+  getSpecificCategoryOrRegionPosts,
+  deletePostCommunityById
 };

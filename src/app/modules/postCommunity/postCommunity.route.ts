@@ -16,6 +16,13 @@ router
             parseData(),
             postCommunityController.createPost
         )
+    .patch(
+            '/:id', 
+            auth(USER_ROLE.USER, USER_ROLE.ORGANIZER), 
+            upload.single('image'),
+            parseData(),
+            postCommunityController.updatePostCommunityById
+        )
     .get(
         '/',
         postCommunityController.getAllPosts
@@ -55,9 +62,9 @@ router
 )
     
     .delete(
-        '/:id',
+        '/:postId',
         auth(USER_ROLE.USER),
-        postCommunityController.deletePost
+        postCommunityController.deletePostCommunityById
     );
 
 export const postCommunityRoutes = router;

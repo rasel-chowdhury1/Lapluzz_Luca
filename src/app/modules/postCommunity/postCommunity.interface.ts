@@ -7,6 +7,17 @@ export interface IPostCommunity {
   region: string;
   description: string;
   image: string;
+  isDeleted: boolean;
+}
+
+
+export interface UpdatePostCommunityPayload {
+  title?: string;
+  category?: string;
+  region?: string;
+  description?: string;
+  image?: string;
+  isDeleted?: boolean;
 }
 
 export type IPostCommunityModel = Model<IPostCommunity, Record<string, unknown>>;

@@ -319,17 +319,13 @@ const adminCreateAdmin = async (userData: {name: string,email:string,password:st
   return user;
 };
 
-const updateFcmTokenByUserId = async (userId: string, fcmToken: stringt) => {
+const updateFcmTokenByUserId = async (userId: string, fcmToken: string) => {
 
-
-
-  const user = await User.findByIdAndUpdate(userId, {} { new: true });
+  const user = await User.findByIdAndUpdate(userId, {fcmToken}, { new: true });
 
   if (!user) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'User completing failed');
+    throw new AppError(httpStatus.BAD_REQUEST, 'User fcmToken update failed');
   }
-
-  console.log({ user })
 
   return user;
 };
@@ -904,5 +900,7 @@ export const userService = {
   adminCreateAdmin,
   getAdminList,
   getMyTotalCredits,
-  deleteSuperAdmin
+  deleteSuperAdmin,
+  updateFcmTokenByUserId
+
 };

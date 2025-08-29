@@ -8,7 +8,8 @@ const PostCommunitySchema = new Schema<IPostCommunity>(
     category: { type: String, required: true },
     region: { type: String, required: true },
     description: { type: String, required: true },
-    image: { type: String, default: '' }
+    image: { type: String, default: '' },
+    isDeleted: {type: Boolean, default: false}
   },
   { timestamps: true }
 );

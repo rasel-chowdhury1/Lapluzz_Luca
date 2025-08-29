@@ -10,34 +10,52 @@ import BusinessEngagementStats from '../businessEngaagementStats/businessEngaage
 import EventReview from '../eventReview/eventReview.model';
 import EventEngagementStats from '../eventEngagementStats/eventEngagementStats.model';
 
-// const createOrUpdateFolder = async (
-//   userId: string,
-//   folderName: string,
-//   businesses: string[] = [],
-//   events: string[] = [],
-//   jobs: string[] = []
-// ) => {
-//   const wishlist = await WishList.findOneAndUpdate(
-//     {
-//       userId,
-//       'folders.folderName': { $ne: folderName } // only if folder doesn't exist
-//     },
-//     {
-//       $push: {
-//         folders: {
-//           folderName,
-//           businesses,
-//           events,
-//           jobs
-//         }
-//       }
-//     },
-//     { upsert: true, new: true }
-//   );
 
-//   return wishlist;
-// };
 
+const createFolder = async (
+  userId: string,
+  folderName: string,
+  image?: string
+) => {
+
+  const wishlist = await WishList.findOne({ userId });
+
+    if (!wishlist) {
+      // 🌱 First time: Create wishlist and folder
+      const newFolder: any = {
+        folderName,
+        image
+      };
+      
+      const newWishlist =  await WishList.create({
+        userId,
+        folders: [newFolder],
+      });
+
+        return newWishlist;
+      }
+
+    // 🧠 Check for existing folder
+    const folder = wishlist.folders.find(f => f.folderName === folderName);
+
+    if (folder) {
+    // Folder already exists
+    return wishlist;
+    } else {
+        // 📁 Create new folder with the ID
+        const newFolder: any = {
+          folderName,
+          image
+        };
+        wishlist.folders.push(newFolder);
+
+
+
+      await wishlist.save();
+      return wishlist;
+    };
+  
+}
 
 const createOrUpdateFolder = async (
   userId: string,
@@ -122,10 +140,11 @@ const getWishlistByUser = async (userId: string) => {
     return null;
   }
 
-  console.log({wishlist})
+  // Filter out folders that are marked as deleted
+  const activeFolders = wishlist.folders.filter(folder => !folder.isDeleted);
   // Manually populate each folder's references
   const populatedFolders = await Promise.all(
-    wishlist.folders.map(async (folder) => {
+    activeFolders.map(async (folder) => {
       const [businesses, events, jobs] = await Promise.all([
         Business.find({ _id: { $in: folder.businesses } }).select('name coverImage'),
         Event.find({ _id: { $in: folder.events } }).select('name coverImage'),
@@ -179,37 +198,21 @@ const getCheckWishlistByUser = async (userId: string) => {
     return null;
   }
 
+  // Filter out folders that are marked as deleted
+  const activeFolders = wishlist.folders.filter(folder => !folder.isDeleted);
+
   const updatedFolders = await Promise.all(
-    wishlist.folders.map(async (folder) => {
+    activeFolders.map(async (folder) => {
       const totalItems =
         (folder.businesses?.length || 0) +
         (folder.events?.length || 0) +
         (folder.jobs?.length || 0);
 
-      let coverImage = null;
-
-      if (folder.businesses?.[0]) {
-        const business = await Business.findById(folder.businesses[0])
-          .select('coverImage')
-          .lean();
-        coverImage = business?.coverImage || null;
-      } else if (folder.events?.[0]) {
-        const event = await Event.findById(folder.events[0])
-          .select('coverImage')
-          .lean();
-        coverImage = event?.coverImage || null;
-      } else if (folder.jobs?.[0]) {
-        const job = await Job.findById(folder.jobs[0])
-          .select('coverImage')
-          .lean();
-        coverImage = job?.coverImage || null;
-      }
-
       return {
         folderName: folder.folderName,
         isActive: folder.isActive, // fallback to default true
         totalItems,
-        coverImage,
+        coverImage: folder.image,
       };
     })
   );
@@ -236,6 +239,10 @@ const getWishlistFolderDetailsByName = async (
   if (!targetFolder) {
     // throw new AppError(httpStatus.NOT_FOUND, 'Folder not found');
     return null;
+  }
+
+  if(targetFolder.isDeleted){
+    return null
   }
 
   // Fetch businesses
@@ -406,11 +413,83 @@ const removeServiceFromFolder = async (
   return wishlist;
 };
 
+const updateFolderName = async (
+  userId: string,
+  oldFolderName: string,
+  newFolderName: string
+) => {
+  // Ensure the new folder name is not empty
+  if (!newFolderName) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Folder name cannot be empty');
+  }
+
+  // Find the wishlist for the user
+  const wishlist = await WishList.findOne({ userId });
+
+  if (!wishlist) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Wishlist not found for this user');
+  }
+
+  // Find the folder with the old name
+  const folder = wishlist.folders.find(f => f.folderName === oldFolderName);
+
+  if (!folder) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Folder not found');
+  }
+
+  // Update the folder name
+  folder.folderName = newFolderName;
+
+  // Save the updated wishlist
+  await wishlist.save();
+
+
+
+  return wishlist;
+};
+
+const softDeleteFolder = async (
+  userId: string,
+  folderName: string
+) => {
+  // Find the user's wishlist
+  const wishlist = await WishList.findOne({ userId });
+
+  if (!wishlist) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Wishlist not found for this user');
+  }
+
+  // Find the folder in the wishlist
+  const folder = wishlist.folders.find(f => f.folderName === folderName);
+
+  console.log({folder})
+
+  if (!folder) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Folder not found');
+  }
+
+  // Mark the folder as deleted (soft delete)
+  folder.isDeleted = true;
+
+  // Save the updated wishlist
+  await wishlist.save();
+
+  // Optionally, you can remove the folder name from the User's wishlist (if required)
+  await User.findByIdAndUpdate(userId, {
+    $pull: { wishlist: folderName },
+  });
+
+  return wishlist;
+};
+
 export const wishListService = {
+  createFolder,
   createOrUpdateFolder,
   getWishlistByUser,
   getCheckWishlistByUser,
   updateFolderIsActive,
   getWishlistFolderDetailsByName,
-  removeServiceFromFolder
+  removeServiceFromFolder,
+  updateFolderName,
+  softDeleteFolder
 };

@@ -2,10 +2,12 @@ import { ObjectId, Model } from 'mongoose';
 
 export interface IFolder {
   folderName: string;
+  image: string;
   businesses: ObjectId[];
   events: ObjectId[];
   jobs: ObjectId[];
   isActive: boolean;
+  isDeleted: boolean;
 }
 
 export interface IWishList {

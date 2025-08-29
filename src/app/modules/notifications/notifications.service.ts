@@ -131,26 +131,45 @@ const getMyNotifications = async (userId: string) => {
 
 
 const getMySentedNotifications = async (userId: string) => {
-  let notifications = await Notification.find({ userId }).sort({ createdAt: -1 }).lean();
+  // Ensure the correct syntax for the $in operator in MongoDB query
+  let notifications = await Notification.find({
+    userId,
+    type: { $in: ['BusinessNotification', 'EventNotification', 'JobNotification'] },
+  })
+    .sort({ createdAt: -1 })
+    .lean();
 
-  // Loop through notifications and attach names
+  // Loop through notifications and attach names or titles
   notifications = await Promise.all(
     notifications.map(async (notification) => {
       if (notification.message?.types && notification.message?.notificationFor) {
         let model;
-        if (notification.message.types === "business") {
-          model = Business;
-        } else if (notification.message.types === "event") {
-          model = Event;
-        } else if (notification.message.types === "job") {
-          model = Job;
+
+        // Determine the appropriate model based on the notification type
+        switch (notification.message.types) {
+          case 'business':
+            model = Business;
+            break;
+          case 'event':
+            model = Event;
+            break;
+          case 'job':
+            model = Job;
+            break;
+          default:
+            model = null;
         }
 
         if (model) {
-          const doc = await model.findById(notification.message.notificationFor).select("name title").lean();
+          // Find the related document and attach name or title
+          const doc = await model
+            .findById(notification.message.notificationFor)
+            .select('name title')
+            .lean();
+
           if (doc) {
-            // For businesses we use `name`, for events/jobs `title`
-            notification.message.name = doc.name || doc.title || "";
+            // For businesses, use `name`; for events/jobs, use `title`
+            notification.message.name = doc.name || doc.title || '';
           }
         }
       }
