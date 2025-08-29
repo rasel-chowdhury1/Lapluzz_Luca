@@ -70,4 +70,4 @@ env/
 .vercel
 # public/.env
 .env
-node_modules
+node_modulesgoogleFirebaseAdmin.json
