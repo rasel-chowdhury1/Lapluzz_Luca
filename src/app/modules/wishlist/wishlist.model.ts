@@ -4,10 +4,12 @@ import { IWishList, IWishListModel } from './wishlist.interface';
 const FolderSchema = new Schema(
   {
     folderName: { type: String, required: true },
+    image: { type: String, default: "" },
     businesses: [{ type: Schema.Types.ObjectId, ref: 'Business' }],
     events: [{ type: Schema.Types.ObjectId, ref: 'Event' }],
     jobs: [{ type: Schema.Types.ObjectId, ref: 'Job' }],
-    isActive:{ type: Boolean, default: true }
+    isActive:{ type: Boolean, default: true },
+    isDeleted: { type: Boolean, default: false }  // Soft delete flag
   },
   { _id: false }
 );

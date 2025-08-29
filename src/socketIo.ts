@@ -448,57 +448,6 @@ export const initSocketIO = async (server: HttpServer): Promise<void> => {
 // Export the Socket.IO instance
 export { io };
 
-export const emitOnlineUser = async (userId: string) => {
-  if (!io) throw new Error('Socket.IO is not initialized');
-
-  // 1. Find current user's friends
-  const userList = await Friendship.findOne({ userId });
-
-  if (!userList || !userList.friendship) return;
-
-  // 2. Filter friends who are currently online
-  const connectedFriends = userList.friendship.filter((friendId) =>
-    connectedUsers.has(friendId.toString())
-  );
-
-  // 3. Notify each connected friend with their visible friends
-  await Promise.all(
-    connectedFriends.map(async (friendId: any) => {
-      const friendSocket = connectedUsers.get(friendId.toString());
-
-      if (friendSocket) {
-        const friendList = await Friendship.findOne({
-          userId: friendId,
-        });
-
-        if (!friendList || !friendList.friendship) return;
-
-        const visibleFriends = friendList.friendship.filter((fId: any) =>
-          connectedUsers.has(fId.toString())
-        );
-
-        const visibleFriendUserIds = visibleFriends.map((fId: any) =>
-          fId.toString()
-        );
-
-        console.log(`Emitting to ${friendId}:`, visibleFriendUserIds);
-
-        io.to(friendSocket.socketID).emit('active-users', {
-          success: true,
-          data: visibleFriendUserIds,
-        });
-      }
-    })
-  );
-
-  const connectedFriendUserIds = connectedFriends.map((id) => id.toString());
-
-  return { success: true, data: connectedFriendUserIds };
-};
-
-
-
-
 export const emitNotification = async ({
   userId,
   receiverId,
@@ -614,7 +563,7 @@ export const emitDirectNotification = async ({
 }: {
   userId: mongoose.Types.ObjectId;
   receiverId: mongoose.Types.ObjectId;
-  userMsg?: { image: string; text: string; };
+  userMsg?: { image: string; text: string; name: string };
 }): Promise<void> => {
 
   if (!io) {
@@ -990,4 +939,53 @@ export const emitNotificationOfReview = async ({
 
   }
 
+
+  
+export const emitOnlineUser = async (userId: string) => {
+  if (!io) throw new Error('Socket.IO is not initialized');
+
+  // 1. Find current user's friends
+  const userList = await Friendship.findOne({ userId });
+
+  if (!userList || !userList.friendship) return;
+
+  // 2. Filter friends who are currently online
+  const connectedFriends = userList.friendship.filter((friendId) =>
+    connectedUsers.has(friendId.toString())
+  );
+
+  // 3. Notify each connected friend with their visible friends
+  await Promise.all(
+    connectedFriends.map(async (friendId: any) => {
+      const friendSocket = connectedUsers.get(friendId.toString());
+
+      if (friendSocket) {
+        const friendList = await Friendship.findOne({
+          userId: friendId,
+        });
+
+        if (!friendList || !friendList.friendship) return;
+
+        const visibleFriends = friendList.friendship.filter((fId: any) =>
+          connectedUsers.has(fId.toString())
+        );
+
+        const visibleFriendUserIds = visibleFriends.map((fId: any) =>
+          fId.toString()
+        );
+
+        console.log(`Emitting to ${friendId}:`, visibleFriendUserIds);
+
+        io.to(friendSocket.socketID).emit('active-users', {
+          success: true,
+          data: visibleFriendUserIds,
+        });
+      }
+    })
+  );
+
+  const connectedFriendUserIds = connectedFriends.map((id) => id.toString());
+
+  return { success: true, data: connectedFriendUserIds };
+};
 

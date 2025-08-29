@@ -2,6 +2,10 @@ import { Router } from 'express';
 import { wishListController } from './wishlist.controller';
 import auth from '../../middleware/auth';
 import { USER_ROLE } from '../user/user.constants';
+import parseData from '../../middleware/parseData';
+import fileUpload from '../../middleware/fileUpload';
+const upload = fileUpload('./public/uploads/wishlist');
+
 
 const router = Router();
 
@@ -11,6 +15,13 @@ router.post(
   wishListController.createOrUpdateFolder
 )
 
+  .post(
+    '/create',
+    auth(USER_ROLE.USER),
+    upload.single('image'),
+    parseData(),
+    wishListController.createFolder
+  )
 
 .post(
   '/remove-item',
@@ -22,6 +33,17 @@ router.post(
   '/update',
   auth(USER_ROLE.USER),
   wishListController.updateFolderIsActive
+)
+
+.patch(
+  '/update-folder-name', 
+  auth(USER_ROLE.USER,USER_ROLE.ORGANIZER),
+  wishListController.updateWishlist
+)
+.patch(
+  '/soft-delete-folder', 
+  auth(USER_ROLE.USER,USER_ROLE.ORGANIZER),
+  wishListController.softDeleteFolder
 )
 
 .get(
