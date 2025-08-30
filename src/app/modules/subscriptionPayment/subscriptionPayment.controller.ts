@@ -10,6 +10,7 @@ import SubscriptionPayment from './subscriptionPayment.model';
 import { User } from '../user/user.models';
 import { Coupon } from '../coupon/coupon.model';
 import MySubscription from '../mySubscription/mySubscription.mdel';
+import mongoose from 'mongoose';
 
 const paymentTypeMap: Record<string, string> = {
   'card': 'Card',
@@ -292,13 +293,24 @@ const initiateSubscriptionPayment = catchAsync(async (req: Request, res: Respons
   const expireDate = new Date();
   expireDate.setDate(expireDate.getDate() + (selectedOption.expirationDays || 30));
 
-  // Set subscriptionType to one of 'exclusive', 'elite', 'prime', or 'custom'
-  let subscriptionType = '';
-  if (['EXCLUSIVE', 'ELITE', 'PRIME'].includes(subscription.title.toUpperCase())) {
-    subscriptionType = subscription.title.toLowerCase(); // 'exclusive', 'elite', or 'prime'
-  } else {
-    subscriptionType = 'custom'; // For any other title
-  }
+// Set subscriptionType based on subscriptionForType and subscription.title
+    let subscriptionType = '';
+    
+    if (subscriptionForType === 'Business') {
+      if (['none', 'exclusive', 'elite', 'prime', 'custom'].includes(subscription.title.toLowerCase())) {
+        subscriptionType = subscription.title.toLowerCase();  // 'exclusive', 'elite', 'prime', or 'custom'
+      }
+    } else if (subscriptionForType === 'Event') {
+      if (['none', 'diamond', 'emerald', 'ruby', 'custom'].includes(subscription.title.toLowerCase())) {
+        subscriptionType = subscription.title.toLowerCase();  // 'none', 'diamond', 'emerald', 'ruby', or 'custom'
+      }
+    } else if (subscriptionForType === 'Job') {
+      if (['none', 'visualTop', 'visualMedia', 'visualBase', 'custom'].includes(subscription.title.toLowerCase())) {
+        subscriptionType = subscription.title.toLowerCase();  // 'none', 'visualTop', 'visualMedia', 'visualBase', or 'custom'
+      }
+    } else {
+      subscriptionType = 'custom'; // Default to 'custom' for any other subscriptionForType
+    }
 
   // 💳 Create payment record
   const payment = await SubscriptionPayment.create({
@@ -332,89 +344,124 @@ const initiateSubscriptionPayment = catchAsync(async (req: Request, res: Respons
 });
 
 const buySubscriptionByCredits = catchAsync(async (req: Request, res: Response) => {
-
-  console.log("buy subscription body data ->>> ",req.body);
+  console.log("buy subscription body data ->>> ", req.body);
   const { subscriptionId, subscriptionOptionIndex, subscriptionFor, subscriptionForType } = req.body;
   const { userId } = req.user;
 
-  // 🔍 Get the user and check credits
-  const user = await User.findById(userId);
-  if (!user) {
-    throw new AppError(404, 'User not found.');
-  }
+  const session = await mongoose.startSession(); // Start the transaction session
+  session.startTransaction();
 
-  const userTotalCredits = user.totalCredits || 0;
+  try {
+    // 🔍 Get the user and check credits
+    const user = await User.findById(userId).session(session);
+    if (!user) {
+      throw new AppError(404, 'User not found.');
+    }
 
-  // 🔍 Validate subscription existence
-  const subscription = await Subscription.findById(subscriptionId);
-  if (!subscription) {
-    throw new AppError(404, 'The selected subscription does not exist.');
-  }
+    const userTotalCredits = user.totalCredits || 0;
 
-  // 🔍 Validate subscription option index
-  const selectedOption = subscription.options?.[subscriptionOptionIndex];
-  if (!selectedOption) {
-    console.log("'Invalid subscription option index provided.'")
-    throw new AppError(400, 'Invalid subscription option index provided.');
-  }
+    // 🔍 Validate subscription existence
+    const subscription = await Subscription.findById(subscriptionId).session(session);
+    if (!subscription) {
+      throw new AppError(404, 'The selected subscription does not exist.');
+    }
 
-  // 💸 Check if user has enough credits
-  if (selectedOption.price > userTotalCredits) {
-    return sendResponse(res, {
-      statusCode: 400,
-      success: false,
-      message: 'Insufficient credits to purchase this subscription.',
+    // 🔍 Validate subscription option index
+    const selectedOption = subscription.options?.[subscriptionOptionIndex];
+    if (!selectedOption) {
+      console.log("'Invalid subscription option index provided.'")
+      throw new AppError(400, 'Invalid subscription option index provided.');
+    }
+
+    // 💸 Check if user has enough credits
+    if (selectedOption.price > userTotalCredits) {
+      return sendResponse(res, {
+        statusCode: 400,
+        success: false,
+        message: 'Insufficient credits to purchase this subscription.',
+        data: null,
+      });
+    }
+
+    // 📆 Calculate expiration date
+    const expireDate = new Date();
+    expireDate.setDate(expireDate.getDate() + (selectedOption.expirationDays || 30));
+
+    // Set subscriptionType based on subscriptionForType and subscription.title
+    let subscriptionType = '';
+    
+    if (subscriptionForType === 'Business') {
+      if (['none', 'exclusive', 'elite', 'prime', 'custom'].includes(subscription.title.toLowerCase())) {
+        subscriptionType = subscription.title.toLowerCase();  // 'exclusive', 'elite', 'prime', or 'custom'
+      }
+    } else if (subscriptionForType === 'Event') {
+      if (['none', 'diamond', 'emerald', 'ruby', 'custom'].includes(subscription.title.toLowerCase())) {
+        subscriptionType = subscription.title.toLowerCase();  // 'none', 'diamond', 'emerald', 'ruby', or 'custom'
+      }
+    } else if (subscriptionForType === 'Job') {
+      if (['none', 'visualTop', 'visualMedia', 'visualBase', 'custom'].includes(subscription.title.toLowerCase())) {
+        subscriptionType = subscription.title.toLowerCase();  // 'none', 'visualTop', 'visualMedia', 'visualBase', or 'custom'
+      }
+    } else {
+      subscriptionType = 'custom'; // Default to 'custom' for any other subscriptionForType
+    }
+
+    // 💳 Create a new subscription payment entry with 'Completed' status
+    const payment = await SubscriptionPayment.create([{
+      paymentId: `credit-${Date.now()}`,
+      amount: selectedOption.price,
+      userId,
+      subscriptionFor,
+      subscriptionForType,
+      subscription: subscription._id,
+      subscriptionOptionIndex,
+      subscriptionPriorityLevel: subscription.priorityLevel,
+      subscriptionType: subscriptionType,
+      paymentType: 'credit',
+      status: 'completed',
+      expireDate,
+    }], { session });
+
+    // ✅ Create MySubscription using updated fields
+    await MySubscription.create([{
+      user: userId,
+      subscriptionPaymentId: payment[0]._id,
+      expiryDate: expireDate,
+      subscriptionFor: subscriptionFor,
+      subscriptionForType: subscriptionForType,
+      subscription: subscription,
+      subscriptionOptionIndex: subscriptionOptionIndex,
+      subscriptionPriorityLevel: subscription.priorityLevel,
+      subscriptionType,
+      paymentType: "credit",
+      status: 'notActivate',
+      expireDate: expireDate
+    }], { session });
+
+    // 🧾 Update user's credits without using .save()
+    await User.findByIdAndUpdate(userId, {
+      $inc: { totalCredits: -selectedOption.price },
+    }, { session });
+
+    // Commit the transaction
+    await session.commitTransaction();
+    session.endSession();
+
+    // 📤 Send success response
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Subscription purchased successfully using your credits.',
       data: null,
     });
+  } catch (error) {
+    console.log(error.message)
+    // If an error occurs, abort the transaction and rollback
+    await session.abortTransaction();
+    session.endSession();
+    throw error; // Rethrow the error after rolling back
   }
-
-  // 📆 Calculate expiration date
-  const expireDate = new Date();
-  expireDate.setDate(expireDate.getDate() + (selectedOption.expirationDays || 30));
-
-  // 💳 Create a new subscription payment entry with 'Completed' status
-  const payment = await SubscriptionPayment.create({
-    paymentId: `credit-${Date.now()}`,
-    amount: selectedOption.price,
-    userId,
-    subscriptionFor,
-    subscriptionForType,
-    subscription: subscription._id,
-    subscriptionOptionIndex,
-    paymentType: 'credit',
-    status: 'completed',
-    expireDate,
-  });
-
-
-    
-  // ✅ Create MySubscription using updated fields
-  await MySubscription.create({
-    user: userId,
-    subscriptionPaymentId: payment._id,
-    expiryDate: expireDate,
-    subscriptionFor: subscriptionFor,
-    subscriptionForType: subscriptionForType,
-    subscription: subscription,
-    subscriptionOptionIndex: subscriptionOptionIndex,
-    paymentType: "credit",
-    status: 'notActivate',
-  });
-
-   // 🧾 Update user's credits without using .save()
-  await User.findByIdAndUpdate(userId, {
-    $inc: { totalCredits: -selectedOption.price },
-  });
-
-  // 📤 Send success response
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: 'Subscription purchased successfully using your credits.',
-    data: null,
-  });
 });
-
 
 // subscriptionPayment.controller.ts
 

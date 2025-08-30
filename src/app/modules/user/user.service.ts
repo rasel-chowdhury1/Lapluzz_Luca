@@ -138,6 +138,7 @@ const otpVerifyAndCreateUser = async (
     lastName: string;
     name: string;
     gender: 'male' | 'female' | 'others' | '';
+    dateOfBirth?: string;
     customId?: string; // referrer's customId (your referral code)
     address?: string;
     longitude?: number;
@@ -157,6 +158,7 @@ const otpVerifyAndCreateUser = async (
     lastName,
     name,
     gender,
+    dateOfBirth,
     customId, // referral code of referrer (maps to User.customId)
     // address, longitude, latitude, enableNotification
   } = decoded;
@@ -185,6 +187,7 @@ const otpVerifyAndCreateUser = async (
     email,
     role,
     gender,
+    dateOfBirth
   });
 
   if (!user) {

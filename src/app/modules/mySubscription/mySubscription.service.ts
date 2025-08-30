@@ -11,9 +11,18 @@ import Event from "../event/event.model";
 import Job from "../job/job.model";
 
 const getMySubscriptions = async (userId: string) => {
+  const subscriptions = await MySubscription.find({ user: userId, status: {$in: ["notActivate","activate"]} })
+    .populate("subscription")
+    .populate("subscriptionFor", "name")
+    .sort({ status: "asc", createdAt: -1 });
+  return subscriptions;
+};
+
+const getMySubscriptionsHistory = async (userId: string) => {
   const subscriptions = await MySubscription.find({ user: userId })
     .populate("subscription")
-    .populate("subscriptionFor", "name");
+    .populate("subscriptionFor", "name")
+    .sort({ createdAt: -1 });;
   return subscriptions;
 };
 
@@ -42,9 +51,12 @@ const activateSubscription = async (userId: string, mySubId: string) => {
       );
     }
 
-    // Update subscription status
-    mySubscription.status = "activate";
-    const result = await mySubscription.save({ session });
+    // Update SubscriptionPayment document if the subscription was successfully activated
+    const result = await MySubscription.findByIdAndUpdate(
+      mySubId,
+      { status: "activate" },
+      { session }
+    );
     if (!result) {
       throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to save subscription");
     }
@@ -117,6 +129,8 @@ const activateSubscription = async (userId: string, mySubId: string) => {
 
     return mySubscription;
   } catch (error) {
+
+    console.log(error.message)
     // If an error occurs, abort the transaction and rollback
     await session.abortTransaction();
     session.endSession();
@@ -175,9 +189,19 @@ const stopSubscription = async (userId: string, mySubId: string) => {
       }).session(session);
     }
 
-    // 5. Stop the subscription
-    subscription.status = "gotCredits";
-    const result = await subscription.save({ session });
+    // // 5. Stop the subscriptio
+    // subscription.status = "gotCredits";
+    // const result = await subscription.save({ session });n
+
+     // Update SubscriptionPayment document if the subscription was successfully activated
+    const result = await MySubscription.findByIdAndUpdate(
+      mySubId,
+      { status: "gotCredits" },
+      { session }
+    );
+    if (!result) {
+      throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to save subscription");
+    }
 
     if (!result) {
       throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to stop subscription");
@@ -284,6 +308,7 @@ const stopSubscription = async (userId: string, mySubId: string) => {
 
 export const mySubscriptionService = {
   getMySubscriptions,
+  getMySubscriptionsHistory,
   activateSubscription,
   stopSubscription
 }

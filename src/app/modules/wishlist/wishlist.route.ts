@@ -38,6 +38,8 @@ router.post(
 .patch(
   '/update-folder-name', 
   auth(USER_ROLE.USER,USER_ROLE.ORGANIZER),
+  upload.single('image'),
+  parseData(),
   wishListController.updateWishlist
 )
 .patch(

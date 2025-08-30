@@ -182,6 +182,18 @@ const getUnsubscriptionEvents = catchAsync(async (req: Request, res: Response) =
   });
 });
 
+const getSearchEvents = catchAsync(async (req: Request, res: Response) => {
+
+  const {userId} = req.user;
+  const result = await eventService.searchEvents(req.query, userId);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'All events fetched successfully',
+    data: result,
+  });
+});
+
 const getMyEvents = catchAsync(async (req: Request, res: Response) => {
 
   const { userId } = req.user;
@@ -270,6 +282,7 @@ const deleteEvent = catchAsync(async (req: Request, res: Response) => {
 export const eventController = {
   createEvent,
   getAllEvents,
+  getSearchEvents,
   getSubscriptionEvents,
   getUnsubscriptionEvents,
   getEventById,

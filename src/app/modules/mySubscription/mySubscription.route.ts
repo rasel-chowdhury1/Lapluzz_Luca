@@ -12,6 +12,11 @@ router
     auth(USER_ROLE.ORGANIZER),
     mySubscriptionController.getMySubscriptions
 )
+.get(
+    "/history",
+    auth(USER_ROLE.ORGANIZER),
+    mySubscriptionController.getMySubscriptionsHistory
+)
 
 .patch(
     "/activate/:id",

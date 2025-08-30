@@ -353,7 +353,6 @@ const getWishlistFolderDetailsByName = async (
     'title coverImage category address createdAt subscriptionType'
   );
 
-  const jobIds = jobs.map((job) => job._id);
 
   const populatedJobs = jobs.map((job) => {
     const id = job._id.toString();
@@ -366,6 +365,7 @@ const getWishlistFolderDetailsByName = async (
 
   return {
     folderName: targetFolder.folderName,
+    image: targetFolder.image,
     businesses: populatedBusinesses,
     events: populatedEvents,
     jobs: populatedJobs,
@@ -416,7 +416,8 @@ const removeServiceFromFolder = async (
 const updateFolderName = async (
   userId: string,
   oldFolderName: string,
-  newFolderName: string
+  newFolderName: string,
+  image?: string
 ) => {
   // Ensure the new folder name is not empty
   if (!newFolderName) {
@@ -439,6 +440,10 @@ const updateFolderName = async (
 
   // Update the folder name
   folder.folderName = newFolderName;
+
+  if(image){
+    folder.image = image;
+  }
 
   // Save the updated wishlist
   await wishlist.save();

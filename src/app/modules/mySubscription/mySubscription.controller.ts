@@ -15,6 +15,17 @@ const getMySubscriptions = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getMySubscriptionsHistory = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.userId; // Adjust depending on your auth logic
+  const result = await mySubscriptionService.getMySubscriptionsHistory(userId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "My subscriptions history retrieved successfully",
+    data: result,
+  });
+});
+
 const activateSubscription = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const {userId} = req.user;
@@ -41,6 +52,7 @@ const stopSubscription = catchAsync(async (req: Request, res: Response) => {
 
 export const mySubscriptionController = {
     getMySubscriptions,
+    getMySubscriptionsHistory,
     activateSubscription,
     stopSubscription
 }

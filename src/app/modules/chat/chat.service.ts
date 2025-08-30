@@ -144,7 +144,7 @@ const addNewChat = async (userId: string, chatData: IChat) => {
   // Save the chat to the database
   const savedChat = await newChat.save();
 
-  console.log("new chat ->>> ", newChat)
+  console.log("new chat ->>> ", savedChat)
 
   // Populate the users for the newly created chat
   const populatedResult = await Chat.findById(savedChat._id).populate({

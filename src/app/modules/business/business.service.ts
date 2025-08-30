@@ -987,6 +987,7 @@ const searchBusinesses = async (
 
   // 1. Match categories by name
   const matchedCategories = await Category.find({
+    type: "Provider",
     name: { $regex: searchTerm, $options: 'i' },
     isDeleted: false,
   });
@@ -1097,6 +1098,7 @@ const wizardSearchBusinesses = async (userId:string, filters: WizardFilters) => 
     maxGuest,
     services = [],
     priceRange,
+    maxDistance = 50000, // default to 50km if not provided
   } = filters;
 
   const query: any = { isDeleted: false };
@@ -1120,7 +1122,7 @@ const wizardSearchBusinesses = async (userId:string, filters: WizardFilters) => 
           type: 'Point',
           coordinates: [longitude, latitude],
         },
-        $maxDistance: 50000, // 50 km in meters
+        $maxDistance: maxDistance,
       },
     };
   }

@@ -635,7 +635,8 @@ const getLatestPosts = async (userId: string, limit: number = 10) => {
   const posts = await PostCommunity.aggregate([
     {
       $match: {
-        creator: { $ne: new mongoose.Types.ObjectId(userId),isDeleted: false } // Exclude my own posts
+        isDeleted: false, 
+        creator: { $ne: new mongoose.Types.ObjectId(userId)} // Exclude my own posts
       }
     },
     { $sort: { createdAt: -1 } },
@@ -719,7 +720,8 @@ const getSpecificCategoryOrRegionPosts = async (
   filters?: { category?: string; region?: string }
 ) => {
   const matchStage: any = {
-    creator: { $ne: new mongoose.Types.ObjectId(userId),isDeleted: false },
+    isDeleted: false, 
+    creator: { $ne: new mongoose.Types.ObjectId(userId) },
   };
 
   if (filters?.category) {
@@ -810,7 +812,8 @@ const getMostViewedPosts = async (userId: string, limit: number = 10) => {
   const posts = await PostCommunity.aggregate([
     {
       $match: {
-        creator: { $ne: new mongoose.Types.ObjectId(userId),isDeleted: false }
+        isDeleted: false, 
+        creator: { $ne: new mongoose.Types.ObjectId(userId) }
       }
     },
 
@@ -896,7 +899,8 @@ const getMostCommentedPosts = async (userId: string, limit: number = 10) => {
   const posts = await PostCommunity.aggregate([
     {
       $match: {
-        creator: { $ne: new mongoose.Types.ObjectId(userId),isDeleted: false }
+        isDeleted: false, 
+        creator: { $ne: new mongoose.Types.ObjectId(userId)}
       }
     },
 

@@ -8,7 +8,7 @@ import Job from '../job/job.model';
 import Event from '../event/event.model';
 
 const addNewChat = catchAsync(async (req: Request, res: Response) => {
-  const { userId, fullName,profileImage } = req.user;
+  const { userId, fullName,profileImage,role } = req.user;
   const { users = [], chatImage, isGroupChat = false, contextType, contextId } = req.body;
 
   // Ensure the current userId is included in the `users` array if not already present
@@ -73,6 +73,7 @@ const addNewChat = catchAsync(async (req: Request, res: Response) => {
   const chatData = {
     ...req.body,
     chatImage: chatImage? chatImage : profileImage, 
+    chatName: role === "admin" ? "Pianofesta Support" : "",
     userName: fullName,
     createdBy: userId,
     users, // Modified users array

@@ -108,9 +108,18 @@ const getAllInspirationsGroupedByCategory = async () => {
             createdAt: '$createdAt',
             updatedAt: '$updatedAt'
           }
-        }
+        },
+        categoryCreatedAt: { $first: '$categoryInfo.createdAt' },
       }
     },
+
+    // Step 3: Sort by category's createdAt field
+    {
+      $sort: {
+        categoryCreatedAt: 1, // Sort categories by the createdAt field in ascending order
+      },
+    },
+    
     {
       $project: {
         _id: 0,
