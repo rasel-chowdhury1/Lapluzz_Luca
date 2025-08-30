@@ -31,7 +31,6 @@ out/ 
 .env
 .env.local.env
 .*.local 
-googleFirebaseAdmin.json
 
 # Ignore miscellaneous files
 *.class
