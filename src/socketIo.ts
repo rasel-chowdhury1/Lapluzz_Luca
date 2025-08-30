@@ -666,8 +666,10 @@ export const emitMassNotification = async ({
   };
 
   // Save notification to the database
-  const result = await Notification.create(newNotification);
-  console.log({ result });
+  await Notification.create(newNotification);
+   const msg = userMsg?.text || "something";
+  
+    sendNotificationByFcmToken(receiverId, msg)
 };
 
 
@@ -725,7 +727,9 @@ export const emitNotificationToFollowersOfBusiness = async ({
       timestamp: new Date(),
     });
 
-    console.log("notification result =>>> ", result)
+    const msg = userMsg?.text || "something";
+  
+    sendNotificationByFcmToken(followerId, msg)
   }
 };
 
@@ -784,6 +788,10 @@ export const emitNotificationToInterestUsersOfEvent = async ({
       isRead: false,
       timestamp: new Date(),
     });
+
+    const msg = userMsg?.text || "something";
+  
+    sendNotificationByFcmToken(receiverId, msg)
   }
 };
 
@@ -895,6 +903,10 @@ export const emitSearchNotificationToBusiness = async ({
   // Save notification to the database
   const result = await Notification.create(newNotification);
 
+  const msg = userMsg?.text || "something";
+  
+  sendNotificationByFcmToken(receiverId, msg)
+
 };
 
 
@@ -945,6 +957,10 @@ export const emitNotificationOfReview = async ({
       isRead: false,
       timestamp: new Date(),
     });
+
+    const msg = userMsg?.text || "something";
+  
+    sendNotificationByFcmToken(receiverId, msg)
 
 
   }
