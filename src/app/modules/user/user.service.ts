@@ -186,11 +186,11 @@ const otpVerifyAndCreateUser = async (
     password,
     email,
     role,
-    gender,
-    dateOfBirth
+    gender
   });
 
   if (!user) {
+    console.log("user from error ->>>> ", user)
     throw new AppError(httpStatus.BAD_REQUEST, 'User creation failed');
   }
 
