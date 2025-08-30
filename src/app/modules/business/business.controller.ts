@@ -309,6 +309,7 @@ const wizardSearchBusiness = catchAsync(async (req: Request, res: Response) => {
   const {
     longitude,
     latitude,
+    maxDistance,  // Get maxDistance from query parameters
     ...restQuery
   } = req.query;
 
@@ -318,6 +319,7 @@ const wizardSearchBusiness = catchAsync(async (req: Request, res: Response) => {
     ...restQuery,
     longitude: longitude ? Number(longitude) : undefined,
     latitude: latitude ? Number(latitude) : undefined,
+    maxDistance: maxDistance ? Number(maxDistance) : 50000,  // Default to 50 km if not provided
   };
 
 
@@ -347,6 +349,7 @@ const filterSearchBusinesses = catchAsync(async (req: Request, res: Response) =>
     maxGuest: maxGuest ? Number(maxGuest) : undefined,
     longitude: longitude ? Number(longitude) : undefined,
     latitude: latitude ? Number(latitude) : undefined,
+    
   };
 
 

@@ -168,10 +168,33 @@ const updateWishlist = catchAsync(async (req: Request, res: Response) => {
     });
   }
 
+  if (req?.file) {
+        // req.body.profileImage = storeFile('profile', req?.file?.filename);
+    
+            // upload file in bucket function is done
+        try {
+          const data = await uploadFileToS3(req.file)
+    
+    
+          console.log("data----->>>> ",data)
+          // deleting file after upload
+          fs.unlinkSync(req.file.path)
+      
+          req.body.image= data.Location;
+        } catch (error) {
+          console.log("====erro9r --->>> ", error)
+          if(fs.existsSync(req.file.path)){
+            fs.unlinkSync(req.file.path)
+          }
+        }
+    
+      }
+
   const result = await wishListService.updateFolderName(
     userId,
     oldFolderName,
-    newFolderName
+    newFolderName,
+    req.body.image
   );
 
   sendResponse(res, {

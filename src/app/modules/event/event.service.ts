@@ -43,7 +43,9 @@ const getAllEvents = async (query: Record<string, any>) => {
 };
 
 const getEventList = async () => {
-  const events = await Event.find({ isDeleted: false }).lean();
+  const events = await Event.find({ isDeleted: false })
+                             .populate('author', 'name profileImage role') // Populate the author field
+                            .lean();
 
   const results = await Promise.all(
     events.map(async (event) => {
@@ -401,6 +403,143 @@ const getUnsubscriptionEvent = async (userId: string, query: Record<string, any>
 
   return { data, meta };
 };
+
+const searchEvents = async (
+  query: Record<string, any>,
+  userId?: string
+) => {
+  const searchTerm = (query.searchTerm as string) || '';
+
+  // 🔎 বেস ফিল্টার (ডিলিটেড বাদ + অ্যাকটিভ)
+  const baseFilter: any = {
+    isDeleted: false,
+    isActive: true,
+  };
+
+  // 🔎 টেক্সট সার্চ ফিল্ডগুলো
+  if (searchTerm) {
+    baseFilter.$or = [
+      { name: { $regex: searchTerm, $options: 'i' } },
+      { description: { $regex: searchTerm, $options: 'i' } },
+      { detailDescription: { $regex: searchTerm, $options: 'i' } },
+      { address: { $regex: searchTerm, $options: 'i' } },
+      { category: { $regex: searchTerm, $options: 'i' } },
+      { type: { $regex: searchTerm, $options: 'i' } },
+      { email: { $regex: searchTerm, $options: 'i' } },
+      { phoneNumber: { $regex: searchTerm, $options: 'i' } },
+    ];
+  }
+
+  // 🧭 QueryBuilder (filter/sort/paginate/fields)
+  const baseQuery = Event.find(baseFilter);
+  const qb = new QueryBuilder<IEvent>(baseQuery, query)
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
+
+  let data = await qb.modelQuery;
+  const meta = await qb.countTotal();
+
+  if (!data || data.length === 0) return { data, meta };
+
+  const eventIds = data.map((e) => e._id);
+
+  // ⭐ রেটিং (avg + count)
+  const ratings = await EventReview.aggregate([
+    { $match: { eventId: { $in: eventIds } } },
+    {
+      $group: {
+        _id: '$eventId',
+        averageRating: { $avg: '$rating' },
+        totalReviews: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const ratingMap: Record<string, { averageRating: number; totalReviews: number }> = {};
+  ratings.forEach((r) => {
+    ratingMap[r._id.toString()] = {
+      averageRating: parseFloat(r.averageRating.toFixed(1)),
+      totalReviews: r.totalReviews,
+    };
+  });
+
+  // ⭐ এনগেজমেন্ট (লাইক, কমেন্ট+রিপ্লাই, isLiked)
+  const engagementStats = await EventEngagementStats.find({
+    eventId: { $in: eventIds },
+  }).select('eventId likes comments');
+
+  const engagementMap: Record<
+    string,
+    { totalLikes: number; totalComments: number; isLiked: boolean }
+  > = {};
+
+  engagementStats.forEach((stat) => {
+    const id = stat.eventId.toString();
+    const totalCommentsWithReplies = (stat.comments || []).reduce((acc: number, c: any) => {
+      acc += 1; // main comment
+      if (Array.isArray(c?.replies)) acc += c.replies.length; // replies
+      return acc;
+    }, 0);
+
+    engagementMap[id] = {
+      totalLikes: stat.likes?.length || 0,
+      totalComments: totalCommentsWithReplies,
+      isLiked: userId ? stat.likes?.some((l: any) => l.toString() === userId) : false,
+    };
+  });
+
+  // ⭐ ইউজারের উইশলিস্ট
+  const wishList = userId ? await WishList.findOne({ userId }).lean() : null;
+  const wishListEventIds = new Set<string>();
+  if (wishList?.folders?.length) {
+    wishList.folders.forEach((f: any) => {
+      f.events?.forEach((eid: any) => wishListEventIds.add(eid.toString()));
+    });
+  }
+
+  // 🔀 ফাইনাল মার্জ
+  let enriched = data.map((event) => {
+    const id = event._id.toString();
+
+    const rating = ratingMap[id] || { averageRating: 0, totalReviews: 0 };
+    const engagement =
+      engagementMap[id] || { totalLikes: 0, totalComments: 0, isLiked: false };
+
+    return {
+      ...event.toObject(),
+      ...rating,
+      ...engagement,
+      blueVerifiedBadge: ['diamond', 'emerald'].includes(event.subscriptionType as any),
+      isWishlisted: wishListEventIds.has(id),
+      type: 'event',
+    };
+  });
+
+  // ⬆️ অর্ডারিং: Subscription আগে → টিয়ার → Priority → Newest
+  const subscriptionOrder = ['diamond', 'emerald', 'ruby', 'custom', 'none'];
+  enriched = enriched.sort((a: any, b: any) => {
+    // 1) subscription ইভেন্ট আগে
+    if (a.isSubscription !== b.isSubscription) return a.isSubscription ? -1 : 1;
+
+    // 2) টিয়ার অর্ডার
+    const pa = subscriptionOrder.indexOf(a.subscriptionType ?? 'none');
+    const pb = subscriptionOrder.indexOf(b.subscriptionType ?? 'none');
+    if (pa !== pb) return pa - pb;
+
+    // 3) priority level (বড়টা আগে)
+    const prA = a.subsciptionPriorityLevel ?? 0;
+    const prB = b.subsciptionPriorityLevel ?? 0;
+    if (prA !== prB) return prB - prA;
+
+    // 4) newest first
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+
+  return { data: enriched, meta };
+};
+
 
 // const getEventById = async (id: string) => {
 //   const result = await Event.findById(id);
@@ -875,6 +1014,7 @@ const deleteEvent = async (id: string) => {
 export const eventService = {
   createEvent,
   getAllEvents,
+  searchEvents,
   getSubscrptionEvent,
   getUnsubscriptionEvent,
   getEventById,

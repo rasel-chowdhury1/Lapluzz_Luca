@@ -17,6 +17,7 @@ import Notification from './app/modules/notifications/notifications.model';
 import { User } from './app/modules/user/user.models';
 import { callbackFn } from './app/utils/callbackFn';
 import { verifyToken } from './app/utils/tokenManage';
+import { sendNotificationByFcmToken } from './app/utils/sentNotificationByFcmToken';
 
 // Define the socket server port
 const socketPort: number = parseInt(process.env.SOCKET_PORT || '9020', 10);
@@ -509,6 +510,10 @@ export const emitNotification = async ({
 
   // Save notification to the database
   const result = await Notification.create(newNotification);
+
+  const msg = userMsg?.text || "something";
+  
+  sendNotificationByFcmToken(receiverId, msg)
   console.log({ result });
 };
 
@@ -604,6 +609,11 @@ export const emitDirectNotification = async ({
 
   // Save notification to the database
   const result = await Notification.create(newNotification);
+
+  const msg = userMsg?.text || "something";
+  
+  sendNotificationByFcmToken(receiverId, msg)
+
   console.log({ result });
 };
 

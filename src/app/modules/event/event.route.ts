@@ -81,6 +81,12 @@ router.post(
   auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
   eventController.getUnsubscriptionEvents
 )
+
+.get(
+  '/search',
+  auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
+  eventController.getSearchEvents
+)
   
 .get(
   '/list',

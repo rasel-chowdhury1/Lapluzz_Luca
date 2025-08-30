@@ -9,7 +9,6 @@ const mySubscriptionSchema = new Schema<IMySubscription>({
         ref: 'SubscriptionPayment',
         unique: true
     },
-    expireDate: { type: Date, required: true },
     // 👇 Dynamic reference field
     subscriptionFor: {
         type: mongoose.Schema.Types.ObjectId,
@@ -36,7 +35,7 @@ const mySubscriptionSchema = new Schema<IMySubscription>({
     },
     subscriptionType: { 
         type: String, 
-        enum: ['none','exclusive','elite','prime', 'custom'],
+        enum: ['none','exclusive','elite','prime', 'diamond', 'emerald', 'ruby','visualTop', 'visualMedia', 'visualBase', 'custom'],
         required: true 
     },
     payment_method: {
@@ -68,7 +67,9 @@ const mySubscriptionSchema = new Schema<IMySubscription>({
         type: Boolean,
         default: false
     },
-});
+},
+{ timestamps: true }
+);
 
 
 const MySubscription = mongoose.model<IMySubscription>("MySubcription", mySubscriptionSchema);
