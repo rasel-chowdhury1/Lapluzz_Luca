@@ -17,7 +17,7 @@ import Notification from './app/modules/notifications/notifications.model';
 import { User } from './app/modules/user/user.models';
 import { callbackFn } from './app/utils/callbackFn';
 import { verifyToken } from './app/utils/tokenManage';
-import { sendNotificationByFcmToken } from './app/utils/sentNotificationByFcmToken';
+import { sendNotificationByFcmToken, sendReminderNotification } from './app/utils/sentNotificationByFcmToken';
 
 // Define the socket server port
 const socketPort: number = parseInt(process.env.SOCKET_PORT || '9020', 10);
@@ -1013,5 +1013,70 @@ export const emitOnlineUser = async (userId: string) => {
   const connectedFriendUserIds = connectedFriends.map((id) => id.toString());
 
   return { success: true, data: connectedFriendUserIds };
+};
+
+
+interface NotificationMessage {
+  image?: string;
+  name: string;
+  text: string;
+}
+
+interface EmitReminderNotificationParams {
+  userId: mongoose.Types.ObjectId;
+  receiverId: mongoose.Types.ObjectId;
+  userMsg: NotificationMessage;
+}
+
+export const emitReminderNotificationToBusinessUser = async ({
+  userId,
+  receiverId,
+  userMsg
+}: EmitReminderNotificationParams): Promise<void> => {
+
+  if (!io) {
+    throw new Error('Socket.IO is not initialized');
+  }
+
+  // Get the socket ID of the specific user
+  const userSocket = connectedUsers.get(receiverId.toString());
+
+  // Fetch unread notifications count for the receiver before creating the new notification
+  const unreadCount = await Notification.countDocuments({
+    receiverId: receiverId,
+    isRead: false, // Filter by unread notifications
+  });
+
+
+  // Notify the specific user
+  if (userMsg && userSocket) {
+    console.log();
+    io.to(userSocket.socketID).emit(`notification`, {
+      // userId,
+      // message: userMsg,
+      statusCode: 200,
+      success: true,
+      unreadCount: unreadCount >= 0 ? unreadCount + 1 : 1,
+    });
+  }
+
+
+  // Save notification to the database
+  const newNotification = {
+    userId, // Ensure that userId is of type mongoose.Types.ObjectId
+    receiverId, // Ensure that receiverId is of type mongoose.Types.ObjectId
+    message: userMsg,
+    type: "adminProvide", // Use the provided type (default to "FollowRequest")
+    isRead: false, // Set to false since the notification is unread initially
+    timestamp: new Date(), // Timestamp of when the notification is created
+  };
+
+  // Save notification to the database
+  const result = await Notification.create(newNotification);
+
+  const msg = userMsg?.text || "something";
+  
+  sendReminderNotification(receiverId, userMsg?.name, userMsg?.text)
+
 };
 

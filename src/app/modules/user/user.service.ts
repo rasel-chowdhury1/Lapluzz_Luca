@@ -7,7 +7,7 @@ import config from '../../config';
 import { getAdminId } from '../../DB/adminStore';
 import AppError from '../../error/AppError';
 import { buildLocation } from '../../utils/buildLocation';
-import { otpSendEmail } from '../../utils/eamilNotifiacation';
+import { otpSendEmail, welcomeEmail } from '../../utils/eamilNotifiacation';
 import { createToken, verifyToken } from '../../utils/tokenManage';
 import Event from '../event/event.model';
 import Job from '../job/job.model';
@@ -276,6 +276,9 @@ const otpVerifyAndCreateUser = async (
   });
 
 
+
+
+
     const notificationData = {
     userId: user?._id,
     receiverId: getAdminId(),
@@ -290,6 +293,15 @@ const otpVerifyAndCreateUser = async (
 
   // Fire-and-forget
   void emitNotification(notificationData);
+
+   // 8) Asynchronously send the welcome email (fire-and-forget)
+  process.nextTick(async () => {
+    await welcomeEmail({
+      sentTo: email,
+      subject: '🎉 Welcome to Pianofesta!',
+      name: name || "Customer",
+    });
+  });
 
   // 7) EXACT return shape you requested
   return {

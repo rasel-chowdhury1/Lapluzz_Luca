@@ -4,8 +4,12 @@ import app from './app';
 import colors from 'colors'; // Ensure correct import
 import config from './app/config';
 import createDefaultAdmin from './app/DB/createDefaultAdmin';
-import { initSocketIO } from './socketIo';
+import { emitReminderNotificationToBusinessUser, initSocketIO } from './socketIo';
 import { logger } from './app/utils/logger';
+import cron from 'node-cron';
+import { User } from './app/modules/user/user.models';
+import { sendReminderNotification } from './app/utils/sentNotificationByFcmToken';
+import { getAdminData } from './app/DB/adminStore';
 
 // Create a new HTTP server
 const socketServer = createServer();
@@ -87,3 +91,32 @@ process.on('uncaughtException', (err) => {
   }
 });
 
+
+cron.schedule("0 0 * * *", async () => {
+  const adminData: any = getAdminData();
+
+  if (!adminData || !adminData._id) {
+    console.error("Admin data not found. Cannot send reminder notifications.");
+    return; // Stop the cron job
+  }
+
+  const usersWithoutListings = await User.find({
+    parentBusiness: null,
+    isDeleted: false,
+    isBlocked: false,
+  });
+
+  for (const user of usersWithoutListings) {
+    if (!user._id) continue; // Skip users without valid _id
+
+    await emitReminderNotificationToBusinessUser({
+      userId: adminData._id as mongoose.Types.ObjectId,
+      receiverId: user._id as mongoose.Types.ObjectId,
+      userMsg: {
+        name: "🚀 Create Your Business Listing",
+        image: (adminData.profileImage ?? "") as string,
+        text: `Hi ${user.name}, you haven’t created your first business yet. Start today and grow with Pianofesta! 🌟`,
+      },
+    });
+  }
+});

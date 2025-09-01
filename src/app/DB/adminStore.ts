@@ -1,12 +1,13 @@
+import { TUser } from "../modules/user/user.interface";
 
 
-let adminData: {} | null = null;
+let adminData: TUser | null = null;
 
-export const setAdminData = (data: {}) => {
+export const setAdminData = (data: TUser) => {
   adminData = data;
 };
 
-export const getAdminData = (): {} | null => {
+export const getAdminData = (): TUser | null => {
   return adminData;
 };
 
