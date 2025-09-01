@@ -37,7 +37,7 @@ export interface OTPVerifyAndCreateUserProps {
 const createUserToken = async (payload: TUserCreate) => {
   console.log('payload service user');
 
-  const { role, email, sureName, lastName, name, password, dateOfBirth, gender, customId, address, longitude, latitude, enableNotification } =
+  const {sureName, lastName, name,email,password, role,  phone = "",  dateOfBirth = null, gender, customId, address, longitude, latitude, enableNotification } =
     payload;
 
   // user exist check
@@ -74,15 +74,16 @@ const createUserToken = async (payload: TUserCreate) => {
   }
 
   const otpBody: Partial<TUserCreate> = {
-    email,
     sureName,
     lastName,
     name,
+    email,
     password,
+    phone,
+    dateOfBirth,
     role,
     gender,
     customId,
-    dateOfBirth,
     address,
     longitude,
     latitude,
@@ -138,7 +139,8 @@ const otpVerifyAndCreateUser = async (
     lastName: string;
     name: string;
     gender: 'male' | 'female' | 'others' | '';
-    dateOfBirth?: string;
+    phone?: string;
+    dateOfBirth?: Date;
     customId?: string; // referrer's customId (your referral code)
     address?: string;
     longitude?: number;
@@ -158,6 +160,7 @@ const otpVerifyAndCreateUser = async (
     lastName,
     name,
     gender,
+    phone,
     dateOfBirth,
     customId, // referral code of referrer (maps to User.customId)
     // address, longitude, latitude, enableNotification
@@ -186,7 +189,9 @@ const otpVerifyAndCreateUser = async (
     password,
     email,
     role,
-    gender
+    gender,
+    phone,
+    dateOfBirth
   });
 
   if (!user) {

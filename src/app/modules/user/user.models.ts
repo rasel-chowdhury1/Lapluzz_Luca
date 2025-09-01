@@ -80,7 +80,7 @@ const userSchema = new Schema<TUser>(
     dateOfBirth: {
       type: Date, // Added date of birth
       required: false, // Optional field
-      default: ""
+      default: null
     },
     isSubBusiness: {
       type: Boolean,

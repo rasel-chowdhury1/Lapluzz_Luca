@@ -18,7 +18,7 @@ export interface TUserCreate {
   loginWth: 'google' | 'apple' | 'facebook' | 'credentials';
   enableNotification?: boolean;
   about?: string;
-  dateOfBirth?: Date;
+  dateOfBirth?: Date | null;
   wishlist?: [string];
   referralsUserList: ObjectId[];
   referredBy?: ObjectId;
