@@ -80,7 +80,8 @@ const getAllBusiness = async (userId: string, query: Record<string, any>) => {
     .search(['name', 'email', 'phoneNumber', 'address', 'subscriptionType ', 'priceRange'])
     .filter()
     .paginate()
-    .fields();
+    .fields()
+    .sort();
 
   let data = await businessModel.modelQuery;
   const meta = await businessModel.countTotal();

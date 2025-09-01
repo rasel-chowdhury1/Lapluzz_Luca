@@ -252,6 +252,7 @@ const buySubscription = catchAsync(async (req: Request, res: Response) => {
 
 
 const initiateSubscriptionPayment = catchAsync(async (req: Request, res: Response) => {
+
   const { subscriptionId, subscriptionOptionIndex, subscriptionFor, subscriptionForType, couponCode } = req.body;
   const { userId } = req.user;
 
@@ -298,6 +299,7 @@ const initiateSubscriptionPayment = catchAsync(async (req: Request, res: Respons
     
     if (subscriptionForType === 'Business') {
       if (['none', 'exclusive', 'elite', 'prime', 'custom'].includes(subscription.title.toLowerCase())) {
+        console.log("=>>> subscription title =>>> ",subscription.title.toLowerCase())
         subscriptionType = subscription.title.toLowerCase();  // 'exclusive', 'elite', 'prime', or 'custom'
       }
     } else if (subscriptionForType === 'Event') {
@@ -491,62 +493,88 @@ const handleWooPaymentWebhook = catchAsync(async (req: Request, res: Response) =
     });
   }
 
-  // ✅ Update SubscriptionPayment
-  const updated = await SubscriptionPayment.findByIdAndUpdate(
-    subscription_payment_id,
-    {
-      transaction_id: payment_detials?.transaction_id,
-      woo_order_id,
-      amount_cents,
-      currency,
-      customer_name: customer?.name || '',
-      customer_email: customer?.email || '',
-      payment_method,
-      payment_status,
-      status,
-      userStatus: "notActivate"
-    },
-    { new: true }
-  );
+  // Start a session for the transaction
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-  if (!updated) {
-    throw new AppError(404, 'Subscription payment record not found');
-  }
-
-  
-  // ✅ Create MySubscription using updated fields
-  await MySubscription.create({
-    user: updated.userId,
-    subscriptionPaymentId: subscription_payment_id,
-    expiryDate: updated.expireDate,
-    subscriptionFor: updated.subscriptionFor,
-    subscriptionForType: updated.subscriptionForType,
-    subscription: updated.subscription,
-    subscriptionOptionIndex: updated.subscriptionOptionIndex,
-    subscriptionPriorityLevel: updated.subscriptionPriorityLevel,
-    subscriptionType: updated.subscriptionType,
-    payment_method: updated.payment_method,
-    payment_status: updated.payment_status,
-    expireDate: updated.expireDate,
-    status: 'notActivate',
-  });
-
-  // ✅ Increment coupon usage if applicable
-  if (updated.couponCode) {
-    await Coupon.findOneAndUpdate(
-      { name: updated.couponCode },
-      { $inc: { usedCount: 1 } }
+  try {
+    // ✅ Update SubscriptionPayment
+    const updated = await SubscriptionPayment.findByIdAndUpdate(
+      subscription_payment_id,
+      {
+        transaction_id: payment_detials?.transaction_id,
+        woo_order_id,
+        amount_cents,
+        currency,
+        customer_name: customer?.name || '',
+        customer_email: customer?.email || '',
+        payment_method,
+        payment_status,
+        status,
+        userStatus: "notActivate"
+      },
+      { new: true, session } // Pass the session to the query
     );
-  }
 
-  // ✅ Final response
-  return sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: 'Subscription payment processed successfully',
-    data: updated,
-  });
+    if (!updated) {
+      throw new AppError(404, 'Subscription payment record not found');
+    }
+
+    // ✅ Create MySubscription using updated fields
+    await MySubscription.create(
+      [{
+        user: updated.userId,
+        subscriptionPaymentId: subscription_payment_id,
+        expiryDate: updated.expireDate,
+        subscriptionFor: updated.subscriptionFor,
+        subscriptionForType: updated.subscriptionForType,
+        subscription: updated.subscription,
+        subscriptionOptionIndex: updated.subscriptionOptionIndex,
+        subscriptionPriorityLevel: updated.subscriptionPriorityLevel,
+        subscriptionType: updated.subscriptionType,
+        payment_method: updated.payment_method,
+        payment_status: updated.payment_status,
+        expireDate: updated.expireDate,
+        status: 'notActivate',
+      }],
+      { session } // Pass the session to the query
+    );
+
+    // ✅ Increment coupon usage if applicable
+    if (updated.couponCode) {
+      await Coupon.findOneAndUpdate(
+        { name: updated.couponCode },
+        { $inc: { usedCount: 1 } },
+        { session } // Pass the session to the query
+      );
+    }
+
+    // Commit the transaction
+    await session.commitTransaction();
+
+    // Final response
+    return sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Subscription payment processed successfully',
+      data: updated,
+    });
+  } catch (error) {
+    // If an error occurs, abort the transaction
+    await session.abortTransaction();
+    console.error("Error during payment processing:", error);
+    return sendResponse(res, {
+      statusCode: 500,
+      success: false,
+      message: 'An error occurred while processing the subscription payment',
+      data: null,
+    });
+  } finally {
+    // End the session
+    session.endSession();
+  }
 });
+
 
 const getMySubscription = catchAsync(async (req: Request, res: Response) => {
 
