@@ -193,7 +193,7 @@ try {
     role,
     gender,
     phone,
-    dateOfBirth
+    dateOfBirth: dateOfBirth && !isNaN(new Date(dateOfBirth).getTime()) ? new Date(dateOfBirth) : null
   });
 
     // 5) Referral logic (transactional): +5 to referrer and +5 to claimant
