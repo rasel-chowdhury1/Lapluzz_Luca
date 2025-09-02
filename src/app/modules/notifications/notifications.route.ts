@@ -76,6 +76,24 @@ notificationRoutes
   )
 
   .get(
+    '/business/mySented/:id', 
+    auth(USER_ROLE.USER,USER_ROLE.ORGANIZER, USER_ROLE.SUPER_ADMIN,USER_ROLE.ADMIN), 
+    notificationController.getMySentedSpecificBusinessNotifications
+  )
+
+  .get(
+    '/event/mySented/:id', 
+    auth(USER_ROLE.USER,USER_ROLE.ORGANIZER, USER_ROLE.SUPER_ADMIN,USER_ROLE.ADMIN), 
+    notificationController.getMySentedSpecificEventNotifications
+  )
+
+  .get(
+    '/job/mySented/:id', 
+    auth(USER_ROLE.USER,USER_ROLE.ORGANIZER, USER_ROLE.SUPER_ADMIN,USER_ROLE.ADMIN), 
+    notificationController.getMySentedSpecificJobNotifications
+  )
+
+  .get(
     "/mass",
     auth(USER_ROLE.USER,USER_ROLE.ORGANIZER, USER_ROLE.SUPER_ADMIN,USER_ROLE.ADMIN), 
     notificationController.getMassNotifications

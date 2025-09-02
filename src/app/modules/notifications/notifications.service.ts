@@ -196,7 +196,7 @@ const getMySentedNotificationsByTypeAndId = async (userId: string, notificationT
   const notificationTypeKey = validTypes[notificationType];
 
   // Get the sent notifications for a specific type and entityId
-  const result = await Notification.find({
+  let notifications = await Notification.find({
     userId,
     "message.types": notificationType,
     "message.notificationFor": entityId,
@@ -205,7 +205,45 @@ const getMySentedNotificationsByTypeAndId = async (userId: string, notificationT
   }).sort({ createdAt: -1 })  // Sort notifications by the most recent ones
     .lean();  // Use lean() to get plain JavaScript objects for better performance
 
-  return result;  // Return the fetched notifications
+  // Loop through notifications and attach names or titles
+  notifications = await Promise.all(
+    notifications.map(async (notification) => {
+      if (notification.message?.types && notification.message?.notificationFor) {
+        let model;
+
+        // Determine the appropriate model based on the notification type
+        switch (notification.message.types) {
+          case 'business':
+            model = Business;
+            break;
+          case 'event':
+            model = Event;
+            break;
+          case 'job':
+            model = Job;
+            break;
+          default:
+            model = null;
+        }
+
+        if (model) {
+          // Find the related document and attach name or title
+          const doc = await model
+            .findById(notification.message.notificationFor)
+            .select('name title')
+            .lean();
+
+          if (doc) {
+            // For businesses, use `name`; for events/jobs, use `title`
+            notification.message.name = doc.name || doc.title || '';
+          }
+        }
+      }
+      return notification;
+    })
+  );
+
+  return notifications;  // Return the fetched notifications
 };
 
 const getTodayHowManySentNotifications = async (userId: string) => {
