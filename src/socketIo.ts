@@ -966,6 +966,64 @@ export const emitNotificationOfReview = async ({
   }
 
 
+// Typing the function parameters
+interface UserMessage {
+  name: string;
+  image?: string;
+  text: string; // The main message text
+}
+
+export const emitNotificationOfSuccessfullyPamentSubcription = async ({
+  userId,
+  receiverId,
+  userMsg,
+}: {
+  userId: mongoose.Types.ObjectId;
+  receiverId: mongoose.Types.ObjectId;
+  userMsg: UserMessage;
+}): Promise<void> => {
+
+  if (!io) {
+    throw new Error('Socket.IO is not initialized');
+  }
+
+  // Get the socket ID of the specific user
+  const userSocket = connectedUsers.get(receiverId.toString());
+
+  // Fetch unread notifications count for the receiver before creating the new notification
+  const unreadCount = await Notification.countDocuments({
+    receiverId: receiverId,
+    isRead: false, // Filter by unread notifications
+  });
+
+  // Notify the specific user via Socket.IO
+  if (userMsg && userSocket) {
+    io.to(userSocket.socketID).emit('notification', {
+      statusCode: 200,
+      success: true,
+      unreadCount: unreadCount + 1, // Add 1 for the new notification
+    });
+  }
+
+  // Save the notification to the database
+  const newNotification = {
+    userId, // Ensure userId is of type mongoose.Types.ObjectId
+    receiverId, // Ensure receiverId is of type mongoose.Types.ObjectId
+    message: userMsg, // The message object
+    type: "adminProvide", // Default type or use the provided type
+    isRead: false, // Initially unread
+    timestamp: new Date(), // Timestamp when the notification is created
+  };
+
+  // Save the notification to the database
+  const result = await Notification.create(newNotification);
+
+  // Log or process the notification message if necessary
+  const msg = userMsg?.text || "Something went wrong with the message"; // Fallback message
+  
+  // Optionally call a reminder notification function (assuming it's defined elsewhere)
+  sendReminderNotification(receiverId, userMsg?.name, userMsg?.text);
+};
   
 export const emitOnlineUser = async (userId: string) => {
   if (!io) throw new Error('Socket.IO is not initialized');

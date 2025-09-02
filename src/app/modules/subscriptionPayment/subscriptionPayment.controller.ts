@@ -11,6 +11,8 @@ import { User } from '../user/user.models';
 import { Coupon } from '../coupon/coupon.model';
 import MySubscription from '../mySubscription/mySubscription.mdel';
 import mongoose from 'mongoose';
+import { getAdminData } from '../../DB/adminStore';
+import { emitNotificationOfSuccessfullyPamentSubcription } from '../../../socketIo';
 
 const paymentTypeMap: Record<string, string> = {
   'card': 'Card',
@@ -557,6 +559,36 @@ const handleWooPaymentWebhook = catchAsync(async (req: Request, res: Response) =
 
     // Commit the transaction
     await session.commitTransaction();
+
+     // Fetch admin data (for sending a notification)
+    const adminData: any = getAdminData();
+
+    if (!adminData || !adminData._id) {
+      console.error("Admin data not found. Cannot send reminder notifications.");
+      return; // Stop the notification process if admin data is not available
+    }
+
+    // Fetch the user object to personalize the message
+    const user = await User.findById(updated.userId);  // Assuming the user exists in the updated document
+
+    if (!user) {
+      console.error("User not found for the provided userId.");
+      return;
+    }
+
+    // Prepare the notification message
+    const userMsg = {
+      name: `🎉 Congratulations, ${user.name || 'User'}! Your Subscription is Ready to Activate`,
+      image: (adminData.profileImage ?? "") as string,
+      text: `Hi ${user?.name}, you’ve successfully completed your payment! To start boosting your ${updated.subscriptionForType} with Pianofesta, go to your sponsorship list and activate your subscription now. Let's grow your ${updated.subscriptionForType} together! 🌟`,
+    };
+
+    // Send notification to the user (using Socket.IO and save it to the database)
+    await emitNotificationOfSuccessfullyPamentSubcription({
+      userId: adminData._id as mongoose.Types.ObjectId,
+      receiverId: updated.userId as mongoose.Types.ObjectId,
+      userMsg,
+    });
 
     // Final response
     return sendResponse(res, {
