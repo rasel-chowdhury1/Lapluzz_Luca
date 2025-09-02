@@ -103,6 +103,7 @@ const resendOtpEmail = async ({ token }: { token: string }) => {
     token,
     access_secret: config.jwt_access_secret as string,
   });
+  
   const { email } = decodeData;
 
   const { isExist, isExpireOtp } = await checkOtpByEmail(email);
@@ -132,6 +133,7 @@ const resendOtpEmail = async ({ token }: { token: string }) => {
       name: '',
       otp,
       expiredAt: expiredAt,
+      expireTime: config.otp_expire_time as string || "2"
     });
   });
 };
