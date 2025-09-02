@@ -180,6 +180,33 @@ const getMySentedNotifications = async (userId: string) => {
   return notifications;
 };
 
+const getMySentedNotificationsByTypeAndId = async (userId: string, notificationType: string, entityId: string) => {
+  // Ensure the notificationType is valid
+  const validTypes: Record<string, string> = {
+    business: "BusinessNotification",
+    event: "EventNotification",
+    job: "JobNotification"
+  };
+
+  if (!validTypes[notificationType]) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Invalid notification type');
+  }
+
+  // Get the notification type key from the validTypes object
+  const notificationTypeKey = validTypes[notificationType];
+
+  // Get the sent notifications for a specific type and entityId
+  const result = await Notification.find({
+    userId,
+    "message.types": notificationType,
+    "message.notificationFor": entityId,
+    type: notificationTypeKey, // The type of notification (e.g., BusinessNotification, EventNotification, JobNotification)
+    status: "Sent", // Only sent notifications
+  }).sort({ createdAt: -1 })  // Sort notifications by the most recent ones
+    .lean();  // Use lean() to get plain JavaScript objects for better performance
+
+  return result;  // Return the fetched notifications
+};
 
 const getTodayHowManySentNotifications = async (userId: string) => {
   const todayStart = startOfDay(new Date());
@@ -188,6 +215,45 @@ const getTodayHowManySentNotifications = async (userId: string) => {
   const count = await Notification.countDocuments({
     userId,
     createdAt: { $gte: todayStart, $lte: todayEnd }
+  });
+
+  return count || 0;
+};
+
+const getTotalSentNotificationsByTypeAndId = async (userId: string, notificationType: string, entityId: string) => {
+  // Ensure the notificationType is valid
+  const validTypes = ["business", "event", "job"];
+  if (!validTypes.includes(notificationType)) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Invalid notification type');
+  }
+
+  const todayStart = startOfDay(new Date());
+  const todayEnd = endOfDay(new Date());
+
+  // Determine the notification type key (to match BusinessNotification, EventNotification, JobNotification)
+  let notificationTypeKey: string;
+  switch (notificationType) {
+    case "business":
+      notificationTypeKey = "BusinessNotification";
+      break;
+    case "event":
+      notificationTypeKey = "EventNotification";
+      break;
+    case "job":
+      notificationTypeKey = "JobNotification";
+      break;
+    default:
+      throw new AppError(httpStatus.BAD_REQUEST, 'Invalid notification type');
+  }
+
+  // Get the count of sent notifications for a specific type and ID
+  const count = await Notification.countDocuments({
+    userId,
+    "message.types": notificationType, // Match the type (business, event, or job)
+    "message.notificationFor": entityId, // Match the notificationFor field with the entityId
+    type: notificationTypeKey, // Ensure we are counting the correct notification type (Business, Event, Job)
+    status: "Sent", // Only count notifications with "Sent" status
+    createdAt: { $gte: todayStart, $lte: todayEnd } // Ensure the notifications were created today
   });
 
   return count || 0;
@@ -318,4 +384,6 @@ export const notificationService = {
   markAllAsRead,
   getUnreadCount,
   deleteNotification,
+  getTotalSentNotificationsByTypeAndId,
+  getMySentedNotificationsByTypeAndId
 };

@@ -44,15 +44,15 @@ const sentNotificationToFollowersOfBusiness = catchAsync(async (req: Request, re
   const { message, type } = req.body;
 
 
-  const todayCount = await notificationService.getTodayHowManySentNotifications(userId);
-    if (todayCount >= 3) {
-    return sendResponse(res, {
-      statusCode: httpStatus.BAD_REQUEST,
-      success: false,
-      message: 'You have already sent the maximum of 3 notifications today.',
-      data: null,
-    });
-  }
+  // const todayCount = await notificationService.getTodayHowManySentNotifications(userId);
+  //   if (todayCount >= 3) {
+  //   return sendResponse(res, {
+  //     statusCode: httpStatus.BAD_REQUEST,
+  //     success: false,
+  //     message: 'You have already sent the maximum of 3 notifications today.',
+  //     data: null,
+  //   });
+  // }
 
   await emitNotificationToFollowersOfBusiness({
     userId: new mongoose.Types.ObjectId(userId),
@@ -72,15 +72,15 @@ const sentNotificationToInterestedUsersOfEvent = catchAsync(async (req: Request,
   const userId = req.user.userId;
   const { message, type } = req.body;
 
-    const todayCount = await notificationService.getTodayHowManySentNotifications(userId);
-    if (todayCount >= 3) {
-    return sendResponse(res, {
-      statusCode: httpStatus.BAD_REQUEST,
-      success: false,
-      message: 'You have already sent the maximum of 3 notifications today.',
-      data: null,
-    });
-  }
+  //   const todayCount = await notificationService.getTodayHowManySentNotifications(userId);
+  //   if (todayCount >= 3) {
+  //   return sendResponse(res, {
+  //     statusCode: httpStatus.BAD_REQUEST,
+  //     success: false,
+  //     message: 'You have already sent the maximum of 3 notifications today.',
+  //     data: null,
+  //   });
+  // }
 
   await emitNotificationToInterestUsersOfEvent({
     userId: new mongoose.Types.ObjectId(userId),
@@ -100,15 +100,15 @@ const sentNotificationToApplicantsOfJob = catchAsync(async (req: Request, res: R
   const userId = req.user.userId;
   const { message, type } = req.body;
 
-    const todayCount = await notificationService.getTodayHowManySentNotifications(userId);
-    if (todayCount >= 3) {
-    return sendResponse(res, {
-      statusCode: httpStatus.BAD_REQUEST,
-      success: false,
-      message: 'You have already sent the maximum of 3 notifications today.',
-      data: null,
-    });
-  }
+  //   const todayCount = await notificationService.getTodayHowManySentNotifications(userId);
+  //   if (todayCount >= 3) {
+  //   return sendResponse(res, {
+  //     statusCode: httpStatus.BAD_REQUEST,
+  //     success: false,
+  //     message: 'You have already sent the maximum of 3 notifications today.',
+  //     data: null,
+  //   });
+  // }
 
   await emitNotificationToApplicantsOfJob({
     userId: new mongoose.Types.ObjectId(userId),
@@ -217,6 +217,47 @@ const getMySentedNotifications = catchAsync(async (req: Request, res: Response) 
   });
 });
 
+const getMySentedSpecificBusinessNotifications = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.userId;
+  const {id} = req.params;
+  const result = await notificationService.getMySentedNotificationsByTypeAndId(userId, "business", id);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    data: result,
+    message: 'My sented notifications fetched successfully!',
+  });
+});
+
+const getMySentedSpecificEventNotifications = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.userId;
+  const {id} = req.params;
+  const result = await notificationService.getMySentedNotificationsByTypeAndId(userId, "event", id);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    data: result,
+    message: 'My sented notifications fetched successfully!',
+  });
+});
+
+const getMySentedSpecificJobNotifications = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.userId;
+  const {id} = req.params;
+  const result = await notificationService.getMySentedNotificationsByTypeAndId(userId, "job", id);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    data: result,
+    message: 'My sented notifications fetched successfully!',
+  });
+});
+
+
+
 const getTodayHowManySentNotifications = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.userId;
   const count = await notificationService.getTodayHowManySentNotifications(userId);
@@ -226,6 +267,112 @@ const getTodayHowManySentNotifications = catchAsync(async (req: Request, res: Re
     statusCode: httpStatus.OK,
     data: { count },
     message: 'Total notifications sent to you today retrieved successfully!',
+  });
+});
+
+const getTodayHowManySentNotificationsBusinessById = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.userId;  // Get the userId from the request object (assumed to be added by middleware)
+  const { businessId } = req.params;        // Extract the business ID from the request parameters
+
+  // Get the count of total sent notifications of type 'business' for the specific user and business ID
+  const count = await notificationService.getTotalSentNotificationsByTypeAndId(userId, 'business', businessId);
+
+  // Send the response with the count of notifications
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    data: { count },
+    message: `Successfully retrieved the total number of business notifications sent to you today!`,
+  });
+});
+
+const getTodayHowManySentNotificationsEventById = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.userId;  // Get the userId from the request object (assumed to be added by middleware)
+  const { eventId } = req.params;        // Extract the event ID from the request parameters
+
+  // Check for missing or invalid user ID
+  if (!userId) {
+    sendResponse(res, {
+      success: false,
+      statusCode: httpStatus.BAD_REQUEST,
+      message: 'User ID is missing or invalid.',
+      data: null
+    });
+  }
+
+  // Check for missing event ID
+  if (!eventId) {
+    sendResponse(res, {
+      success: false,
+      statusCode: httpStatus.BAD_REQUEST,
+      message: 'Event ID is required.',
+      data: null
+    });
+  }
+
+  // Get the count of total sent notifications of type 'event' for the specific user and event ID
+  const count = await notificationService.getTotalSentNotificationsByTypeAndId(userId, 'event', eventId);
+
+  if (count === 0) {
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      data: { count },
+      message: `No event notifications have been sent to you today.`,
+    });
+  }
+
+  // Send the response with the count of notifications
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    data: { count },
+    message: `Successfully retrieved the total number of event notifications sent to you today!`,
+  });
+});
+
+const getTodayHowManySentNotificationsJobById = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.userId;  // Get the userId from the request object (assumed to be added by middleware)
+  const { jobId } = req.params;        // Extract the job ID from the request parameters
+
+  // Check for missing or invalid user ID
+  if (!userId) {
+    sendResponse(res, {
+      success: false,
+      statusCode: httpStatus.BAD_REQUEST,
+      message: 'User ID is missing or invalid.',
+      data: null
+    });
+  }
+
+  // Check for missing job ID
+  if (!jobId) {
+    sendResponse(res, {
+      success: false,
+      statusCode: httpStatus.BAD_REQUEST,
+      message: 'Job ID is required.',
+      data: null
+    });
+  }
+
+  // Get the count of total sent notifications of type 'job' for the specific user and job ID
+  const count = await notificationService.getTotalSentNotificationsByTypeAndId(userId, 'job', jobId);
+
+  if (count === 0) {
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      data: { count },
+      message: `No job notifications have been sent to you today.`,
+    });
+  }
+
+  // Send the response with the count of notifications
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    data: { count },
+    message: `Successfully retrieved the total number of job notifications sent to you today!`,
   });
 });
 
@@ -294,5 +441,11 @@ export const notificationController = {
   sentNotificationToDirect,
   sentSearchNotificationToBusinesses,
   getUnreadCount,
-  getMassNotifications
+  getMassNotifications,
+  getTodayHowManySentNotificationsBusinessById,
+  getTodayHowManySentNotificationsEventById,
+  getTodayHowManySentNotificationsJobById,
+  getMySentedSpecificBusinessNotifications,
+  getMySentedSpecificEventNotifications,
+  getMySentedSpecificJobNotifications
 };

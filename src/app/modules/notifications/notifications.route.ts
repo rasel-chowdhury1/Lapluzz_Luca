@@ -86,6 +86,21 @@ notificationRoutes
     notificationController.getTodayHowManySentNotifications
   )
   .get(
+    "/business/today-count/:businessId",
+    auth(USER_ROLE.USER,USER_ROLE.ORGANIZER, USER_ROLE.SUPER_ADMIN,USER_ROLE.ADMIN), 
+    notificationController.getTodayHowManySentNotificationsBusinessById
+  )
+  .get(
+    "/event/today-count/:eventId",
+    auth(USER_ROLE.USER,USER_ROLE.ORGANIZER, USER_ROLE.SUPER_ADMIN,USER_ROLE.ADMIN), 
+    notificationController.getTodayHowManySentNotificationsEventById
+  )
+  .get(
+    "/job/today-count/:jobId",
+    auth(USER_ROLE.USER,USER_ROLE.ORGANIZER, USER_ROLE.SUPER_ADMIN,USER_ROLE.ADMIN), 
+    notificationController.getTodayHowManySentNotificationsJobById
+  )
+  .get(
     "/unread",
     auth(USER_ROLE.USER,USER_ROLE.ORGANIZER, USER_ROLE.SUPER_ADMIN,USER_ROLE.ADMIN), 
     notificationController.getUnreadCount
