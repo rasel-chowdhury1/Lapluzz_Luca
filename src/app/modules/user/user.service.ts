@@ -138,7 +138,7 @@ const otpVerifyAndCreateUser = async (
     sureName: string;
     lastName: string;
     name: string;
-    gender: 'male' | 'female' | 'others' | '';
+    gender?: 'male' | 'female' | 'others' | '';
     phone?: string;
     dateOfBirth?: Date;
     customId?: string; // referrer's customId (your referral code)
@@ -168,6 +168,7 @@ const otpVerifyAndCreateUser = async (
 
   // 2) OTP check
   const isOtpMatch = await otpServices.otpMatch(email, otp);
+
   if (!isOtpMatch) {
     throw new AppError(httpStatus.BAD_REQUEST, 'OTP did not match');
   }
@@ -181,6 +182,7 @@ const otpVerifyAndCreateUser = async (
     throw new AppError(httpStatus.FORBIDDEN, 'User already exists with this email');
   }
 
+try {
   // 4) Create user (password hashing handled by your pre-save hook)
   const user = await User.create({
     sureName,
@@ -194,12 +196,7 @@ const otpVerifyAndCreateUser = async (
     dateOfBirth
   });
 
-  if (!user) {
-    console.log("user from error ->>>> ", user)
-    throw new AppError(httpStatus.BAD_REQUEST, 'User creation failed');
-  }
-
-  // 5) Referral logic (transactional): +5 to referrer and +5 to claimant
+    // 5) Referral logic (transactional): +5 to referrer and +5 to claimant
   if (customId) {
     const session = await mongoose.startSession();
     try {
@@ -308,6 +305,16 @@ const otpVerifyAndCreateUser = async (
     role: user.role,      // e.g., "organizer"
     accessToken,          // JWT string
   };
+  // Log or handle the user creation result
+  console.log("User created successfully:", user);
+} catch (error) {
+  // Handle any errors that occur during user creation
+  console.error("Error creating user:", error);
+  throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to create user");
+}
+
+
+
 };
 
 const adminCreateAdmin = async (userData: {name: string,email:string,password:string, role: string}) => {
