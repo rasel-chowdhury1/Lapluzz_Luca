@@ -56,7 +56,7 @@ export interface IEvent {
   isSubscription: boolean;
   subscriptionType: string;
   subsciptionPriorityLevel?: number;
-  subcriptionStatus?: string;
+  subscriptionStatus?: string;
   expireSubscriptionTime?: Date;
   subscriptionEndTime?: Date;
   isActive: boolean;

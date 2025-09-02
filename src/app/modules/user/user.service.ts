@@ -35,7 +35,7 @@ export interface OTPVerifyAndCreateUserProps {
 }
 
 const createUserToken = async (payload: TUserCreate) => {
-  console.log('payload service user');
+  console.log('payload service user =>>> ', payload);
 
   const {sureName, lastName, name,email,password, role,  phone = "",  dateOfBirth = null, gender, customId, address, longitude, latitude, enableNotification } =
     payload;
@@ -103,7 +103,7 @@ const createUserToken = async (payload: TUserCreate) => {
       expireTime: config.otp_expire_time as string || "2"
     });
   });
-  console.log('after otp send email');
+  console.log('after otp send email==> otp body ==>>> ', otpBody);
 
   // crete token
   const createUserToken = createToken({

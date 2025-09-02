@@ -101,6 +101,7 @@ cron.schedule("0 0 * * *", async () => {
   }
 
   const usersWithoutListings = await User.find({
+    role: "organizer",
     parentBusiness: null,
     isDeleted: false,
     isBlocked: false,

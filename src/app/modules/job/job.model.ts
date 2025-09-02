@@ -111,7 +111,7 @@ const JobSchema = new Schema<IJob>(
       type: Number,
       default: 0
     },
-    subcriptionStatus: {
+    subscriptionStatus: {
       type: String,
       enum: ["activated", "deactivated", null],
       default: null

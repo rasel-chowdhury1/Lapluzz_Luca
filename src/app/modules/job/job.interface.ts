@@ -34,7 +34,7 @@ export interface IJob {
   isSubscription: boolean;
   subscriptionType: string;
   subsciptionPriorityLevel?: number;
-  subcriptionStatus?: string;
+  subscriptionStatus?: string;
   expireSubscriptionTime?: Date;
   subscriptionEndTime?: Date;
   isActive: boolean;

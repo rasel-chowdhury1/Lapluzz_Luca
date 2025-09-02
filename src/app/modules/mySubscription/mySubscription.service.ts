@@ -76,11 +76,13 @@ const activateSubscription = async (userId: string, mySubId: string) => {
           isSubscription: true,
           subscriptionPriorityLevel: mySubscription.subscriptionPriorityLevel,
           subscriptionType: mySubscription.subscriptionType,
-          subcriptionStatus: "activated",
+          subscriptionStatus: "activated",
           expireSubscriptionTime: mySubscription.expireDate,
         },
-        { session }
+        { new: true, session }
       );
+
+      console.log("business result =>>>> ", businessResult)
       if (!businessResult) {
         throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to update business subscription");
       }
@@ -98,7 +100,7 @@ const activateSubscription = async (userId: string, mySubId: string) => {
           subscriptionStatus: "activated",
           expireSubscriptionTime: mySubscription.expireDate,
         },
-        { session }
+        { new: true, session }
       );
       if (!eventResult) {
         throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to update event subscription");
@@ -116,7 +118,7 @@ const activateSubscription = async (userId: string, mySubId: string) => {
           subscriptionStatus: "activated",
           expireSubscriptionTime: mySubscription.expireDate,
         },
-        { session }
+        { new: true, session }
       );
       if (!jobResult) {
         throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to update job subscription");
@@ -147,6 +149,8 @@ const stopSubscription = async (userId: string, mySubId: string) => {
   try {
     // 1. Fetch the subscription document
     const subscription = await MySubscription.findById(mySubId).session(session);
+
+    console.log("my subscription of stop =>>> ", subscription )
     if (!subscription) {
       throw new AppError(httpStatus.NOT_FOUND, "Subscription not found");
     }
@@ -164,24 +168,33 @@ const stopSubscription = async (userId: string, mySubId: string) => {
 
     // 2. Fetch the subscription plan to get the price
     const plan = await Subscription.findById(subscription.subscription).session(session);
+
+
+    console.log("Subscription plan ==>>>>>>> ", plan)
     if (!plan) {
       throw new AppError(httpStatus.NOT_FOUND, "Subscription plan not found");
     }
 
     const selectedOption = plan.options[subscription.subscriptionOptionIndex];
+
+    console.log("selected option =>>>> ", selectedOption)
     if (!selectedOption) {
       throw new AppError(httpStatus.BAD_REQUEST, "Invalid subscription option index");
     }
 
     // 3. Calculate unused credits
     const today = dayjs();
-    const expiryDate = dayjs(subscription.expiryDate);
+    const expiryDate = dayjs(subscription.expireDate);
     const unusedDays = expiryDate.diff(today, 'day');
+
+    console.log("today expiryDate unuseddays ==>>> ", today,expiryDate,unusedDays)
 
     if (unusedDays > 0) {
       const totalDays = selectedOption.expirationDays || 0;
       const perDayPrice = selectedOption.price / totalDays;
       const creditAmount = perDayPrice * unusedDays;
+
+      console.log( "credite amount ->>> ",{creditAmount})
 
       // 4. Add credits to the user account
       await User.findByIdAndUpdate(subscription.user, {
@@ -199,6 +212,7 @@ const stopSubscription = async (userId: string, mySubId: string) => {
       { status: "gotCredits" },
       { session }
     );
+
     if (!result) {
       throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to save subscription");
     }
@@ -212,12 +226,14 @@ const stopSubscription = async (userId: string, mySubId: string) => {
 
     // 7. Update business subscription if applicable
     if (subscription.subscriptionForType === "Business") {
-      await Business.findByIdAndUpdate(subscription.subscriptionFor, {
+     const businessResult = await Business.findByIdAndUpdate(subscription.subscriptionFor, {
         isSubscription: false,
         subscriptionStatus: "deactivated",
         expireSubscriptionTime: null,
         subscriptionEndTime: today.toISOString()
-      }).session(session);
+      }, {new: true}).session(session);
+
+      console.log("stop business result =>>> ", businessResult)
     }
 
     // 8. Update event-related subscription if applicable

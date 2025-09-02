@@ -82,7 +82,7 @@ export interface IBusiness {
   isSubscription: boolean;
   subscriptionType: string;
   subsciptionPriorityLevel?: number;
-  subcriptionStatus?: string;
+  subscriptionStatus?: string;
   advertisingCreditsList: IBusinessAdvertisingCredits[];
   totalAdvertisingCredits: number;
   expireSubscriptionTime?: Date;

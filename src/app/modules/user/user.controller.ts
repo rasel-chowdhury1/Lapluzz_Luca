@@ -8,7 +8,7 @@ import { storeFile } from '../../utils/fileHelper';
 import { uploadFileToS3 } from '../../utils/fileUploadS3';
 
 const createUser = catchAsync(async (req: Request, res: Response) => {
-  console.log(req.body);
+  console.log("create user data =>>>> ",req.body);
   const createUserToken = await userService.createUserToken(req.body);
 
   sendResponse(res, {

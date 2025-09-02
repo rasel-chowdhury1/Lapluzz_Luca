@@ -364,12 +364,16 @@ const buySubscriptionByCredits = catchAsync(async (req: Request, res: Response) 
 
     // 🔍 Validate subscription existence
     const subscription = await Subscription.findById(subscriptionId).session(session);
+    console.log("Specefic subscription data -==>>>> ", subscription)
     if (!subscription) {
       throw new AppError(404, 'The selected subscription does not exist.');
     }
 
     // 🔍 Validate subscription option index
     const selectedOption = subscription.options?.[subscriptionOptionIndex];
+
+    console.log("selected option =>>> ", selectedOption)
+
     if (!selectedOption) {
       console.log("'Invalid subscription option index provided.'")
       throw new AppError(400, 'Invalid subscription option index provided.');
@@ -407,6 +411,8 @@ const buySubscriptionByCredits = catchAsync(async (req: Request, res: Response) 
     } else {
       subscriptionType = 'custom'; // Default to 'custom' for any other subscriptionForType
     }
+
+    console.log("subscription type =>>> ", subscriptionType)
 
     // 💳 Create a new subscription payment entry with 'Completed' status
     const payment = await SubscriptionPayment.create([{
@@ -457,7 +463,7 @@ const buySubscriptionByCredits = catchAsync(async (req: Request, res: Response) 
       data: null,
     });
   } catch (error) {
-    console.log(error.message)
+    console.log("errror --->>>> ",error.message)
     // If an error occurs, abort the transaction and rollback
     await session.abortTransaction();
     session.endSession();
