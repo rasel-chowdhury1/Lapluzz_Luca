@@ -723,6 +723,7 @@ export const emitNotificationToFollowersOfBusiness = async ({
       receiverId: followerId, // follower is the receiver
       message: userMsg,
       type: type || 'BusinessNotification',
+      sentCount: followers.length,
       isRead: false,
       timestamp: new Date(),
     });
@@ -785,6 +786,7 @@ export const emitNotificationToInterestUsersOfEvent = async ({
       receiverId, // receiver is the interested user
       message: userMsg,
       type: type || 'EventNotification',
+      sentCount: interestUsers.length,
       isRead: false,
       timestamp: new Date(),
     });
@@ -846,6 +848,7 @@ export const emitNotificationToApplicantsOfJob = async ({
       receiverId, // receiver is the interested user
       message: userMsg,
       type: type || 'JobNotification',
+      sentCount: interestUsers.length,
       isRead: false,
       timestamp: new Date(),
     });
