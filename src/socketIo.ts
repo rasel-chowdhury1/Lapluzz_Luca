@@ -18,7 +18,7 @@ import { User } from './app/modules/user/user.models';
 import { callbackFn } from './app/utils/callbackFn';
 import { verifyToken } from './app/utils/tokenManage';
 import { sendNotificationByFcmToken, sendReminderNotification } from './app/utils/sentNotificationByFcmToken';
-
+import { v4 as uuidv4 } from 'uuid';
 // Define the socket server port
 const socketPort: number = parseInt(process.env.SOCKET_PORT || '9020', 10);
 
@@ -686,6 +686,9 @@ export const emitNotificationToFollowersOfBusiness = async ({
     throw new Error('Socket.IO is not initialized');
   }
 
+  // Generate a unique ID for this notification event
+  const notificationEventId = uuidv4();
+
   // 1. Find followers of the business
   const engagement = await BusinessEngagementStats.findOne({
     businessId: userMsg?.notificationFor, // business ID
@@ -724,6 +727,7 @@ export const emitNotificationToFollowersOfBusiness = async ({
       message: userMsg,
       type: type || 'BusinessNotification',
       sentCount: followers.length,
+      notificationEventId,
       isRead: false,
       timestamp: new Date(),
     });

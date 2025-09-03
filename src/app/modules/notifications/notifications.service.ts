@@ -284,17 +284,29 @@ const getTotalSentNotificationsByTypeAndId = async (userId: string, notification
       throw new AppError(httpStatus.BAD_REQUEST, 'Invalid notification type');
   }
 
-  // Get the count of sent notifications for a specific type and ID
-  const count = await Notification.countDocuments({
-    userId,
-    "message.types": notificationType, // Match the type (business, event, or job)
-    "message.notificationFor": entityId, // Match the notificationFor field with the entityId
-    type: notificationTypeKey, // Ensure we are counting the correct notification type (Business, Event, Job)
-    status: "Sent", // Only count notifications with "Sent" status
-    createdAt: { $gte: todayStart, $lte: todayEnd } // Ensure the notifications were created today
-  });
+// Count unique notification events by notificationEventId
+  const count = await Notification.aggregate([
+    {
+      $match: {
+        userId: new mongoose.Types.ObjectId(userId),
+        "message.types": notificationType,
+        "message.notificationFor": entityId,
+        type: notificationTypeKey,
+        status: "Sent",
+        createdAt: { $gte: todayStart, $lte: todayEnd },
+      },
+    },
+    {
+      $group: {
+        _id: "$notificationEventId", // Group by notificationEventId
+      },
+    },
+    {
+      $count: "totalEvents", // Count unique notification events
+    },
+  ]);
 
-  return count || 0;
+  return count.length > 0 ? count[0].totalEvents : 0;
 };
 
 const getMassNotifications = async () => {

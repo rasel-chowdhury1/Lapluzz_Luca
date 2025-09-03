@@ -43,6 +43,7 @@
     "stripe": "^18.3.0",
     "twilio": "^5.4.0",
     "ua-parser-js": "^2.0.4",
+    "uuidv4": "^6.2.13",
     "winston": "^3.17.0",
     "winston-daily-rotate-file": "^5.0.0",
     "zod": "^3.24.1"

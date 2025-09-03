@@ -44,6 +44,10 @@ const NotificationSchema = new Schema<INotification>(
       type: Number,
       default: 0,
     },
+    notificationEventId: {
+      type: String, // Store a unique ID for the notification event
+      required: false,
+    },
     isRead: {
       type: Boolean,
       default: false,

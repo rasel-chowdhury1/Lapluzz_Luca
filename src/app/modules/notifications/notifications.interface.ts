@@ -16,6 +16,7 @@ export interface INotification {
     channel: string;
     status: string;
     sentCount: number;
+    notificationEventId?: string;
     isRead: boolean; // Whether the notification is read
     
   }
