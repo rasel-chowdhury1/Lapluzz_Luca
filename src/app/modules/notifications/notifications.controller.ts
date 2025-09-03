@@ -41,6 +41,8 @@ const sentNotificationToDirect = catchAsync(async (req: Request, res: Response) 
 
 const sentNotificationToFollowersOfBusiness = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.userId;
+
+  console.log(" sent notification to followers of buseiness ==>>> ", req.body);
   const { message, type } = req.body;
 
 
@@ -70,6 +72,8 @@ const sentNotificationToFollowersOfBusiness = catchAsync(async (req: Request, re
 
 const sentNotificationToInterestedUsersOfEvent = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.userId;
+
+  console.log(" sent notification to followers of event ==>>> ", req.body);
   const { message, type } = req.body;
 
   //   const todayCount = await notificationService.getTodayHowManySentNotifications(userId);
@@ -98,6 +102,7 @@ const sentNotificationToInterestedUsersOfEvent = catchAsync(async (req: Request,
 
 const sentNotificationToApplicantsOfJob = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.userId;
+  console.log(" sent notification to followers of job ==>>> ", req.body);
   const { message, type } = req.body;
 
   //   const todayCount = await notificationService.getTodayHowManySentNotifications(userId);

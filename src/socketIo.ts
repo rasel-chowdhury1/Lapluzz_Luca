@@ -757,6 +757,9 @@ export const emitNotificationToInterestUsersOfEvent = async ({
 }): Promise<void> => {
   if (!io) throw new Error('Socket.IO is not initialized');
 
+  // Generate a unique ID for this notification event
+  const notificationEventId = uuidv4();
+
   // 1. Find interest users for this event
   const interestList = await EventInterestUserList.findOne({
     eventId: userMsg?.notificationFor,
@@ -791,6 +794,7 @@ export const emitNotificationToInterestUsersOfEvent = async ({
       message: userMsg,
       type: type || 'EventNotification',
       sentCount: interestUsers.length,
+      notificationEventId,
       isRead: false,
       timestamp: new Date(),
     });
@@ -818,6 +822,9 @@ export const emitNotificationToApplicantsOfJob = async ({
   type?: string;
 }): Promise<void> => {
   if (!io) throw new Error('Socket.IO is not initialized');
+
+  // Generate a unique ID for this notification event
+  const notificationEventId = uuidv4();
 
   // 1. Find interest users for this event
   const interestList = await EventInterestUserList.findOne({
@@ -853,9 +860,14 @@ export const emitNotificationToApplicantsOfJob = async ({
       message: userMsg,
       type: type || 'JobNotification',
       sentCount: interestUsers.length,
+      notificationEventId,
       isRead: false,
       timestamp: new Date(),
     });
+
+    const msg = userMsg?.text || "something";
+  
+    sendNotificationByFcmToken(receiverId, msg)
   }
 };
 
