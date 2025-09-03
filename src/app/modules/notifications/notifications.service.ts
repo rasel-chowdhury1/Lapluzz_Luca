@@ -180,12 +180,16 @@ const getMySentedNotifications = async (userId: string) => {
   return notifications;
 };
 
-const getMySentedNotificationsByTypeAndId = async (userId: string, notificationType: string, entityId: string) => {
+const getMySentedNotificationsByTypeAndId = async (
+  userId: string,
+  notificationType: string,
+  entityId: string
+) => {
   // Ensure the notificationType is valid
   const validTypes: Record<string, string> = {
-    business: "BusinessNotification",
-    event: "EventNotification",
-    job: "JobNotification"
+    business: 'BusinessNotification',
+    event: 'EventNotification',
+    job: 'JobNotification',
   };
 
   if (!validTypes[notificationType]) {
@@ -195,19 +199,34 @@ const getMySentedNotificationsByTypeAndId = async (userId: string, notificationT
   // Get the notification type key from the validTypes object
   const notificationTypeKey = validTypes[notificationType];
 
-  // Get the sent notifications for a specific type and entityId
-  let notifications = await Notification.find({
-    userId,
-    "message.types": notificationType,
-    "message.notificationFor": entityId,
-    type: notificationTypeKey, // The type of notification (e.g., BusinessNotification, EventNotification, JobNotification)
-    status: "Sent", // Only sent notifications
-  }).sort({ createdAt: -1 })  // Sort notifications by the most recent ones
-    .lean();  // Use lean() to get plain JavaScript objects for better performance
+  // Use aggregation to get unique notifications by notificationEventId
+  let notifications = await Notification.aggregate([
+    {
+      $match: {
+        userId: new mongoose.Types.ObjectId(userId),
+        'message.types': notificationType,
+        'message.notificationFor': entityId,
+        type: notificationTypeKey,
+        status: 'Sent',
+      },
+    },
+    {
+      $group: {
+        _id: '$notificationEventId', // Group by notificationEventId
+        notification: { $first: '$$ROOT' }, // Keep the first notification document for each group
+      },
+    },
+    {
+      $replaceRoot: { newRoot: '$notification' }, // Replace the root with the notification document
+    },
+    {
+      $sort: { createdAt: -1 }, // Sort by most recent
+    },
+  ]);
 
   // Loop through notifications and attach names or titles
   notifications = await Promise.all(
-    notifications.map(async (notification) => {
+    notifications.map(async (notification: any) => {
       if (notification.message?.types && notification.message?.notificationFor) {
         let model;
 
@@ -243,8 +262,9 @@ const getMySentedNotificationsByTypeAndId = async (userId: string, notificationT
     })
   );
 
-  return notifications;  // Return the fetched notifications
+  return notifications; // Return the fetched unique notifications
 };
+
 
 const getTodayHowManySentNotifications = async (userId: string) => {
   const todayStart = startOfDay(new Date());
