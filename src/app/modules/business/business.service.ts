@@ -822,9 +822,9 @@ const getExtraBusinessDataById = async (userId: string, id: string) => {
 
 const getSpecificBusinessStats = async (businessId: string) => {
   const id = new Types.ObjectId(businessId);
-
+  console.log("business -=>>> ")
   // 1️⃣ Check business existence and status
-  const business = await Business.findOne({ _id: id, isDeleted: false }).lean();
+  const business = await Business.findOne({ _id: id, isDeleted: false }).select("logo").lean();
   if (!business) {
     throw new Error('Business not found');
   }
@@ -889,6 +889,7 @@ const getSpecificBusinessStats = async (businessId: string) => {
   // ✅ Final return object
   return {
     businessId,
+    image: business.logo,
     totalFollowers,
     totalLikes,
     totalComments,

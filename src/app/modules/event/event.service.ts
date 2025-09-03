@@ -725,7 +725,7 @@ const getSpecificEventStats = async (eventId: string) => {
   const id = new Types.ObjectId(eventId);
 
   // 1️⃣ Check event existence and status
-  const event = await Event.findOne({ _id: id, isDeleted: false }).lean();
+  const event = await Event.findOne({ _id: id, isDeleted: false }).select("logo").lean();
   if (!event) {
     throw new Error('event not found');
   }
@@ -793,6 +793,7 @@ const getSpecificEventStats = async (eventId: string) => {
   // ✅ Final return object
   return {
     eventId,
+    image: event.logo,
     totalLikes,
     totalComments,
     eventViews: profileViews,

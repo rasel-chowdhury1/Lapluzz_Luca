@@ -563,7 +563,7 @@ const getSpecificJobStats = async (jobId: string) => {
   const id = new Types.ObjectId(jobId);
 
   // 1️⃣ Check job existence and status
-  const job = await Job.findOne({ _id: id, isDeleted: false }).lean();
+  const job = await Job.findOne({ _id: id, isDeleted: false }).select("logo").lean();
   if (!job) {
     throw new Error('job not found');
   }
@@ -614,6 +614,7 @@ const getSpecificJobStats = async (jobId: string) => {
   // ✅ Final return object
   return {
     jobId,
+    image: job.logo,
     totalComments,
     jobViews: profileViews,
     monthlyViews,
