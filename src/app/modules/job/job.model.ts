@@ -89,7 +89,7 @@ const JobSchema = new Schema<IJob>(
     },
     availability: {
       type: String,
-      enum: ['immediate', '15days', '1week', '1month'],
+      enum: ['immediate', '15days', '15 days', '1week', '1 week','1month', '1 month'],
       default: 'immediate'
     },
     workHour: {
