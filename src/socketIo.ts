@@ -83,6 +83,8 @@ export const initSocketIO = async (server: HttpServer): Promise<void> => {
       (socket.handshake.headers.token as string) ||
       (socket.handshake.headers.authorization as string);
 
+    console.log("sockte time zone =>>> ", socket.handshake.time)
+
     if (!token) {
       return next(
         new AppError(
@@ -258,6 +260,8 @@ export const initSocketIO = async (server: HttpServer): Promise<void> => {
                 userSocketIds.push(userSocket.socketID); // Collect socket IDs
               }
             });
+
+            console.log("socket =>>>>>> ", socket)
 
             const userTimeZone = 'Asia/Dhaka'; // Dynamic time zone or default to Asia/Dhaka
 
