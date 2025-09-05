@@ -274,7 +274,7 @@ const getJobById = async (userId: string, id: string) => {
 };
 
 const getAllJobsList = async () => {
-  const jobs = await Job.find({ isDeleted: false }).populate("author", "sureName name email");
+  const jobs = await Job.find({ isDeleted: false }).populate("author", "sureName name email").populate("businessId", 'name');
   const jobIds = jobs.map((job) => job._id);
 
   // ⭐ Aggregate Ratings

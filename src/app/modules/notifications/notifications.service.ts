@@ -20,7 +20,7 @@ interface ICreateNotificationProps {
 interface ISendMassNotificationParams {
   location: { latitude: number; longitude: number };
   rangeKm: number;
-  category: "all" | "event" | "business";
+  category: "all" | "event" | "business" | "job";
   message: {
     image?: string;
     text: string;
@@ -77,6 +77,12 @@ const sendMassNotification = async ({
   if (category === "event" || category === "all") {
     const events = await Event.find(locationQuery, { author: 1 }).lean();
     receiverIds.push(...events.map((e) => e.author.toString()));
+  }
+
+    // 4️⃣ Fetch job authors
+  if (category === "job" || category === "all") {
+    const jobs = await Job.find(locationQuery, { author: 1 }).lean();
+    receiverIds.push(...jobs.map((j) => j.author.toString()));
   }
 
   // 4️⃣ Remove duplicates

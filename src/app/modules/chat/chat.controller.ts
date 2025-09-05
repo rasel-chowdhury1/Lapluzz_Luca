@@ -9,7 +9,9 @@ import Event from '../event/event.model';
 
 const addNewChat = catchAsync(async (req: Request, res: Response) => {
   const { userId, fullName,profileImage,role } = req.user;
-  const { users = [], chatImage, isGroupChat = false, contextType, contextId } = req.body;
+
+  console.log("add new chat =>>> ", req.body)
+  const { users = [], chatImage, chatName, isGroupChat = false, contextType, contextId } = req.body;
 
   // Ensure the current userId is included in the `users` array if not already present
   if (!users.includes(userId)) {
@@ -73,7 +75,7 @@ const addNewChat = catchAsync(async (req: Request, res: Response) => {
   const chatData = {
     ...req.body,
     chatImage: chatImage? chatImage : profileImage, 
-    chatName: role === "admin" ? "Pianofesta Support" : "",
+    chatName: role === "admin" ? "Pianofesta Support" : chatName,
     userName: fullName,
     createdBy: userId,
     users, // Modified users array

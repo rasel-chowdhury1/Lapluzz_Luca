@@ -22,7 +22,10 @@ const reportSchema = new Schema<IReport>(
       required: true
     },
 
-    reason: { type: String, required: true }
+    reason: { type: String, required: true },
+    isCompleted: {type: Boolean, required: false},
+    isNotified: {type: Boolean, required: false},
+    isDeleted: {type: Boolean, required: false},
   },
   {
     timestamps: true

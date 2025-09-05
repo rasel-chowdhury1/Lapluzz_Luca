@@ -60,6 +60,8 @@ const createEvent = catchAsync(async (req: Request, res: Response) => {
   }
 
   const result = await eventService.createEvent(req.body);
+
+  console.log("event result =>>> ", result)
   sendResponse(res, {
     statusCode: 201,
     success: true,
@@ -185,6 +187,7 @@ const getUnsubscriptionEvents = catchAsync(async (req: Request, res: Response) =
 const getSearchEvents = catchAsync(async (req: Request, res: Response) => {
 
   const {userId} = req.user;
+  console.log("req query data ->>>> ", req.query)
   const result = await eventService.searchEvents(req.query, userId);
   sendResponse(res, {
     statusCode: 200,
@@ -269,6 +272,17 @@ const getCalculateCompetitionScore = catchAsync(async (req: Request, res: Respon
   });
 });
 
+const getAllCategoryAndEventName = catchAsync(async (req: Request, res: Response) => {
+  const result = await eventService.getAllCategoryAndEventName();
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Events search completed',
+    data: result
+  });
+});
+
 const deleteEvent = catchAsync(async (req: Request, res: Response) => {
   const result = await eventService.deleteEvent(req.params.id);
   sendResponse(res, {
@@ -294,5 +308,6 @@ export const eventController = {
   getSpecificEventStats,
   getAllEventList,
   activateEventById,
-  getCalculateCompetitionScore
+  getCalculateCompetitionScore,
+  getAllCategoryAndEventName
 };

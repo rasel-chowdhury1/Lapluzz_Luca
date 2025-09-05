@@ -26,6 +26,10 @@ const EventSchema = new Schema<IEvent>(
         ref: 'User', 
         required: true 
     },
+    businessId: { 
+        type: Schema.Types.ObjectId, 
+        ref: 'Business', required: true 
+    },
     name: { 
         type: String, 
         required: true 

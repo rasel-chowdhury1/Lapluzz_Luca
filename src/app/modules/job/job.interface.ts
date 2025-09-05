@@ -9,6 +9,7 @@ export interface IJobSubscription {
 
 export interface IJob {
   author: ObjectId;
+  businessId: ObjectId;
   title: string;
   description: string;
   logo: string;

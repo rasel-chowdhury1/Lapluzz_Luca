@@ -40,6 +40,20 @@ const getReportById = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// Mark report as completed
+const markAsCompleted = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const result = await reportService.markAsCompleted(id);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Report marked as completed',
+    data: result,
+  });
+});
+
 const deleteReport = catchAsync(async (req: Request, res: Response) => {
   const result = await reportService.deleteReport(req.params.id);
 
@@ -55,6 +69,7 @@ export const reportController = {
   createReport,
   getAllReports,
   getReportById,
+  markAsCompleted,
   deleteReport,
 };
 

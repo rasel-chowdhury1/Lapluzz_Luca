@@ -35,6 +35,7 @@ import { faqRoutes } from "../modules/faq/faq.router";
 import { couponRoutes } from "../modules/coupon/coupon.route";
 import { mySubscriptionRoutes } from "../modules/mySubscription/mySubscription.route";
 import { staticPageRoutes } from "../modules/staticPages/staticPages.route";
+import { checklistRoutes } from "../modules/checklist/checklist.route";
 
 const router = Router();
 
@@ -121,10 +122,20 @@ const moduleRoutes = [
      path: "/requestCategory",
      route: requestCategoryRoutes
   },
+
+  // favourite/wishlist  and Checklist
   {
      path: "/wishlist",
      route: wishListRoutes
   },
+  
+  {
+     path: "/checkList",
+     route: checklistRoutes
+  },
+
+
+
   {
      path: "/postCommunity",
      route: postCommunityRoutes

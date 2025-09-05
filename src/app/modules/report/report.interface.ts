@@ -1,3 +1,4 @@
+
 import { ObjectId, Model } from 'mongoose';
 
 export type ReportType = 'Inspiration' | 'PostCommunity' | 'PollCommunity';
@@ -11,6 +12,9 @@ export interface IReport {
   inspirationId?: ObjectId;
   postId?: ObjectId;
   pollId?: ObjectId;
+  isCompleted: boolean;
+  isNotified: boolean;
+  isDeleted: boolean;
 }
 
 export type IReportModel = Model<IReport>;

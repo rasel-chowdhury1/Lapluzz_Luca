@@ -59,6 +59,7 @@ const getAllReports = async (query: any) => {
 
   return { data, meta };
 };
+
 const getReportById = async (id: string) => {
   const report = await Report.findById(id)
     .populate('userId', 'name email profileImage')
@@ -70,6 +71,20 @@ const getReportById = async (id: string) => {
   return report;
 };
 
+// Function to mark a report as completed
+const markAsCompleted = async (id: string) => {
+  const report = await Report.findById(id);
+
+  if (!report) throw new AppError(httpStatus.NOT_FOUND, 'Report not found');
+
+  // Update the report's isCompleted field
+  report.isCompleted = true;
+  await report.save();
+
+  return report;
+};
+
+
 const deleteReport = async (id: string) => {
   const result = await Report.findByIdAndDelete(id);
   if (!result) throw new AppError(httpStatus.BAD_REQUEST, 'Failed to delete report');
@@ -80,5 +95,6 @@ export const reportService = {
   createReport,
   getAllReports,
   getReportById,
+  markAsCompleted,
   deleteReport,
 };

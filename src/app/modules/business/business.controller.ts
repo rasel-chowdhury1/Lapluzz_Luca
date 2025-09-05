@@ -130,6 +130,37 @@ const activateBusinessById = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+
+const getAllBusinessByLocation = catchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.user;
+
+  // Extract latitude and longitude from the query parameters or body
+  const { latitude, longitude, ...rest } = req.query;
+
+  // Ensure latitude and longitude are valid numbers
+  if (!latitude || !longitude) {
+    return sendResponse(res, {
+      statusCode: 400,
+      success: false,
+      message: 'Latitude and longitude are required',
+      data: ""
+    });
+  }
+
+  // Call the service with the userId, query, and user location (latitude, longitude)
+  const result = await businessService.getAllBusinessByLocation(userId, rest, {
+    latitude: parseFloat(latitude as string),
+    longitude: parseFloat(longitude as string),
+  });
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'All business location fetched successfully',
+    data: result,
+  });
+});
+
 const getAllBusiness = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user;
   const result = await businessService.getAllBusiness(userId, req.query);
@@ -202,6 +233,17 @@ const getMyBusiness = catchAsync(async (req: Request, res: Response) => {
     statusCode: 200,
     success: true,
     message: 'my businessusiness fetched successfully',
+    data: result,
+  });
+});
+
+
+const getMyBusinessNameList = catchAsync(async (req: Request, res: Response) => {
+  const result = await businessService.getBusinessNameList(req.user.userId);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'my businessusiness namelist fetched successfully',
     data: result,
   });
 });
@@ -290,6 +332,29 @@ const deleteBusiness = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const searchEntities = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.userId; // from JWT middleware
+  const result = await businessService.searchEntities(req.query, userId);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Businesses search completed',
+    meta: result.meta,
+    data: result.data,
+  });
+});
+
+const getAllCategoryAndBusinessName = catchAsync(async (req: Request, res: Response) => {
+  const result = await businessService.getAllCategoryAndBusinessName();
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Businesses search completed',
+    data: result
+  });
+});
 
 const searchBusiness = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.userId; // from JWT middleware
@@ -397,5 +462,8 @@ export const businessController = {
   getMyParentBusiness,
   activateBusinessById,
   getAllBusinessList,
-  getAllBusinessQueryNameList
+  getAllBusinessQueryNameList,
+  getMyBusinessNameList,
+  getAllBusinessByLocation,
+  getAllCategoryAndBusinessName
 };

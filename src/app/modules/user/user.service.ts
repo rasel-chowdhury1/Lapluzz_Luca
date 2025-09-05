@@ -429,7 +429,7 @@ const getAllUserList = async () => {
 
 
 const getAllUserQueryNameList = async (userId: string, query: Record<string, unknown>) => {
-  const userQuery = new QueryBuilder(User.find({ _id: { $ne: userId }, isDeleted: false}).select("name sureName email") as any, query)
+  const userQuery = new QueryBuilder(User.find({ _id: { $ne: userId }, isDeleted: false}).select("name sureName email role") as any, query)
     .search(['name', 'sureName', 'email'])
     .filter()
     .sort()

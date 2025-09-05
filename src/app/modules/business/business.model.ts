@@ -47,6 +47,7 @@ const businessSchema = new Schema<IBusiness>(
         type: Schema.Types.ObjectId, 
         ref: 'User', required: true 
     },
+    
     name: { 
         type: String, 
         required: true 
@@ -91,7 +92,7 @@ const businessSchema = new Schema<IBusiness>(
     },
 
     availabilities: AvailabilitiesSchema,
-    
+
     address: { 
         type: String, 
         default: null 

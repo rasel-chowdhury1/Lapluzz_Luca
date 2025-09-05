@@ -22,6 +22,7 @@ export interface IGallery {
 
 export interface IEvent {
   author: ObjectId;
+  businessId: ObjectId;
   name: string;
   description: string;
   detailDescription: string;

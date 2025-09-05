@@ -13,6 +13,7 @@ import { monthNames } from '../business/business.utils';
 import { EventInterestUserList } from '../eventInterest/eventInterest.model';
 import { enrichEvent } from './event.utils';
 import WishList from '../wishlist/wishlist.model';
+import Category from '../category/category.model';
 
 const createEvent = async (payload: IEvent) => {
   const { longitude, latitude, ...rest } = payload;
@@ -20,6 +21,8 @@ const createEvent = async (payload: IEvent) => {
   if (longitude !== undefined && latitude !== undefined) {
     rest.location = buildLocation(longitude, latitude) as any;
   }
+
+
   const result = await Event.create(payload);
 
   if (!result) throw new AppError(httpStatus.BAD_REQUEST, 'Failed to create event');
@@ -45,6 +48,7 @@ const getAllEvents = async (query: Record<string, any>) => {
 const getEventList = async () => {
   const events = await Event.find({ isDeleted: false })
                              .populate('author', 'name profileImage role') // Populate the author field
+                             .populate("businessId", 'name')
                             .lean();
 
   const results = await Promise.all(
@@ -410,6 +414,8 @@ const searchEvents = async (
 ) => {
   const searchTerm = (query.searchTerm as string) || '';
 
+  console.log("search term=====>>>>> ",searchTerm)
+
   // 🔎 বেস ফিল্টার (ডিলিটেড বাদ + অ্যাকটিভ)
   const baseFilter: any = {
     isDeleted: false,
@@ -440,6 +446,8 @@ const searchEvents = async (
 
   let data = await qb.modelQuery;
   const meta = await qb.countTotal();
+
+  console.log({data,meta})
 
   if (!data || data.length === 0) return { data, meta };
 
@@ -537,6 +545,7 @@ const searchEvents = async (
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
+  console.log("search events =>>> ", enriched)
   return { data: enriched, meta };
 };
 
@@ -1006,6 +1015,25 @@ const calculateCompetitionScoreForEvent = async (eventId: string) => {
   };
 };
 
+const getAllCategoryAndEventName = async() => {
+   // Fetch all categories with only the name
+    const categories = await Category.find(
+      { type: "Provider", isDeleted: false },
+      'name'  // Only select the 'name' field for categories
+    );
+
+    // Fetch all businesses with their name and category
+    const events = await Event.find({isDeleted: false}, 'name');  // Adjust the field if needed
+
+   // Combine categories and businesses into a single array
+    const combinedData = [
+      ...categories.map((category) => ({ type: 'category', name: category.name })),
+      ...events.map((event) => ({ type: 'event', name: event.name }))
+    ];
+
+    return combinedData;
+}
+
 const deleteEvent = async (id: string) => {
   const result = await Event.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
   if (!result) throw new AppError(httpStatus.BAD_REQUEST, 'Failed to delete event');
@@ -1027,5 +1055,6 @@ export const eventService = {
   getSpecificEventStats,
   getEventList,
   activateEventById,
-  calculateCompetitionScoreForEvent
+  calculateCompetitionScoreForEvent,
+  getAllCategoryAndEventName
 };

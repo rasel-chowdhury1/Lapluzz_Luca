@@ -94,6 +94,10 @@ router.post(
   eventController.getAllEventList
 )
 
+.get(
+    "/categoryEventNameList",
+    eventController.getAllCategoryAndEventName
+  )
 
 
 .get(

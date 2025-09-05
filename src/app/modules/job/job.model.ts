@@ -20,6 +20,10 @@ const JobSchema = new Schema<IJob>(
       ref: 'User',
       required: true
     },
+    businessId: { 
+        type: Schema.Types.ObjectId, 
+        ref: 'Business', required: true 
+    },
     title: {
       type: String,
       required: true

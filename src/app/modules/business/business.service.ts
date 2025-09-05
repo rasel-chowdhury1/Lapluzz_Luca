@@ -65,6 +65,185 @@ const createBusiness = async (payload: IBusiness) => {
 //   };
 // };
 
+const getAllBusinessByLocation = async (userId: string, query: Record<string, any>, userLocation: { latitude: number, longitude: number }, maxDistance: number = 5000) => {
+  query['isActive'] = true;
+  query['isDeleted'] = false;
+
+  const { latitude, longitude } = userLocation;
+
+  // Aggregate query to include $geoNear for geospatial sorting by distance
+  const aggregateQuery = Business.aggregate([
+    {
+      $geoNear: {
+        near: {
+          type: 'Point',
+          coordinates: [longitude, latitude], // [longitude, latitude]
+        },
+        distanceField: 'distance', // Add a field to store the distance from the point
+        maxDistance: maxDistance, // Max distance in meters
+        spherical: true, // Use spherical coordinates for accurate distance calculation
+      },
+    },
+    {
+      $match: {
+        author: { $ne: new mongoose.Types.ObjectId(userId) },
+        isActive: true,
+        isDeleted: false,
+      },
+    },
+    {
+      $sort: { distance: 1 }, // Sort by distance, ascending (nearest businesses first)
+    },
+    {
+      $project: {
+        name: 1,
+        coverImage: 1,
+        address: 1,
+        priceRange: 1,
+        maxGuest: 1,
+        subscriptionType: 1,
+        createdAt: 1,
+        providerType: 1,
+        location: 1,
+        distance: 1, // Include the calculated distance
+      },
+    },
+  ]);
+
+  // Pagination logic after aggregation
+  const page = parseInt(query.page) || 1; // Default to page 1 if not provided
+  const limit = parseInt(query.limit) || 10; // Default to 10 items per page
+  const skip = (page - 1) * limit;
+
+  // Paginate the results from the aggregation
+  const paginatedData = aggregateQuery.skip(skip).limit(limit);
+
+  let data = await paginatedData;
+  const meta = {
+    total: await Business.countDocuments({
+      author: { $ne: new mongoose.Types.ObjectId(userId) },
+      isActive: true,
+      isDeleted: false,
+    }),
+    page,
+    limit,
+  };
+
+  // Handle case where no business is found within the location
+  if (!data || data.length === 0) {
+    return { data: [], meta, message: 'No businesses found near your location.' };
+  }
+
+  const businessIds = data.map((biz) => biz._id);
+
+  // ⭐ Aggregate reviews
+  const ratings = await BusinessReview.aggregate([
+    { $match: { businessId: { $in: businessIds } } },
+    {
+      $group: {
+        _id: '$businessId',
+        averageRating: { $avg: '$rating' },
+        totalReviews: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const ratingMap: Record<
+    string,
+    { averageRating: number; totalReviews: number }
+  > = {};
+  ratings.forEach((r) => {
+    ratingMap[r._id.toString()] = {
+      averageRating: parseFloat(r.averageRating.toFixed(1)),
+      totalReviews: r.totalReviews,
+    };
+  });
+
+  // ⭐ Get engagement stats (likes/comments)
+  const engagementStats = await BusinessEngagementStats.find({
+    businessId: { $in: businessIds },
+  }).select('businessId likes comments');
+
+  const engagementMap: Record<
+    string,
+    {
+      totalLikes: number;
+      totalComments: number;
+      isLiked: boolean;
+      isFollowed: boolean;
+    }
+  > = {};
+
+  engagementStats.forEach((stat) => {
+    const id = stat.businessId.toString();
+    engagementMap[id] = {
+      totalLikes: stat.likes?.length || 0,
+      totalComments: 0,
+      isLiked: stat.likes?.some((like) => like.toString() === userId) || false,
+      isFollowed: stat.followers?.some((f) => f.toString() === userId) || false,
+    };
+
+    const totalCommentsWithReplies = stat.comments.reduce((acc, comment) => {
+      acc += 1;
+      if (comment.replies && Array.isArray(comment.replies)) {
+        acc += comment.replies.length;
+      }
+      return acc;
+    }, 0);
+
+    engagementMap[id].totalComments = totalCommentsWithReplies;
+  });
+
+  // ⭐ Fetch user wishlist events
+  const wishList = await WishList.findOne({ userId }).lean();
+  const wishListBusinessIds = new Set<string>();
+
+  if (wishList && wishList.folders?.length) {
+    wishList.folders.forEach((folder) => {
+      if (folder.businesses?.length) {
+        folder.businesses.forEach((eid) => wishListBusinessIds.add(eid.toString()));
+      }
+    });
+  }
+
+  // 🔀 Merge into final response
+  data = data.map((biz) => {
+    const id = biz._id.toString();
+
+    const ratingInfo = ratingMap[id] || {
+      averageRating: 0,
+      totalReviews: 0,
+    };
+
+    const engagementInfo = engagementMap[id] || {
+      totalLikes: 0,
+      totalComments: 0,
+      isLiked: false,
+      isFollowed: false,
+    };
+
+    return {
+      ...biz, // No need to use .toObject() as `biz` is already a plain object
+      ...ratingInfo,
+      ...engagementInfo,
+      blueVerifiedBadge: biz.subscriptionType === 'exclusive',
+      isWishlisted: wishListBusinessIds.has(id), // ✅ true if in wishlist, else false
+    };
+  });
+
+  // 🔽 Sort: subscriptionType then newest
+  const subscriptionOrder = ['exclusive', 'elite', 'prime', 'none'];
+  data = data.sort((a, b) => {
+    const posA = subscriptionOrder.indexOf(a.subscriptionType ?? 'none');
+    const posB = subscriptionOrder.indexOf(b.subscriptionType ?? 'none');
+
+    if (posA !== posB) return posA - posB;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+
+  return { data, meta };
+};
+
 
 
 const getAllBusiness = async (userId: string, query: Record<string, any>) => {
@@ -303,9 +482,10 @@ const getBusinessList = async (userId: string) => {
   return result;
 };
 
-const getBusinessNameList = async () => {
-
-
+const getBusinessNameList = async (userId: string) => {
+   const myBusiness = await Business.find({author: userId, isDeleted: false }).select("name")
+   
+   return myBusiness || []
 };
 
 
@@ -586,9 +766,9 @@ const getMyBusinesses = async (userId: string) => {
   const businesses = await Business.find({ author: userId, isDeleted: false })
     .populate('providerType', 'name');
 
-  if (!businesses.length) {
-    throw new Error('No businesses found!');
-  }
+  // if (!businesses.length) {
+  //   throw new Error('No businesses found!');
+  // }
 
   const results = await Promise.all(
     businesses.map(async (business) => {
@@ -673,7 +853,7 @@ const getMyBusinesses = async (userId: string) => {
     })
   );
 
-  return results;
+  return results || [];
 };
 
 const getMyParentBusiness = async (userId: string) => {
@@ -951,6 +1131,57 @@ const activateBusinessById = async (
 
   console.log({updateBusiness})
   return updatedBusiness;
+};
+
+const getAllCategoryAndBusinessName = async() => {
+   // Fetch all categories with only the name
+    const categories = await Category.find(
+      { type: "Provider", isDeleted: false },
+      'name'  // Only select the 'name' field for categories
+    );
+
+    // Fetch all businesses with their name and category
+    const businesses = await Business.find({isDeleted: false}, 'name');  // Adjust the field if needed
+
+   // Combine categories and businesses into a single array
+    const combinedData = [
+      ...categories.map((category) => ({ type: 'category', name: category.name })),
+      ...businesses.map((business) => ({ type: 'business', name: business.name }))
+    ];
+
+    return combinedData;
+}
+
+
+const searchEntities = async (searchQuery: string) => {
+  // Regex search for the query
+  const regexQuery = new RegExp(searchQuery, 'i');  // 'i' for case-insensitive search
+
+  // Aggregation pipeline to search for Business, Event, and Category (filtered for Provider types in Category)
+  const results = await Promise.all([
+    // Search in Business
+    Business.find({
+      name: { $regex: regexQuery },
+    }).select('name _id type'),
+
+    // Search in Event (no type filtering needed for Event)
+    Event.find({
+      name: { $regex: regexQuery },
+    }).select('name _id type'),
+
+    // Search in Category (filtered for Event and Provider types)
+    Category.find({
+      name: { $regex: regexQuery },
+      type: { $in: ['Event', 'Provider'] },  // Filter for Event and Provider types in Category
+    }).select('name _id type'),
+  ]);
+
+  // Combine all results and return
+  return {
+    businessResults: results[0],
+    eventResults: results[1],
+    categoryResults: results[2],
+  };
 };
 
 const deleteBusiness = async (id: string) => {
@@ -1491,5 +1722,9 @@ export const businessService = {
   filterSearchBusinesses,
   getBusinessList,
   activateBusinessById,
-  getAllBusinessQueryNameList
+  getAllBusinessQueryNameList,
+  getBusinessNameList,
+  getAllBusinessByLocation,
+  searchEntities,
+  getAllCategoryAndBusinessName
 };

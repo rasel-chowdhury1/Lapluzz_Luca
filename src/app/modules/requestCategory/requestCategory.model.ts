@@ -16,6 +16,7 @@ const RequestedCategorySchema = new Schema<IRequestedCategory>(
         ref: 'User', 
         required: true 
     },
+    isNotified: {type: Boolean, required: false},
     isDeleted: { 
         type: Boolean, 
         default: false 

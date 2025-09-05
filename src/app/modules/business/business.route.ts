@@ -45,6 +45,7 @@ router.post(
 
   .delete(
     '/:id',
+    auth(USER_ROLE.ORGANIZER, USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),
     businessController.deleteBusiness
   )
 
@@ -52,6 +53,12 @@ router.post(
     '/',
     auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
     businessController.getAllBusiness
+)
+
+  .get(
+    '/location',
+    auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
+    businessController.getAllBusinessByLocation
 )
   
   .get(
@@ -65,6 +72,17 @@ router.post(
     '/my',
     auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
     businessController.getMyBusiness
+  )
+
+  .get(
+    "/my/nameList",
+    auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
+    businessController.getMyBusinessNameList
+  )
+
+  .get(
+    "/categoryBusinessNameList",
+    businessController.getAllCategoryAndBusinessName
   )
 
   .get(
