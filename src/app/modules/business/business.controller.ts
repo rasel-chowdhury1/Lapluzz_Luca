@@ -356,6 +356,17 @@ const getAllCategoryAndBusinessName = catchAsync(async (req: Request, res: Respo
   });
 });
 
+const getAllBusinessesNameList = catchAsync(async (req: Request, res: Response) => {
+  const result = await businessService.getAllBusinessesNameList();
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'All business namelist fetched successfully.',
+    data: result
+  });
+});
+
 const searchBusiness = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.userId; // from JWT middleware
   const result = await businessService.searchBusinesses(req.query, userId);
@@ -465,5 +476,6 @@ export const businessController = {
   getAllBusinessQueryNameList,
   getMyBusinessNameList,
   getAllBusinessByLocation,
-  getAllCategoryAndBusinessName
+  getAllCategoryAndBusinessName,
+  getAllBusinessesNameList
 };

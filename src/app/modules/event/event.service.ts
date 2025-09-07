@@ -1018,7 +1018,7 @@ const calculateCompetitionScoreForEvent = async (eventId: string) => {
 const getAllCategoryAndEventName = async() => {
    // Fetch all categories with only the name
     const categories = await Category.find(
-      { type: "Provider", isDeleted: false },
+      { type: "Event", isDeleted: false },
       'name'  // Only select the 'name' field for categories
     );
 

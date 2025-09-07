@@ -43,6 +43,8 @@ const createUserToken = async (payload: TUserCreate) => {
   // user exist check
   const userExist = await userService.getUserByEmail(email);
 
+  console.log({userExist})
+
   if (userExist) {
     throw new AppError(httpStatus.BAD_REQUEST, 'User already exist!!');
   }
@@ -720,7 +722,7 @@ const getAdminProfile = async (id: string) => {
 
 const getUserByEmail = async (email: string) => {
   const result = await User.findOne({ email });
-
+  console.log("result ->>> ", result)
   return result;
 };
 
@@ -739,17 +741,15 @@ const deleteMyAccount = async (id: string, payload: DeleteAccountPayload) => {
     throw new AppError(httpStatus.BAD_REQUEST, 'Password does not match');
   }
 
-  const userDeleted = await User.findByIdAndUpdate(
-    id,
-    { isDeleted: true },
-    { new: true },
-  );
+  // Hard delete the user
+  const deletedUser = await User.findByIdAndDelete(id);
 
-  if (!userDeleted) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'user deleting failed');
+  if (!deletedUser) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'User deletion failed');
   }
 
-  return userDeleted;
+
+  return null;
 };
 
 
@@ -813,19 +813,24 @@ const deletedUser = async (id: string) => {
   // } else {
   //   status = true;
   // }
-  let status = !singleUser.isDeleted;
-  console.log('status', status);
-  const user = await User.findByIdAndUpdate(
-    id,
-    { isDeleted: status },
-    { new: true },
-  );
+  // let status = !singleUser.isDeleted;
+  // console.log('status', status);
+  // const user = await User.findByIdAndUpdate(
+  //   id,
+  //   { isDeleted: status },
+  //   { new: true },
+  // );
 
-  if (!user) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'user deleting failed');
+    // Hard delete the user
+  const deletedUser = await User.findByIdAndDelete(id);
+
+  if (!deletedUser) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'User deletion failed');
   }
 
-  return { status, user };
+
+
+  return null;
 
 };
 

@@ -1047,6 +1047,68 @@ export const emitNotificationOfSuccessfullyPamentSubcription = async ({
   // Optionally call a reminder notification function (assuming it's defined elsewhere)
   sendReminderNotification(receiverId, userMsg?.name, userMsg?.text);
 };
+
+
+
+export const emitNotificationAllBusinessUsersFromCouponOffer = async ({
+  userId,
+  userMsg,
+  type,
+}: {
+  userId: string;
+  userMsg?: {
+    image?: string;
+    text: string;
+    name: string;
+  };
+  type?: string;
+}): Promise<void> => {
+  if (!io) throw new Error('Socket.IO is not initialized');
+
+  // Ensure that userMsg exists
+  if (!userMsg || !userMsg.text ) {
+    throw new Error('Invalid notification message');
+  }
+
+  // 1. Find business users (change 'organizer' to the appropriate role, if necessary)
+  const businessUserList = await User.find({ role: 'business' }).select('_id'); // Adjust role as needed
+
+  // 2. Loop through business users
+  for (const businessUser of businessUserList) {
+    const receiverId = businessUser._id; // Correctly access the user ID
+    const userSocket = connectedUsers.get(receiverId.toString()); // Get the socket ID for real-time notification
+
+    const unreadCount = await Notification.countDocuments({
+      receiverId: receiverId,
+      isRead: false,
+    });
+
+    // 3. Emit socket notification if user is online
+    if (userMsg && userSocket) {
+      io.to(userSocket.socketID).emit('notification', {
+        success: true,
+        statusCode: 200,
+        unreadCount: unreadCount + 1,
+        message: userMsg,
+      });
+    }
+
+    // 4. Save the notification in the database
+    await Notification.create({
+      userId, // sender
+      receiverId, // receiver is the business user
+      message: userMsg,
+      type: type || 'CouponOfferNotification', // Custom type for coupon-related notifications
+      sentCount: businessUserList.length,
+      isRead: false,
+      timestamp: new Date(),
+    });
+
+    // 5. Send push notification via FCM (optional)
+    const msg = userMsg?.text || 'New coupon offer available!';
+    sendNotificationByFcmToken(receiverId, msg);
+  }
+};
   
 export const emitOnlineUser = async (userId: string) => {
   if (!io) throw new Error('Socket.IO is not initialized');

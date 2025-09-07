@@ -288,8 +288,11 @@ const initiateSubscriptionPayment = catchAsync(async (req: Request, res: Respons
       throw new AppError(400 , "coupon limit reached")
     }
 
-    // 💸 Apply discount
-    finalAmount = Math.max(0, finalAmount - coupon.discountPrice); // never below 0
+        // 💸 Apply percentage discount
+    finalAmount = finalAmount - (finalAmount * coupon.discountPrice / 100);
+
+    // Never below 0, round to 2 decimals
+    finalAmount = Math.max(0, Math.round(finalAmount * 100) / 100);
   }
 
   // 📆 Set expiration date

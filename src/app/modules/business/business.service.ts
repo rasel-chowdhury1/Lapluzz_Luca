@@ -1153,6 +1153,12 @@ const getAllCategoryAndBusinessName = async() => {
 }
 
 
+const getAllBusinessesNameList = async() => {
+   const businesses = await Business.find({isDeleted: false}, 'name');
+   return businesses
+}
+
+
 const searchEntities = async (searchQuery: string) => {
   // Regex search for the query
   const regexQuery = new RegExp(searchQuery, 'i');  // 'i' for case-insensitive search
@@ -1726,5 +1732,6 @@ export const businessService = {
   getBusinessNameList,
   getAllBusinessByLocation,
   searchEntities,
-  getAllCategoryAndBusinessName
+  getAllCategoryAndBusinessName,
+  getAllBusinessesNameList
 };

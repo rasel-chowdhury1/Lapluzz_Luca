@@ -36,6 +36,7 @@ import { couponRoutes } from "../modules/coupon/coupon.route";
 import { mySubscriptionRoutes } from "../modules/mySubscription/mySubscription.route";
 import { staticPageRoutes } from "../modules/staticPages/staticPages.route";
 import { checklistRoutes } from "../modules/checklist/checklist.route";
+import { useCreditsRoutes } from "../modules/useCredits/useCredits.route";
 
 const router = Router();
 
@@ -166,6 +167,11 @@ const moduleRoutes = [
      route: messageRoutes
   },
 
+
+  {
+     path: "/useCredits",
+     route: useCreditsRoutes
+  },
   // business settings
   {
    path: "/settings",

@@ -22,6 +22,12 @@ router.post(
   businessController.createBusiness
 )
 
+    .post(
+      "/useCredits",
+      auth(USER_ROLE.USER),
+      
+    )
+
 
   .patch(
     '/update/:businessId',
@@ -83,6 +89,11 @@ router.post(
   .get(
     "/categoryBusinessNameList",
     businessController.getAllCategoryAndBusinessName
+  )
+
+  .get(
+    "/allNameList",
+    businessController.getAllBusinessesNameList
   )
 
   .get(
@@ -154,6 +165,11 @@ router.post(
       '/all-business-nameList',
       auth(USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN),
       businessController.getAllBusinessQueryNameList
+    )
+
+
+    .post(
+      "/useCredits"
     )
 
   .get(
