@@ -275,8 +275,8 @@ const deletedUser = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: `User ${result.status ? 'deleted' : 'unDeleted'} successfully`,
-    data: result.user,
+    message: `User deleted successfully`,
+    data: null,
   });
 });
 

@@ -151,6 +151,7 @@ userRoutes
     ),
     userController.deleteMyAccount,
   )
+  
   .delete(
     '/delete/:userId',
     auth(USER_ROLE.ADMIN

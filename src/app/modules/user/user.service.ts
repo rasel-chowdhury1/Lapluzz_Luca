@@ -22,6 +22,7 @@ import Business from '../business/business.model';
 import BusinessEngagementStats from '../businessEngaagementStats/businessEngaagementStats.model';
 import BusinessReview from '../businessReview/businessReview.model';
 import { Request } from 'express';
+import Otp from '../otp/otp.model';
 
 export type IFilter = {
   searchTerm?: string;
@@ -765,6 +766,8 @@ const deleteSuperAdmin = async (id: string) => {
   if (!deletedUser) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Failed to delete the user');
   }
+  // Use deleteMany to remove OTPs sent to the deleted user's email
+  const otpDeleted = await Otp.deleteMany({ sentTo: deletedUser.email });
 
   return deletedUser;
 };
@@ -799,39 +802,68 @@ const blockedUser = async (id: string) => {
 };
 
 
+// const deletedUser = async (id: string) => {
+//   const singleUser = await User.IsUserExistById(id);
+
+//   if (!singleUser) {
+//     throw new AppError(httpStatus.NOT_FOUND, 'User not found');
+//   }
+
+//   // let status;
+
+//   // if (singleUser?.isActive) {
+//   //   status = false;
+//   // } else {
+//   //   status = true;
+//   // }
+//   // let status = !singleUser.isDeleted;
+//   // console.log('status', status);
+//   // const user = await User.findByIdAndUpdate(
+//   //   id,
+//   //   { isDeleted: status },
+//   //   { new: true },
+//   // );
+
+//     // Hard delete the user
+//   const deletedUser = await User.findByIdAndDelete(id);
+
+//   if (!deletedUser) {
+//     throw new AppError(httpStatus.BAD_REQUEST, 'User deletion failed');
+//   }
+
+
+//   return null;
+
+// };
+
 const deletedUser = async (id: string) => {
+  // Check if the user exists by their ID
   const singleUser = await User.IsUserExistById(id);
 
   if (!singleUser) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found');
   }
 
-  // let status;
-
-  // if (singleUser?.isActive) {
-  //   status = false;
-  // } else {
-  //   status = true;
-  // }
-  // let status = !singleUser.isDeleted;
-  // console.log('status', status);
-  // const user = await User.findByIdAndUpdate(
-  //   id,
-  //   { isDeleted: status },
-  //   { new: true },
-  // );
-
-    // Hard delete the user
+  // Hard delete the user
   const deletedUser = await User.findByIdAndDelete(id);
 
   if (!deletedUser) {
     throw new AppError(httpStatus.BAD_REQUEST, 'User deletion failed');
   }
 
+  // Assuming user has an email field, you should use the deleted user's email
+  const otpDeleted = await Otp.deleteMany({ sentTo: deletedUser.email });
 
+  // Check if OTPs were deleted successfully
+  if (!otpDeleted) {
+    throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to delete OTPs');
+  }
 
-  return null;
-
+  // Return a success message or the deleted user's data for further processing
+  return {
+    message: 'User and OTPs deleted successfully',
+    deletedUser,
+  };
 };
 
 const getEarningOverview = async (year: number) => {
