@@ -38,7 +38,7 @@ const createUseCredits = async (payload: {
     );
 
     let authorBusiness: any = null;
-    let businessData: any = null
+
     // Handle discount type
     if (type === 'discount') {
       if (!businessId) throw new Error('businessId is required when type is discount');
@@ -52,6 +52,21 @@ const createUseCredits = async (payload: {
         { $inc: { totalCredits: usedCredits } },
         { new: true, session }
       );
+
+          // Define the user message for the coupon notification, including the coupon code (payload.name)
+    let userMsg = {};
+
+    // For 'gotCredits', the message informs the user about receiving credits
+    userMsg.name = "Credits Received";
+    userMsg.text = `You received ${usedCredits} credits from the user ${userData.name} for the business "${businessData?.name}".`;
+
+    // Emit notification for credits usage
+    emitNotificationforGotCredits({
+      userId: userId, 
+      receiverId: businessData?.author, 
+      userMsg: userMsg,  // Pass the properly constructed message object
+    });
+
     }
 
     // Create UseCredits record
@@ -69,26 +84,12 @@ const createUseCredits = async (payload: {
       { session }
     );
 
+
+
+
     // Commit transaction
     await session.commitTransaction();
     session.endSession();
-
-    // Define the user message for the coupon notification, including the coupon code (payload.name)
-let userMsg = {};
-
-// For 'gotCredits', the message informs the user about receiving credits
-userMsg.name = "Credits Received";
-userMsg.text = `You received ${usedCredits} credits from the user ${userData.name} for the business "${businessData.name}".`;
-
-// Emit notification for credits usage
-emitNotificationforGotCredits({
-  userId: userId, 
-  receiverId: businessData.author, 
-  userMsg: userMsg,  // Pass the properly constructed message object
-});
-
-console.log('UseCredits record created:', credits[0]);
-
 
     console.log('UseCredits record created:', credits[0]);
     return credits[0];
