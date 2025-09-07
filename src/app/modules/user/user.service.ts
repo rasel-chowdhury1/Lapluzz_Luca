@@ -749,6 +749,8 @@ const deleteMyAccount = async (id: string, payload: DeleteAccountPayload) => {
     throw new AppError(httpStatus.BAD_REQUEST, 'User deletion failed');
   }
 
+  // Use deleteMany to remove OTPs sent to the deleted user's email
+  const otpDeleted = await Otp.deleteMany({ sentTo: deletedUser.email });
 
   return null;
 };
