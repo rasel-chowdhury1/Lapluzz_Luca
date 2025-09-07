@@ -1071,7 +1071,7 @@ export const emitNotificationAllBusinessUsersFromCouponOffer = async ({
   }
 
   // 1. Find business users (change 'organizer' to the appropriate role, if necessary)
-  const businessUserList = await User.find({ role: 'business' }).select('_id'); // Adjust role as needed
+  const businessUserList = await User.find({ role: 'organizer' }).select('_id'); // Adjust role as needed
 
   console.log("businessUserList===>>> ", businessUserList)
 
