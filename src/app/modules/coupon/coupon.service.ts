@@ -21,7 +21,7 @@ const createCoupon = async (payload: ICoupon): Promise<ICouponDocument> => {
   const newCoupon = await Coupon.create(payload);
 
   // 2. Fire off the notification asynchronously (don't wait for it)
-await  emitNotificationAllBusinessUsersFromCouponOffer({
+emitNotificationAllBusinessUsersFromCouponOffer({
     userId: adminData?._id as string, // Pass the admin's ID or other identifying data
     userMsg,
     type: 'CouponOfferNotification',
