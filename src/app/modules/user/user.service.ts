@@ -750,7 +750,7 @@ const deleteMyAccount = async (id: string, payload: DeleteAccountPayload) => {
   }
 
   // Use deleteMany to remove OTPs sent to the deleted user's email
-  const otpDeleted = await Otp.deleteMany({ sentTo: deletedUser.email });
+  const otpDeleted = await Otp.findByIdAndDelete({ sentTo: deletedUser.email });
 
   return null;
 };
