@@ -57,7 +57,9 @@ admin.initializeApp({
   });
 // Function to send notification to a user
 export const sendNotificationByFcmToken = async (receiverId: any, textMessage: string): Promise<void> => {
+  
 
+  console.log({receiverId,textMessage})
     // Fetch the user by ID
     const findUser = await User.findOne({ _id: receiverId });
 

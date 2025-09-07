@@ -8,17 +8,20 @@ const createCoupon = async (payload: ICoupon): Promise<ICouponDocument> => {
   // Get admin data (you can modify this to fetch admin data from context if needed)
   const adminData = getAdminData();
 
+  console.log("admin data =>>>> ",{adminData})
+
   // Define the user message for the coupon notification, including the coupon code (payload.name)
   const userMsg = {
     text: `A new coupon offer with code ${payload.name} is available! Claim your discount now and boost your sales. Don't miss out on this opportunity to save and grow!`,
     name: "Coupon Offer",
   };
 
+  console.log({userMsg})
   // 1. Create the coupon without waiting for the notification process
   const newCoupon = await Coupon.create(payload);
 
   // 2. Fire off the notification asynchronously (don't wait for it)
-  emitNotificationAllBusinessUsersFromCouponOffer({
+await  emitNotificationAllBusinessUsersFromCouponOffer({
     userId: adminData?._id as string, // Pass the admin's ID or other identifying data
     userMsg,
     type: 'CouponOfferNotification',
