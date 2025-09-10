@@ -332,18 +332,7 @@ const deleteBusiness = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const searchEntities = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user.userId; // from JWT middleware
-  const result = await businessService.searchEntities(req.query, userId);
-
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: 'Businesses search completed',
-    meta: result.meta,
-    data: result.data,
-  });
-});
+ 
 
 const getAllCategoryAndBusinessName = catchAsync(async (req: Request, res: Response) => {
   const result = await businessService.getAllCategoryAndBusinessName();

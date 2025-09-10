@@ -11,6 +11,7 @@ import { Types } from 'mongoose';
 import { monthNames } from '../business/business.utils';
 import JobApplicant from '../jobApplicant/jobApplicant.model';
 import WishList from '../wishlist/wishlist.model';
+import { User } from '../user/user.models';
 
 const createJob = async (payload: IJob) => {
   const result = await Job.create(payload);
@@ -569,8 +570,10 @@ const getSpecificJobStats = async (jobId: string) => {
   }
 
 
-  // // ⭐ Get totalCredits of the author
-  // const author = await User.findById(authorId).select('totalCredits').lean();
+  const authorId = job.author;
+    // ⭐ Get totalCredits of the author
+  const author = await User.findById(authorId).select('totalCredits customId').lean();
+  const totalCredits = author?.totalCredits || 0;
  
 
   // 2️⃣ Get engagement stats (followers, likes, comments)
@@ -625,7 +628,8 @@ const getSpecificJobStats = async (jobId: string) => {
         }
       : null,
     totalActiveSub,
-    jobApplicants
+    jobApplicants,
+    totalCredits
   };
 };
 

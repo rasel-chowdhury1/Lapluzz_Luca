@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';
 import httpStatus from 'http-status';
 import config from '../../config';
 import AppError from '../../error/AppError';
-import { otpSendEmail } from '../../utils/eamilNotifiacation';
+import { otpSendEmail } from '../../utils/emailNotifiacation';
 import { createToken, verifyToken } from '../../utils/tokenManage';
 import { otpServices } from '../otp/otp.service';
 import { generateOptAndExpireTime } from '../otp/otp.utils';
@@ -193,7 +193,7 @@ const forgotPasswordByEmail = async (email: string) => {
   const { isExist, isExpireOtp } = await otpServices.checkOtpByEmail(email);
 
   console.log({isExist, isExpireOtp})
-  const { otp, expiredAt } = generateOptAndExpireTime("1");
+  const { otp, expiredAt } = generateOptAndExpireTime("5");
 
   if (isExist && !isExpireOtp) {
     throw new AppError(httpStatus.BAD_REQUEST, 'otp-exist. Check your email.');
@@ -237,6 +237,7 @@ const forgotPasswordByEmail = async (email: string) => {
       name: '',
       otp,
       expiredAt: expiredAt,
+      expireTime: "5"
     });
   });
 

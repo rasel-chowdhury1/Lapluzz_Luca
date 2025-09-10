@@ -5,7 +5,7 @@ import { verifyToken } from '../../utils/tokenManage';
 import httpStatus from 'http-status';
 import config from '../../config';
 import { generateOptAndExpireTime } from './otp.utils';
-import { otpSendEmail } from '../../utils/eamilNotifiacation';
+import { otpSendEmail } from '../../utils/emailNotifiacation';
 
 const createOtp = async ({
   name,

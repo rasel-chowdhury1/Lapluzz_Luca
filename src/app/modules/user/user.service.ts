@@ -7,7 +7,7 @@ import config from '../../config';
 import { getAdminId } from '../../DB/adminStore';
 import AppError from '../../error/AppError';
 import { buildLocation } from '../../utils/buildLocation';
-import { otpSendEmail, welcomeEmail } from '../../utils/eamilNotifiacation';
+import { otpSendEmail, welcomeEmail } from '../../utils/emailNotifiacation';
 import { createToken, verifyToken } from '../../utils/tokenManage';
 import Event from '../event/event.model';
 import Job from '../job/job.model';

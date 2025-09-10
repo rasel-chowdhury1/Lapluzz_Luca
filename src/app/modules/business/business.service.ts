@@ -1002,9 +1002,8 @@ const getExtraBusinessDataById = async (userId: string, id: string) => {
 
 const getSpecificBusinessStats = async (businessId: string) => {
   const id = new Types.ObjectId(businessId);
-  console.log("business -=>>> ")
   // 1️⃣ Check business existence and status
-  const business = await Business.findOne({ _id: id, isDeleted: false }).select("logo").lean();
+  const business = await Business.findOne({ _id: id, isDeleted: false }).select("logo author").lean();
   if (!business) {
     throw new Error('Business not found');
   }
@@ -1013,6 +1012,8 @@ const getSpecificBusinessStats = async (businessId: string) => {
 
   // ⭐ Get totalCredits of the author
   const author = await User.findById(authorId).select('totalCredits customId').lean();
+
+  console.log({business})
   const totalCredits = author?.totalCredits || 0;
 
   // 2️⃣ Get engagement stats (followers, likes, comments)

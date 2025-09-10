@@ -10,6 +10,7 @@ const inspirationSchema = new Schema<IInspiration>(
     },
     title: { type: String, required: true },
     category: { type: Schema.Types.ObjectId, ref: 'Categories', required: true },
+    subCategory: {type: String, enum: [""]},
     type: {
       type: String,
       enum: ['blog', 'gallery'],

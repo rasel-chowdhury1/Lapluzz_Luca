@@ -56,7 +56,7 @@ admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
   });
 // Function to send notification to a user
-export const sendNotificationByFcmToken = async (receiverId: any, textMessage: string): Promise<void> => {
+export const sendNotificationByFcmToken = async (receiverId: any, textMessage: string,  titleName?: string,): Promise<void> => {
   
 
   console.log({receiverId,textMessage})
@@ -82,7 +82,7 @@ export const sendNotificationByFcmToken = async (receiverId: any, textMessage: s
     // Construct the notification message
     const message: Message = {
       notification: {
-        title: textMessage, // Set title dynamically with user's name or default to "Admin"
+        title: titleName || "Pianofesta Support", // Set title dynamically with user's name or default to "Admin"
         body: textMessage, // Set the body of the notification
       },
       token: fcmToken, // Use the user's FCM token to send the message
@@ -126,7 +126,7 @@ export const sendReminderNotification = async (receiverId: any, title: string, t
     // Construct the notification message
     const message: Message = {
       notification: {
-        title: textMessage, // Set title dynamically with user's name or default to "Admin"
+        title: "Pianofesta Support", // Set title dynamically with user's name or default to "Admin"
         body: textMessage, // Set the body of the notification
       },
       token: fcmToken, // Use the user's FCM token to send the message

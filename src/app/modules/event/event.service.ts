@@ -734,13 +734,15 @@ const getSpecificEventStats = async (eventId: string) => {
   const id = new Types.ObjectId(eventId);
 
   // 1️⃣ Check event existence and status
-  const event = await Event.findOne({ _id: id, isDeleted: false }).select("logo").lean();
+  const event = await Event.findOne({ _id: id, isDeleted: false }).select("logo author").lean();
   if (!event) {
     throw new Error('event not found');
   }
 
   const authorId = event.author;
-
+    // ⭐ Get totalCredits of the author
+  const author = await User.findById(authorId).select('totalCredits customId').lean();
+  const totalCredits = author?.totalCredits || 0;
   // // ⭐ Get totalCredits of the author
   // const author = await User.findById(authorId).select('totalCredits').lean();
  
@@ -816,7 +818,8 @@ const getSpecificEventStats = async (eventId: string) => {
         }
       : null,
     totalActiveSub,
-    interestsUsers
+    interestsUsers,
+    totalCredits,
   };
 };
 

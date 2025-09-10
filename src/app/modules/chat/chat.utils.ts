@@ -30,3 +30,19 @@ export const ensureFriendship = async (userId: any, requesterId: any) => {
       await Friendship.create({ userId: requesterId, friendship: [userId] });
     }
   };
+
+
+
+export const generateNotificationSubject = (contextType: string): string => {
+  switch (contextType) {
+    case 'business':
+      return '✅ Deal Closed for Your Business Interaction!';
+    case 'event':
+      return '✅ Deal Closed for Your Event Interaction!';
+    case 'job':
+      return '✅ Deal Closed for Your Job Opportunity!';
+    default:
+      return '✅ Deal Closed – Action Required!';
+  }
+};
+

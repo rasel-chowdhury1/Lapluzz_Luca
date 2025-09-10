@@ -351,8 +351,10 @@ const initiateSubscriptionPayment = catchAsync(async (req: Request, res: Respons
 });
 
 const buySubscriptionByCredits = catchAsync(async (req: Request, res: Response) => {
+
   console.log("buy subscription body data ->>> ", req.body);
-  const { subscriptionId, subscriptionOptionIndex, subscriptionFor, subscriptionForType } = req.body;
+
+  const { subscriptionId, subscriptionOptionIndex, subscriptionFor, subscriptionForType,couponCode } = req.body;
   const { userId } = req.user;
 
   const session = await mongoose.startSession(); // Start the transaction session
@@ -386,6 +388,8 @@ const buySubscriptionByCredits = catchAsync(async (req: Request, res: Response) 
 
     // 💸 Check if user has enough credits
     if (selectedOption.price > userTotalCredits) {
+
+      
       return sendResponse(res, {
         statusCode: 400,
         success: false,

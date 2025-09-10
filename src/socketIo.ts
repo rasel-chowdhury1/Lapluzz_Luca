@@ -19,6 +19,8 @@ import { callbackFn } from './app/utils/callbackFn';
 import { verifyToken } from './app/utils/tokenManage';
 import { sendNotificationByFcmToken, sendReminderNotification } from './app/utils/sentNotificationByFcmToken';
 import { v4 as uuidv4 } from 'uuid';
+import { generateNotificationSubject } from './app/modules/chat/chat.utils';
+import { sendNotificationEmailForReview } from './app/utils/emailNotifiacation';
 // Define the socket server port
 const socketPort: number = parseInt(process.env.SOCKET_PORT || '9020', 10);
 
@@ -982,10 +984,21 @@ export const emitNotificationOfReview = async ({
     });
 
     const msg = userMsg?.text || "something";
+
+    const receiverData = await User.findById(receiverId).select("email")
   
-    sendNotificationByFcmToken(receiverId, msg)
+    sendNotificationByFcmToken(receiverId, msg, userMsg?.name)
 
 
+    let subject = "Review notifications";
+    if(userMsg?.types){
+      subject = generateNotificationSubject(userMsg.types);
+    }
+    // Generate subject dynamically based on contextType
+  
+   if (receiverData) sendNotificationEmailForReview({ sentTo: receiverData?.email, subject, name: receiverData?.name || "", userMsg: msg, platform: userMsg?.name || "" });
+
+    
   }
 
 
