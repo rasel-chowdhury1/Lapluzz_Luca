@@ -1,4 +1,5 @@
 import { emitNotificationAllBusinessUsersFromCouponOffer } from "../../../socketIo";
+import config from "../../config";
 import { getAdminData } from "../../DB/adminStore";
 import { ICoupon, ICouponDocument } from "./coupon.interface";
 import { Coupon } from "./coupon.model";
@@ -14,6 +15,7 @@ const createCoupon = async (payload: ICoupon): Promise<ICouponDocument> => {
   const userMsg = {
     text: `A new coupon offer with code ${payload.name} is available! Claim your discount now and boost your sales. Don't miss out on this opportunity to save and grow!`,
     name: "Coupon Offer",
+    image: config.coupon_offer_img
   };
 
   console.log({userMsg})

@@ -150,11 +150,26 @@ const getMessagesForChat = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+
+const getUnreadMessageCount = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.userId; // ✅ ধরলাম authentication middleware ইউজার সেট করে দিচ্ছে
+
+  const count = await messageService.getUnreadMessageCount(userId);
+console.log({count})
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Unread message count fetched successfully",
+    data: { count },
+  });
+});
+
 export const messageController = {
   sendMessage,
   fileUpload,
   getMessagesForChat,
   updateMessage,
   seenMessage,
-  deleteMessage
+  deleteMessage,
+  getUnreadMessageCount
 };

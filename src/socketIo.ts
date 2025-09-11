@@ -17,7 +17,7 @@ import Notification from './app/modules/notifications/notifications.model';
 import { User } from './app/modules/user/user.models';
 import { callbackFn } from './app/utils/callbackFn';
 import { verifyToken } from './app/utils/tokenManage';
-import { sendNotificationByFcmToken, sendReminderNotification } from './app/utils/sentNotificationByFcmToken';
+import { sendNotificationByFcmToken, sendReminderNotification, sentNotificationToReciverForNewMessageByFcmToken } from './app/utils/sentNotificationByFcmToken';
 import { v4 as uuidv4 } from 'uuid';
 import { generateNotificationSubject } from './app/modules/chat/chat.utils';
 import { sendNotificationEmailForReview } from './app/utils/emailNotifiacation';
@@ -41,6 +41,13 @@ declare module 'socket.io' {
 let io: SocketIOServer;
 
 export const connectedUsers = new Map<
+  string,
+  {
+    socketID: string;
+  }
+>();
+
+export const connectedUserOnChat = new Map<
   string,
   {
     socketID: string;
@@ -134,9 +141,20 @@ export const initSocketIO = async (server: HttpServer): Promise<void> => {
       }
 
       // (Optional) In addition to auto-registering, you can still listen for a "userConnected" event if needed.
-      socket.on('userConnected', ({ userId }: { userId: string }) => {
-        connectedUsers.set(userId, { socketID: socket.id });
+      socket.on('chatConnected', ({ userId }: { userId: string }) => {
+        console.log("connected to chat")
+        connectedUserOnChat.set(userId, { socketID: socket.id });
         // console.log(`User ${userId} connected with socket ID: ${socket.id}`);
+
+        console.log({connectedUserOnChat})
+      });
+
+      // (Optional) In addition to auto-registering, you can still listen for a "userConnected" event if needed.
+      socket.on('chatDisConnected', ({ userId }: { userId: string }) => {
+        console.log("disconnected to chat")
+         connectedUserOnChat.delete(userId)
+
+        console.log({connectedUserOnChat})
       });
 
 
@@ -213,8 +231,10 @@ export const initSocketIO = async (server: HttpServer): Promise<void> => {
 
       socket.on(
         'send-message',
-        async (payload: { text: string; images: string[], chatId: string }, callback) => {
-          console.log({ payload });
+        async (payload: { text: string; images: string[], chatId: string, sender: string, sendenName?: string, senderImage?: string }, callback) => {
+
+          console.log({payload})
+
           // Check if chatId is provided
           if (!payload.chatId) {
             callbackFn(callback, {
@@ -249,21 +269,21 @@ export const initSocketIO = async (server: HttpServer): Promise<void> => {
 
             // Extract users and filter out the sender
             const usersToNotify = chatData.users.filter(
-              (user) => user.toString() !== socket?.user?._id,
+              (user) => user.toString() !== payload.sender,
             );
 
-            console.log("userNotify ->> ", usersToNotify);
-            console.log("connected users _>>", connectedUsers)
+            let receiverId;
             // Notify users who are online
             const userSocketIds: string[] = [];
             usersToNotify.forEach((user) => {
               const userSocket = connectedUsers.get(user.toString());
+              receiverId = user;
               if (userSocket) {
                 userSocketIds.push(userSocket.socketID); // Collect socket IDs
               }
             });
 
-            console.log("socket =>>>>>> ", socket)
+
 
             const userTimeZone = 'Asia/Dhaka'; // Dynamic time zone or default to Asia/Dhaka
 
@@ -272,7 +292,7 @@ export const initSocketIO = async (server: HttpServer): Promise<void> => {
 
             socket.emit(`message_received::${payload.chatId}`, {
               success: true,
-              sender: socket?.user?._id,
+              sender: payload.sender,
               message: payload.text,
               images: payload.images,
               createdAt: messageTime
@@ -297,32 +317,35 @@ export const initSocketIO = async (server: HttpServer): Promise<void> => {
               })
               io.to(userSocketIds).emit(`message_received`, {
                 success: true,
-                sender: socket?.user?._id,
+                sender: payload.sender,
                 message: payload.text,
                 images: payload.images,
                 createdAt: messageTime
               });
               io.to(userSocketIds).emit(`message_received::${payload.chatId}`, {
                 success: true,
-                sender: socket?.user?._id,
+                sender: payload.sender,
                 message: payload.text,
                 images: payload.images,
                 createdAt: messageTime
               });
             }
 
+
             // Store the message in the database
             await Message.create({
-              sender: socket?.user?._id,
+              sender: payload.sender,
+              receiver: receiverId,
               text: payload.text,
               images: payload.images,
               chat: payload.chatId,
             });
 
+            sentNotificationToReciverForNewMessageByFcmToken(receiverId,payload.text, payload.sendenName, payload.senderImage)
             // Send success callback to the sender
             callbackFn(callback, {
               success: true,
-              message: { message: payload.text, images: payload.images, sender: socket?.user?._id, createdAt: messageTime },
+              message: { message: payload.text, images: payload.images, sender: payload.sender, createdAt: messageTime },
             });
 
           } catch (error) {
@@ -421,7 +444,12 @@ export const initSocketIO = async (server: HttpServer): Promise<void> => {
             break;
           }
         }
-
+        for (const [key, value] of connectedUserOnChat.entries()) {
+          if (value.socketID === socket.id) {
+            connectedUserOnChat.delete(key);
+            break;
+          }
+        }
         io.emit('onlineUser', Array.from(connectedUsers));
         emitOnlineUser(socket.user?._id as any);
       });
@@ -440,6 +468,12 @@ export const initSocketIO = async (server: HttpServer): Promise<void> => {
         for (const [key, value] of connectedUsers.entries()) {
           if (value.socketID === socket.id) {
             connectedUsers.delete(key);
+            break;
+          }
+        }
+        for (const [key, value] of connectedUserOnChat.entries()) {
+          if (value.socketID === socket.id) {
+            connectedUserOnChat.delete(key);
             break;
           }
         }
@@ -1289,4 +1323,5 @@ export const emitNotificationforGotCredits = async ({
   sendReminderNotification(receiverId, userMsg?.name, userMsg?.text)
 
 };
+
 

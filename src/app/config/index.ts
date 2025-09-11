@@ -40,5 +40,7 @@ export default {
   stripe,
   admin_email: process.env.ADMIN_EMAIL,
   admin_password: process.env.ADMIN_PASSWORD,
-  admin_phone: process.env.ADMIN_PHONE
+  admin_phone: process.env.ADMIN_PHONE,
+  credits_recived_img: process.env.creditsRecived,
+  coupon_offer_img: process.env.couponOffer 
 };

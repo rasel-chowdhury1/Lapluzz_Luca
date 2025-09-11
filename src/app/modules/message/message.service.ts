@@ -5,7 +5,6 @@ import Message from './message.model';
 import Chat from '../chat/chat.model';
 
 const sendMessage = async (data: any) => {
-  console.log({data})
    // Check if text, chatId, and sender are provided
    if (!data.text || !data.chat || !data.sender) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Text, chatId, and sender are required');
@@ -116,7 +115,22 @@ const deleteMessage = async (data: { userId: string, msgId: string }) => {
 };
 
 const getMessagesForChat = async (chatId: string) => {
+  Message.updateMany(
+    { chat: chatId, seen: false },
+    { $set: { seen: true } }
+  ).exec();
   return await Message.find({ chat: chatId });
+};
+
+const getUnreadMessageCount = async (userId: string) => {
+
+  console.log({userId})
+  const count = await Message.countDocuments({
+    receiver: userId,
+    seen: false 
+  });
+
+  return count;
 };
 
 export const messageService = {
@@ -124,5 +138,6 @@ export const messageService = {
   getMessagesForChat,
   updateMessage,
   seenMessage,
+  getUnreadMessageCount,
   deleteMessage
 };

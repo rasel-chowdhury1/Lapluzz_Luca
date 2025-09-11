@@ -3,7 +3,7 @@ import Business from '../business/business.model';
 import { User } from '../user/user.models';
 import UseCredits from './useCredits.model';
 import { emitNotificationforGotCredits } from '../../../socketIo';
-
+import config from '../../config';
 const createUseCredits = async (payload: {
   userId: string;
   type: 'paymentSubscription' | 'discount' | 'gotCredits';
@@ -59,6 +59,7 @@ const createUseCredits = async (payload: {
     // For 'gotCredits', the message informs the user about receiving credits
     userMsg.name = "Credits Received";
     userMsg.text = `You received ${usedCredits} credits from the user ${userData.name} for the business "${businessData?.name}".`;
+    userMsg.image = config.credits_recived_img
 
     // Emit notification for credits usage
     emitNotificationforGotCredits({

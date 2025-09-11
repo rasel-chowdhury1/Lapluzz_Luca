@@ -45,6 +45,12 @@ messageRoutes
     messageController.deleteMessage
   )
 
+    .get(
+    '/unread-count', 
+    auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
+    messageController.getUnreadMessageCount
+  )
+
   .get(
     '/:chatId', 
     auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),

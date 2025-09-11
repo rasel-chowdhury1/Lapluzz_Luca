@@ -7,5 +7,6 @@ export interface IMessage {
   isLeft: boolean;
   seen: boolean;
   sender: Schema.Types.ObjectId; // Reference to the sender (User)
+  receiver: Schema.Types.ObjectId; // Reference to the sender (User)
   chat: Schema.Types.ObjectId; // Reference to the chat (Chat)
 }

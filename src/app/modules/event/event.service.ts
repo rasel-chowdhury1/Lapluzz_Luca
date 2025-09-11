@@ -301,7 +301,7 @@ const getUnsubscriptionEvent = async (userId: string, query: Record<string, any>
   const meta = await eventModel.countTotal();
 
   // console.log("event body data ->>> ")
-  console.log({data,meta})
+  // console.log({data,meta})
 
   if (!data || data.length === 0) return { data, meta };
 
@@ -447,7 +447,7 @@ const searchEvents = async (
   let data = await qb.modelQuery;
   const meta = await qb.countTotal();
 
-  console.log({data,meta})
+  // console.log({data,meta})
 
   if (!data || data.length === 0) return { data, meta };
 
