@@ -232,8 +232,6 @@ const getMySentedNotificationsByTypeAndId = async (
   ]);
 
 
-  console.log({notifications})
-
   // Loop through notifications and attach names or titles
   notifications = await Promise.all(
     notifications.map(async (notification: any) => {
