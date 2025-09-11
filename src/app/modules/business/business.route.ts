@@ -22,11 +22,11 @@ router.post(
   businessController.createBusiness
 )
 
-    .post(
-      "/useCredits",
-      auth(USER_ROLE.USER),
-      
-    )
+  .post(
+    "/useCredits",
+    auth(USER_ROLE.USER),
+    
+  )
 
 
   .patch(

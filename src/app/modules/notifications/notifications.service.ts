@@ -205,6 +205,7 @@ const getMySentedNotificationsByTypeAndId = async (
   // Get the notification type key from the validTypes object
   const notificationTypeKey = validTypes[notificationType];
 
+  // console.log({userId,notificationType, entityId, notificationTypeKey})
   // Use aggregation to get unique notifications by notificationEventId
   let notifications = await Notification.aggregate([
     {
@@ -213,7 +214,7 @@ const getMySentedNotificationsByTypeAndId = async (
         'message.types': notificationType,
         'message.notificationFor': entityId,
         type: notificationTypeKey,
-        status: 'Sent',
+        // status: 'Confirmed',
       },
     },
     {
@@ -229,6 +230,9 @@ const getMySentedNotificationsByTypeAndId = async (
       $sort: { createdAt: -1 }, // Sort by most recent
     },
   ]);
+
+
+  console.log({notifications})
 
   // Loop through notifications and attach names or titles
   notifications = await Promise.all(
@@ -318,7 +322,7 @@ const getTotalSentNotificationsByTypeAndId = async (userId: string, notification
         "message.types": notificationType,
         "message.notificationFor": entityId,
         type: notificationTypeKey,
-        status: "Sent",
+        // status: "Sent",
         createdAt: { $gte: todayStart, $lte: todayEnd },
       },
     },
