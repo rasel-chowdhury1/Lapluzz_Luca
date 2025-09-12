@@ -80,9 +80,13 @@ const subscriptionPaymentSchema: Schema = new Schema<ISubscriptionPayment>(
       type: String,
       default: "",
     },
+    useCredits: {
+      type: Number,
+      default: 0
+    },
     paymentType: {
       type: String,
-      enum: ["credit","payment" ],
+      enum: ["credit","payment", "creditWithPayment" ],
     },
     status: {
       type: String,
@@ -94,9 +98,17 @@ const subscriptionPaymentSchema: Schema = new Schema<ISubscriptionPayment>(
         enum: ["pending","notActivate", "activate", "stop", "gotCredits"],
         default: "pending"
     }, 
-      couponCode: {
+    couponCode: {
       type: String,
       default: null
+    },
+    autoRefundAmount: {
+      type: Number,
+      default: 0
+    },
+    gotCredits: {
+        type: Number,
+        default: 0
     },
     activateExpireDays:{
       type: Number,
@@ -107,6 +119,10 @@ const subscriptionPaymentSchema: Schema = new Schema<ISubscriptionPayment>(
       default: null
     },
     stopDate: {
+      type: Date,
+      default: null
+    },
+    autoExpireDate: {
       type: Date,
       default: null
     },

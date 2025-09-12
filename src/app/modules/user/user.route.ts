@@ -30,6 +30,12 @@ userRoutes
     userController.userCreateVarification,
   )
 
+  .post(
+    '/add-credits',
+    auth(USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),
+    userController.addCreditsByAdmin
+  )
+
   .patch(
     "/update-fcmToken",
     auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN),

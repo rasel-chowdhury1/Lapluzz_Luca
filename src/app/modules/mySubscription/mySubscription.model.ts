@@ -29,6 +29,10 @@ const mySubscriptionSchema = new Schema<IMySubscription>({
         type: Number,
         required: true
     },
+    subcriptionDays: {
+        type: Number,
+        required: true
+    },
     subscriptionPriorityLevel: { 
         type: Number, 
         required: true 
@@ -46,14 +50,26 @@ const mySubscriptionSchema = new Schema<IMySubscription>({
         type: String,
         default: '',
     },
+    useCredits: {
+      type: Number,
+      default: 0
+    },
     paymentType: {
       type: String,
-      enum: ["credit","payment"],
+      enum: ["credit","payment", "creditWithPayment"],
     },
     status: {
         type: String,
-        enum: ["notActivate", "activate", "stop", "gotCredits"],
+        enum: ["notActivate", "activate", "stop", "gotCredits", ],
         default: "notActivate"
+    },
+    autoRefundAmount: {
+      type: Number,
+      default: 0
+    },
+    gotCredits: {
+        type: Number,
+        default: 0
     },
     activateExpireDays: {
         type: Number,
@@ -68,6 +84,10 @@ const mySubscriptionSchema = new Schema<IMySubscription>({
       default: null
     },
     stopDate: {
+      type: Date,
+      default: null
+    },
+    autoExpireDate: {
       type: Date,
       default: null
     },

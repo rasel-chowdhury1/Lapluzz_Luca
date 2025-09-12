@@ -21,14 +21,18 @@ export interface ISubscriptionPayment extends Document {
   subscriptionType: string;
   payment_method: string;
   payment_status: string;
+  useCredits: number;
   paymentType: string;
   status: string;
   userStatus: string;
   currentStatus: string;
   couponCode?: string;
+  autoRefundAmount: number;
+  gotCredits: number;
   activateExpireDays: number;
   activateDate?: Date | null;
   stopDate?: Date | null;
+  autoExpireDate?: Date | null;
   expireDate: Date;
   createdAt?: Date;
   updatedAt?: Date;

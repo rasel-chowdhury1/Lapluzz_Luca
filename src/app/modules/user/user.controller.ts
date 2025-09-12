@@ -260,6 +260,31 @@ const myReferrals = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const addCreditsByAdmin = catchAsync(async (req: Request, res: Response) => {
+
+  const {userId: adminId, profileImage} = req.user;
+  const { userId, creditAmount } = req.body;
+
+  if (!userId || creditAmount == null) {
+    return sendResponse(res, {
+      statusCode: httpStatus.BAD_REQUEST,
+      success: false,
+      message: "userId and creditAmount are required",
+      data: null,
+    });
+  }
+
+  const updatedUser = await userService.addCreditsByAdmin(adminId,userId, creditAmount,profileImage);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: `Added ${creditAmount} credits to user successfully`,
+    data: updatedUser,
+  });
+});
+
+
 const blockedUser = catchAsync(async (req: Request, res: Response) => {
   const result = await userService.blockedUser(req.params.userId);
   sendResponse(res, {
@@ -385,5 +410,6 @@ export const userController = {
   deleteSuperAdmin,
   getAllUserQueryNameList,
   getMyTotalCredits,
-  updatefcmToken
+  updatefcmToken,
+  addCreditsByAdmin
 };

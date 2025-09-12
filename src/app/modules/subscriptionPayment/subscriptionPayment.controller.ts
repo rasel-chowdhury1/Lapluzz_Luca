@@ -255,7 +255,7 @@ const buySubscription = catchAsync(async (req: Request, res: Response) => {
 
 const initiateSubscriptionPayment = catchAsync(async (req: Request, res: Response) => {
 
-  const { subscriptionId, subscriptionOptionIndex, subscriptionFor, subscriptionForType, couponCode } = req.body;
+  const { subscriptionId, subscriptionOptionIndex, subscriptionFor, subscriptionForType, couponCode, type, userTotalCredits } = req.body;
   const { userId } = req.user;
 
   // 🧾 Validate subscription
@@ -295,6 +295,15 @@ const initiateSubscriptionPayment = catchAsync(async (req: Request, res: Respons
 
     // Never below 0, round to 2 decimals
     finalAmount = Math.max(0, Math.round(finalAmount * 100) / 100);
+
+  }
+
+  let paymentType = "payment";
+  let useCredits = 0;
+  if(type ==="credit"){
+    paymentType = "creditWithPayment";
+    finalAmount= finalAmount - userTotalCredits;
+    useCredits = userTotalCredits;
   }
 
   // 📆 Set expiration date
@@ -333,8 +342,10 @@ const initiateSubscriptionPayment = catchAsync(async (req: Request, res: Respons
     subcriptionDays: selectedOption.expirationDays,
     subscriptionPriorityLevel: subscription.priorityLevel,
     subscriptionType: subscriptionType,
-    paymentType: 'payment',
+    useCredits,
+    paymentType,
     status: 'pending',
+    autoRefundAmount: finalAmount,
     activateExpireDays: selectedOption.refoundDays,
     expireDate,
     ...(couponCode && { appliedCoupon: couponCode }), // optionally store applied coupon
@@ -480,6 +491,7 @@ const buySubscriptionByCredits = catchAsync(async (req: Request, res: Response) 
       subscriptionType: subscriptionType,
       paymentType: 'credit',
       status: 'completed',
+      autoRefundAmount: finalAmount,
       activateExpireDays: selectedOption.refoundDays,
       expireDate,
     }], { session });
@@ -493,10 +505,12 @@ const buySubscriptionByCredits = catchAsync(async (req: Request, res: Response) 
       subscriptionForType: subscriptionForType,
       subscription: subscription,
       subscriptionOptionIndex: subscriptionOptionIndex,
+      subcriptionDays: selectedOption.expirationDays,
       subscriptionPriorityLevel: subscription.priorityLevel,
       subscriptionType,
       paymentType: "credit",
       status: 'notActivate',
+      autoRefundAmount: finalAmount,
       activateExpireDays: selectedOption.refoundDays,
       activateExpireDate,
       expireDate: expireDate
@@ -584,6 +598,15 @@ const handleWooPaymentWebhook = catchAsync(async (req: Request, res: Response) =
       throw new AppError(404, 'Subscription payment record not found');
     }
 
+
+    if(updated.paymentType === "creditWithPayment") {
+      await User.findByIdAndUpdate(
+        updated.userId,
+        { $inc: { totalCredits: -updated.useCredits } },
+        {session}
+      )
+    }
+
    // 📆 Calculate activateExpireDate (user must activate within X days after purchase)
     let activateExpireDate = new Date(updated.createdAt ?? new Date());
     activateExpireDate.setDate(
@@ -610,6 +633,9 @@ const handleWooPaymentWebhook = catchAsync(async (req: Request, res: Response) =
         subscriptionType: updated.subscriptionType,
         payment_method: updated.payment_method,
         payment_status: updated.payment_status,
+        useCredits: updated.useCredits,
+        paymentType: updated.paymentType,
+        autoRefundAmount: updated.autoRefundAmount,
         activateExpireDays: updated.activateExpireDays,
         activateExpireDate,
         expireDate: expireDate,

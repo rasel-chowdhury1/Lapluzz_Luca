@@ -1213,6 +1213,8 @@ const getBusinessAndEventsForMap = async (userId?: string) => {
   const events = await Event.find({ isDeleted: false, endDate: { $gte: today } })
     .select('name address location coverImage startDate endDate startTime endTime');
 
+  console.log({businesses, events})
+
   return {
     businesses,
     events,

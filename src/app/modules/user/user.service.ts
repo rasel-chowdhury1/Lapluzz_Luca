@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import httpStatus from 'http-status';
-import { emitNotification } from '../../../socketIo';
+import { emitNotification, notifyUserCreditAdded } from '../../../socketIo';
 import QueryBuilder from '../../builder/QueryBuilder';
 import config from '../../config';
 import { getAdminId } from '../../DB/adminStore';
@@ -928,6 +928,31 @@ const getMyTotalCredits = async (userId: string) => {
   return totalCredits;
 };
 
+const addCreditsByAdmin = async (adminId: string, userId: string, creditAmount: number, image:string) => {
+  const result = await User.findByIdAndUpdate(
+    userId,
+    { $inc: { totalCredits: creditAmount } }, // Increment totalCredits by creditAmount
+    { new: true } // Return the updated document
+  );
+
+  if (!result) {
+    throw new Error("User not found");
+  }
+
+  let message = {
+    image: image,
+    name: "Pianofesta Support",
+    text: `Hello, ${creditAmount} credits were successfully added to your account by the administrator. You can now use them for your activities on Pianofesta.`
+  };
+
+  notifyUserCreditAdded({
+    userId: new mongoose.Types.ObjectId(adminId),
+    receiverId: new mongoose.Types.ObjectId(userId),
+    userMsg: message
+  })
+  return result;
+};
+
 const getAdminList = async (userId: string) => {
   const adminList = await User.find({
     _id: { $ne: userId },
@@ -967,6 +992,6 @@ export const userService = {
   getAdminList,
   getMyTotalCredits,
   deleteSuperAdmin,
-  updateFcmTokenByUserId
-
+  updateFcmTokenByUserId,
+  addCreditsByAdmin
 };

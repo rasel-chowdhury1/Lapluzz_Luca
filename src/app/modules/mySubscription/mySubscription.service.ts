@@ -15,7 +15,33 @@ const getMySubscriptions = async (userId: string) => {
     .populate("subscription")
     .populate("subscriptionFor", "name")
     .sort({ status: "asc", createdAt: -1 });
-  return subscriptions;
+
+      const subscriptionsWithPotentialCredits = subscriptions.map((sub) => {
+    let potentialCredits = 0;
+
+    // Only calculate if subscription is active
+    if (sub.status === "activate") {
+      const today = dayjs();
+      const expiryDate = dayjs(sub.expireDate);
+      const unusedDays = expiryDate.diff(today, "day");
+
+      // Get subscription option price and expiration days
+      const plan = sub.subscription as any; // populated subscription
+      const selectedOption = plan.options[sub.subscriptionOptionIndex];
+      if (selectedOption && unusedDays > 0) {
+        const totalDays = selectedOption.expirationDays || 0;
+        const perDayPrice = selectedOption.price / totalDays;
+        potentialCredits = perDayPrice * unusedDays;
+      }
+    }
+
+    return {
+      ...sub.toObject(),
+      potentialCredits,
+    };
+  });
+
+  return subscriptionsWithPotentialCredits;
 };
 
 const getMySubscriptionsHistory = async (userId: string) => {
@@ -51,20 +77,49 @@ const activateSubscription = async (userId: string, mySubId: string) => {
       );
     }
 
-    // Update SubscriptionPayment document if the subscription was successfully activated
+        // 🔹 Check if there is already an active subscription for the same "subscriptionFor"
+    const activeSubscription = await MySubscription.findOne({
+      subscriptionFor: mySubscription.subscriptionFor,
+      subscriptionForType: mySubscription.subscriptionForType,
+      status: "activate", // only active ones
+      _id: { $ne: mySubId }, // ignore current subscription
+    }).session(session);
+
+    if (activeSubscription) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "You already have an active subscription for this entity. Please stop it before activating a new one."
+      );
+    }
+
+        // ✅ Calculate expireDate dynamically
+    const activateDate = new Date(); // today
+    const expireDate = new Date();
+
+    const subscriptionDays = mySubscription.subcriptionDays || 30; // default if not set
+    expireDate.setDate(activateDate.getDate() + subscriptionDays);
+
+    // Update MySubscription
     const result = await MySubscription.findByIdAndUpdate(
       mySubId,
-      { status: "activate" },
-      { session }
+      {
+        status: "activate",
+        activateDate,
+        expireDate,
+        activateExpireDate: expireDate,
+      },
+      { session, new: true }
     );
-    if (!result) {
-      throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to save subscription");
-    }
+    if (!result) throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to save subscription");
 
     // Update SubscriptionPayment document if the subscription was successfully activated
     await SubscriptionPayment.findByIdAndUpdate(
       mySubscription.subscriptionPaymentId,
-      { userStatus: "activate" },
+      { userStatus: "activate",
+        activateDate,
+        expireDate,
+        activateExpireDate: expireDate,
+      },
       { session }
     );
 
@@ -77,7 +132,7 @@ const activateSubscription = async (userId: string, mySubId: string) => {
           subscriptionPriorityLevel: mySubscription.subscriptionPriorityLevel,
           subscriptionType: mySubscription.subscriptionType,
           subscriptionStatus: "activated",
-          expireSubscriptionTime: mySubscription.expireDate,
+          expireSubscriptionTime: expireDate,
         },
         { new: true, session }
       );
@@ -98,7 +153,7 @@ const activateSubscription = async (userId: string, mySubId: string) => {
           subscriptionPriorityLevel: mySubscription.subscriptionPriorityLevel,
           subscriptionType: mySubscription.subscriptionType,
           subscriptionStatus: "activated",
-          expireSubscriptionTime: mySubscription.expireDate,
+          expireSubscriptionTime: expireDate,
         },
         { new: true, session }
       );
@@ -116,7 +171,7 @@ const activateSubscription = async (userId: string, mySubId: string) => {
           subscriptionPriorityLevel: mySubscription.subscriptionPriorityLevel,
           subscriptionType: mySubscription.subscriptionType,
           subscriptionStatus: "activated",
-          expireSubscriptionTime: mySubscription.expireDate,
+          expireSubscriptionTime: expireDate,
         },
         { new: true, session }
       );
@@ -188,11 +243,11 @@ const stopSubscription = async (userId: string, mySubId: string) => {
     const unusedDays = expiryDate.diff(today, 'day');
 
     console.log("today expiryDate unuseddays ==>>> ", today,expiryDate,unusedDays)
-
+    let creditAmount;
     if (unusedDays > 0) {
       const totalDays = selectedOption.expirationDays || 0;
       const perDayPrice = selectedOption.price / totalDays;
-      const creditAmount = perDayPrice * unusedDays;
+      creditAmount = perDayPrice * unusedDays;
 
       console.log( "credite amount ->>> ",{creditAmount})
 
@@ -202,14 +257,12 @@ const stopSubscription = async (userId: string, mySubId: string) => {
       }).session(session);
     }
 
-    // // 5. Stop the subscriptio
-    // subscription.status = "gotCredits";
-    // const result = await subscription.save({ session });n
+
 
      // Update SubscriptionPayment document if the subscription was successfully activated
     const result = await MySubscription.findByIdAndUpdate(
       mySubId,
-      { status: "gotCredits" },
+      { status: "gotCredits", gotCredits: creditAmount,stopDate: today.toDate() },
       { session }
     );
 
@@ -222,7 +275,7 @@ const stopSubscription = async (userId: string, mySubId: string) => {
     }
 
     // 6. Update subscription payment status
-    await SubscriptionPayment.findByIdAndUpdate(subscription.subscriptionPaymentId, { userStatus: "gotCredits" }).session(session);
+    await SubscriptionPayment.findByIdAndUpdate(subscription.subscriptionPaymentId, { userStatus: "gotCredits",gotCredits: creditAmount, stopDate: today.toDate()}).session(session);
 
     // 7. Update business subscription if applicable
     if (subscription.subscriptionForType === "Business") {
