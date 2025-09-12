@@ -17,6 +17,10 @@ export interface IMySubscription {
     payment_status: string;
     paymentType: string;
     status: string;
+    activateExpireDays?: number;
+    activateExpireDate?: Date | null;
+    activateDate?: Date | null;
+    stopDate?: Date | null;
     expireDate: Date;
     isExpired?: boolean;
     isNotified?: boolean;

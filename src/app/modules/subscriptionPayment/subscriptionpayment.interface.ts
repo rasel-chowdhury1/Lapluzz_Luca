@@ -16,6 +16,7 @@ export interface ISubscriptionPayment extends Document {
   subscriptionForType: SubscriptionForType;
   subscription: Types.ObjectId;
   subscriptionOptionIndex?: number;
+  subcriptionDays: number;
   subscriptionPriorityLevel?: number;
   subscriptionType: string;
   payment_method: string;
@@ -25,6 +26,9 @@ export interface ISubscriptionPayment extends Document {
   userStatus: string;
   currentStatus: string;
   couponCode?: string;
+  activateExpireDays: number;
+  activateDate?: Date | null;
+  stopDate?: Date | null;
   expireDate: Date;
   createdAt?: Date;
   updatedAt?: Date;

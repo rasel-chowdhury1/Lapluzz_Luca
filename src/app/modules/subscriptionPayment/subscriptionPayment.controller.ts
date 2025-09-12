@@ -9,7 +9,7 @@ import AppError from '../../error/AppError';
 import SubscriptionPayment from './subscriptionPayment.model';
 import { User } from '../user/user.models';
 import { Coupon } from '../coupon/coupon.model';
-import MySubscription from '../mySubscription/mySubscription.mdel';
+import MySubscription from '../mySubscription/mySubscription.model';
 import mongoose from 'mongoose';
 import { getAdminData } from '../../DB/adminStore';
 import { emitNotificationOfSuccessfullyPamentSubcription } from '../../../socketIo';
@@ -332,6 +332,7 @@ const initiateSubscriptionPayment = catchAsync(async (req: Request, res: Respons
     subscriptionType: subscriptionType,
     paymentType: 'payment',
     status: 'pending',
+    activateExpireDays: selectedOption.refoundDays,
     expireDate,
     ...(couponCode && { appliedCoupon: couponCode }), // optionally store applied coupon
   });
@@ -386,8 +387,38 @@ const buySubscriptionByCredits = catchAsync(async (req: Request, res: Response) 
       throw new AppError(400, 'Invalid subscription option index provided.');
     }
 
+      let finalAmount = selectedOption.price;
+
+    // 🎟️ Apply Coupon Discount if couponCode exists
+    if (couponCode) {
+      const now = new Date();
+      const coupon = await Coupon.findOne({
+        name: couponCode,
+        appliesTo: { $in: ['all', subscriptionForType] },
+        isEnable: true,
+        isDeleted: false,
+        startDate: { $lte: now },
+        endDate: { $gte: now },
+      });
+
+      if (!coupon ) {
+        throw new AppError(400, 'Invalid or expired coupon');
+      }
+
+      if(coupon.usageLimit <= coupon.usedCount){
+        throw new AppError(400 , "coupon limit reached")
+      }
+
+          // 💸 Apply percentage discount
+      finalAmount = finalAmount - (finalAmount * coupon.discountPrice / 100);
+
+      // Never below 0, round to 2 decimals
+      finalAmount = Math.max(0, Math.round(finalAmount * 100) / 100);
+    }
+
+
     // 💸 Check if user has enough credits
-    if (selectedOption.price > userTotalCredits) {
+    if (finalAmount > userTotalCredits) {
 
       
       return sendResponse(res, {
@@ -397,6 +428,12 @@ const buySubscriptionByCredits = catchAsync(async (req: Request, res: Response) 
         data: null,
       });
     }
+
+       // 📆 Calculate activateExpireDate (user must activate within X days after purchase)
+    let activateExpireDate = new Date();
+    activateExpireDate.setDate(
+      activateExpireDate.getDate() + (selectedOption.refoundDays || 60) // default 60 days
+    );
 
     // 📆 Calculate expiration date
     const expireDate = new Date();
@@ -423,6 +460,9 @@ const buySubscriptionByCredits = catchAsync(async (req: Request, res: Response) 
 
     console.log("subscription type =>>> ", subscriptionType)
 
+    
+
+
     // 💳 Create a new subscription payment entry with 'Completed' status
     const payment = await SubscriptionPayment.create([{
       paymentId: `credit-${Date.now()}`,
@@ -432,10 +472,12 @@ const buySubscriptionByCredits = catchAsync(async (req: Request, res: Response) 
       subscriptionForType,
       subscription: subscription._id,
       subscriptionOptionIndex,
+      subcriptionDays: selectedOption.expirationDays,
       subscriptionPriorityLevel: subscription.priorityLevel,
       subscriptionType: subscriptionType,
       paymentType: 'credit',
       status: 'completed',
+      activateExpireDays: selectedOption.refoundDays,
       expireDate,
     }], { session });
 
@@ -452,6 +494,8 @@ const buySubscriptionByCredits = catchAsync(async (req: Request, res: Response) 
       subscriptionType,
       paymentType: "credit",
       status: 'notActivate',
+      activateExpireDays: selectedOption.refoundDays,
+      activateExpireDate,
       expireDate: expireDate
     }], { session });
 
@@ -512,6 +556,8 @@ const handleWooPaymentWebhook = catchAsync(async (req: Request, res: Response) =
   const session = await mongoose.startSession();
   session.startTransaction();
 
+
+
   try {
     // ✅ Update SubscriptionPayment
     const updated = await SubscriptionPayment.findByIdAndUpdate(
@@ -535,6 +581,18 @@ const handleWooPaymentWebhook = catchAsync(async (req: Request, res: Response) =
       throw new AppError(404, 'Subscription payment record not found');
     }
 
+   // 📆 Calculate activateExpireDate (user must activate within X days after purchase)
+    let activateExpireDate = new Date(updated.createdAt ?? new Date());
+    activateExpireDate.setDate(
+      activateExpireDate.getDate() + (updated.activateExpireDays || 60) // default 60 days
+    );
+
+        // 📆 Calculate expiration date
+    const expireDate = new Date();
+    expireDate.setDate(expireDate.getDate() + (updated.subcriptionDays || 30));
+
+
+
     // ✅ Create MySubscription using updated fields
     await MySubscription.create(
       [{
@@ -549,7 +607,9 @@ const handleWooPaymentWebhook = catchAsync(async (req: Request, res: Response) =
         subscriptionType: updated.subscriptionType,
         payment_method: updated.payment_method,
         payment_status: updated.payment_status,
-        expireDate: updated.expireDate,
+        activateExpireDays: updated.subcriptionDays,
+        activateExpireDate,
+        expireDate: expireDate,
         status: 'notActivate',
       }],
       { session } // Pass the session to the query

@@ -20,7 +20,7 @@ const getAllSubscriptions = async () => {
 };
 
 const getSubscriptionsByType = async (type: string) => {
-  return Subscription.find({ type }).sort({ priorityLevel: 1 });
+  return Subscription.find({ type }).sort({ priorityLevel: -1 });
 };
 
 const getSubscriptionById = async (id: string) => {

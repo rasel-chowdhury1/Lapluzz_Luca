@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import AppError from "../../error/AppError";
-import MySubscription from "./mySubscription.mdel";
+import MySubscription from "./mySubscription.model";
 import httpStatus from 'http-status';
 import SubscriptionPayment from "../subscriptionPayment/subscriptionPayment.model";
 import Subscription from "../subscription/subcription.model";

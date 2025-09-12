@@ -59,6 +59,10 @@ const subscriptionPaymentSchema: Schema = new Schema<ISubscriptionPayment>(
       type: Number,
       required: true
     },
+    subcriptionDays: {
+      type: Number,
+      default: 0
+    },
     subscriptionPriorityLevel: { 
         type: Number, 
         required: true 
@@ -92,6 +96,18 @@ const subscriptionPaymentSchema: Schema = new Schema<ISubscriptionPayment>(
     }, 
       couponCode: {
       type: String,
+      default: null
+    },
+    activateExpireDays:{
+      type: Number,
+      default: 0
+    },
+    activateDate: {
+      type: Date,
+      default: null
+    },
+    stopDate: {
+      type: Date,
       default: null
     },
     expireDate: {

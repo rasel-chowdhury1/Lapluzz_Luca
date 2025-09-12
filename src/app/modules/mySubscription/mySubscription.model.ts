@@ -55,6 +55,22 @@ const mySubscriptionSchema = new Schema<IMySubscription>({
         enum: ["notActivate", "activate", "stop", "gotCredits"],
         default: "notActivate"
     },
+    activateExpireDays: {
+        type: Number,
+        default: 0
+    },
+    activateExpireDate: {
+        type: Date,
+        default: null
+    },
+    activateDate: {
+      type: Date,
+      default: null
+    },
+    stopDate: {
+      type: Date,
+      default: null
+    },
     expireDate: {
       type: Date,
       required: true

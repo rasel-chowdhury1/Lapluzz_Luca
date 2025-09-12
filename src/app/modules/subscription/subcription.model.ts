@@ -10,6 +10,7 @@ const SubscriptionOptionSchema = new Schema<ISubscription['options'][0]>(
     },
     price: { type: Number, required: true },
     expirationDays: { type: Number, default: null },
+    refoundDays: {type: Number, default: null}
   },
   { _id: false }
 );

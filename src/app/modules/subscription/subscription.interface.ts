@@ -8,6 +8,7 @@ export interface ISubscriptionOption {
   time: SubscriptionTime;
   price: number;
   expirationDays?: number;
+  refoundDays?: number;
 }
 
 export interface ISubscription extends Document {

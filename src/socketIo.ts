@@ -341,6 +341,7 @@ export const initSocketIO = async (server: HttpServer): Promise<void> => {
               chat: payload.chatId,
             });
 
+            console.log("sent messagte ===>>>>> ",receiverId,payload.text, payload.sendenName, payload.senderImage)
             sentNotificationToReciverForNewMessageByFcmToken(receiverId,payload.text, payload.sendenName, payload.senderImage)
             // Send success callback to the sender
             callbackFn(callback, {
