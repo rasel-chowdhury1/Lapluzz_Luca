@@ -266,6 +266,8 @@ const initiateSubscriptionPayment = catchAsync(async (req: Request, res: Respons
   const selectedOption = subscription.options[subscriptionOptionIndex];
   if (!selectedOption) throw new AppError(400, 'Invalid subscription option selected');
 
+  console.log("selected option ->>> ", selectedOption)
+
   let finalAmount = selectedOption.price;
 
   // 🎟️ Apply Coupon Discount if couponCode exists
@@ -328,6 +330,7 @@ const initiateSubscriptionPayment = catchAsync(async (req: Request, res: Respons
     subscriptionForType,
     subscription: subscription._id,
     subscriptionOptionIndex,
+    subcriptionDays: selectedOption.expirationDays,
     subscriptionPriorityLevel: subscription.priorityLevel,
     subscriptionType: subscriptionType,
     paymentType: 'payment',
