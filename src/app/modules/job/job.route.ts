@@ -72,6 +72,7 @@ router.post(
     auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
     jobController.getSpecificJobStats
   )
+  
   .get(
     '/list', 
     auth( USER_ROLE.ADMIN),

@@ -27,6 +27,7 @@ export interface ISubscriptionPayment extends Document {
   userStatus: string;
   currentStatus: string;
   couponCode?: string;
+  subBlueVerifiedBadge: boolean;
   autoRefundAmount: number;
   gotCredits: number;
   activateExpireDays: number;

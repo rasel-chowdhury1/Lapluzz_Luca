@@ -37,6 +37,10 @@ const mySubscriptionSchema = new Schema<IMySubscription>({
         type: Number, 
         required: true 
     },
+    subBlueVerifiedBadge: {
+      type: Boolean,
+      default: false
+    },
     subscriptionType: { 
         type: String, 
         enum: ['none','exclusive','elite','prime', 'diamond', 'emerald', 'ruby','visualTop', 'visualMedia', 'visualBase', 'custom'],

@@ -16,6 +16,7 @@ import { CompetitionResult, IBusiness, WizardFilters } from './business.interfac
 import Business from './business.model';
 import { monthNames } from './business.utils';
 import WishList from '../wishlist/wishlist.model';
+import Job from '../job/job.model';
 
 const createBusiness = async (payload: IBusiness) => {
   const { longitude, latitude, ...rest } = payload;
@@ -296,18 +297,6 @@ const getAllBusiness = async (userId: string, query: Record<string, any>) => {
   const engagementStats = await BusinessEngagementStats.find({
     businessId: { $in: businessIds },
   }).select('businessId likes comments');
-
-  // const engagementMap: Record<
-  //   string,
-  //   { totalLikes: number; totalComments: number; }
-  // > = {};
-
-  // engagementStats.forEach((stat) => {
-  //   engagementMap[stat.businessId.toString()] = {
-  //     totalLikes: stat.likes?.length || 0,
-  //     totalComments: stat.comments?.length || 0,
-  //   };
-  // });
 
   const engagementMap: Record<
     string,
@@ -1213,11 +1202,38 @@ const getBusinessAndEventsForMap = async (userId?: string) => {
   const events = await Event.find({ isDeleted: false, endDate: { $gte: today } })
     .select('name address location coverImage startDate endDate startTime endTime');
 
-  console.log({businesses, events})
+  const jobs = await Job.find({isDeleted: false, isActive: true})
+                        .select('title description address location coverImage availability isSubscription')
+
+  console.log({businesses, events,jobs})
 
   return {
     businesses,
     events,
+    jobs
+  };
+};
+
+
+const getBusinessAndEventsJobsForMap = async (userId?: string) => {
+  const today = new Date();
+  // 🔍 Fetch businesses with required fields
+  const businesses = await Business.find({ isDeleted: false })
+    .select('name address location coverImage availabilities');
+
+  // 🔍 Fetch events with required fields
+  const events = await Event.find({ isDeleted: false, endDate: { $gte: today } })
+    .select('name address location coverImage startDate endDate startTime endTime');
+
+  const jobs = await Job.find({isDeleted: false, isActive: true})
+                        .select('title description address location coverImage availability isSubscription')
+
+  console.log({businesses, events,jobs})
+
+  return {
+    businesses,
+    events,
+    jobs
   };
 };
 

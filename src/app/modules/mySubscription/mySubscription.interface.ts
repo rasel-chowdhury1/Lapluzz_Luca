@@ -12,6 +12,7 @@ export interface IMySubscription {
     subscription: Types.ObjectId;
     subscriptionOptionIndex?: number;
     subcriptionDays: number;
+    subBlueVerifiedBadge: boolean;
     subscriptionPriorityLevel?: number;
     subscriptionType?: string;
     payment_method: string;

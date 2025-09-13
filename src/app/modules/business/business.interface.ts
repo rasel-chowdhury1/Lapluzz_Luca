@@ -81,6 +81,7 @@ export interface IBusiness {
   businessLevel: string;
   isSubscription: boolean;
   subscriptionType: string;
+  subBlueVerifiedBadge: boolean;
   subsciptionPriorityLevel?: number;
   subscriptionStatus?: string;
   advertisingCreditsList: IBusinessAdvertisingCredits[];

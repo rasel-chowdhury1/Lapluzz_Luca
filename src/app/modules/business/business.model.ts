@@ -161,6 +161,10 @@ const businessSchema = new Schema<IBusiness>(
       type: Number,
       default: 0
     },
+    subBlueVerifiedBadge: {
+      type: Boolean,
+      default: false
+    },
     subscriptionStatus: {
       type: String,
       enum: ["activated", "deactivated", null],

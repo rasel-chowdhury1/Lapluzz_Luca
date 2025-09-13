@@ -8,6 +8,10 @@ const searchRecordSchema = new Schema<ISearchRecord>(
         ref: 'User', 
         required: true 
     },
+    address: {
+      type: String,
+      default: ""
+    },
     keyword: {
       type: String,
       required: true,

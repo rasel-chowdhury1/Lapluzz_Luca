@@ -341,6 +341,7 @@ const initiateSubscriptionPayment = catchAsync(async (req: Request, res: Respons
     subscriptionOptionIndex,
     subcriptionDays: selectedOption.expirationDays,
     subscriptionPriorityLevel: subscription.priorityLevel,
+    subBlueVerifiedBadge: subscription.blueVerified,
     subscriptionType: subscriptionType,
     useCredits,
     paymentType,

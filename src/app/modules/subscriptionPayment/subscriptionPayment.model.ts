@@ -102,6 +102,10 @@ const subscriptionPaymentSchema: Schema = new Schema<ISubscriptionPayment>(
       type: String,
       default: null
     },
+    subBlueVerifiedBadge: {
+      type: Boolean,
+      default: false
+    },
     autoRefundAmount: {
       type: Number,
       default: 0
