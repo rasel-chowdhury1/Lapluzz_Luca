@@ -632,6 +632,7 @@ const handleWooPaymentWebhook = catchAsync(async (req: Request, res: Response) =
         subscriptionForType: updated.subscriptionForType,
         subscription: updated.subscription,
         subscriptionOptionIndex: updated.subscriptionOptionIndex,
+        subcriptionDays: updated.subcriptionDays,
         subscriptionPriorityLevel: updated.subscriptionPriorityLevel,
         subscriptionType: updated.subscriptionType,
         payment_method: updated.payment_method,
