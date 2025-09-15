@@ -131,6 +131,7 @@ const activateSubscription = async (userId: string, mySubId: string) => {
           isSubscription: true,
           subscriptionPriorityLevel: mySubscription.subscriptionPriorityLevel,
           subscriptionType: mySubscription.subscriptionType,
+          subBlueVerifiedBadge: mySubscription.subBlueVerifiedBadge,
           subscriptionStatus: "activated",
           expireSubscriptionTime: expireDate,
         },

@@ -605,11 +605,13 @@ export const emitAcceptedRequest = async (userId: string) => {
 export const emitDirectNotification = async ({
   userId,
   receiverId,
-  userMsg
+  userMsg,
+  type,
 }: {
   userId: mongoose.Types.ObjectId;
   receiverId: mongoose.Types.ObjectId;
   userMsg?: { image: string; text: string; name: string };
+  type?: string;
 }): Promise<void> => {
 
   if (!io) {
@@ -710,7 +712,7 @@ export const emitMassNotification = async ({
   await Notification.create(newNotification);
    const msg = userMsg?.text || "something";
   
-    sendNotificationByFcmToken(receiverId, msg)
+    sendNotificationByFcmToken(receiverId, msg, "Pianofesta Support")
 };
 
 

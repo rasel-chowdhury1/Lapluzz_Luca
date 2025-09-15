@@ -58,6 +58,7 @@ export interface IEvent {
   subscriptionType: string;
   subsciptionPriorityLevel?: number;
   subscriptionStatus?: string;
+  subBlueVerifiedBadge?: boolean;
   expireSubscriptionTime?: Date;
   subscriptionEndTime?: Date;
   isActive: boolean;

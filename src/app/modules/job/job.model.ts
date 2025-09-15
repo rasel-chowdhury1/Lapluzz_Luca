@@ -120,6 +120,10 @@ const JobSchema = new Schema<IJob>(
       enum: ["activated", "deactivated", null],
       default: null
     },
+    subBlueVerifiedBadge: {
+      type: Boolean,
+      default: false
+    },
     expireSubscriptionTime: {
       type: Date,
       default: null

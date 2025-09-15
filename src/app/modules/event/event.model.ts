@@ -146,6 +146,10 @@ const EventSchema = new Schema<IEvent>(
       enum: ["activated", "deactivated", null],
       default: null
     },
+    subBlueVerifiedBadge: {
+      type: Boolean,
+      default: false
+    },
     subscriptionEndTime: { 
         type: Date, 
         default: null 

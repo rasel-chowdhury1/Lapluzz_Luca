@@ -8,7 +8,7 @@ export const getAllSearchRecords = async (
   const searchFields = ['keyword']; // you can also add 'userId' if needed
 
   const queryBuilder = new QueryBuilder<ISearchRecord>(
-    SearchRecord.find().populate('userId', 'sureName name'),
+    SearchRecord.find().populate('userId', 'sureName name role'),
     query
   )
     .search(searchFields)

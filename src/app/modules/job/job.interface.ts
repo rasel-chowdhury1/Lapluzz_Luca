@@ -36,6 +36,7 @@ export interface IJob {
   subscriptionType: string;
   subsciptionPriorityLevel?: number;
   subscriptionStatus?: string;
+  subBlueVerifiedBadge: boolean;
   expireSubscriptionTime?: Date;
   subscriptionEndTime?: Date;
   isActive: boolean;
