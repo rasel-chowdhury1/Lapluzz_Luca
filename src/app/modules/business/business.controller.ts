@@ -357,8 +357,16 @@ const getAllBusinessesNameList = catchAsync(async (req: Request, res: Response) 
 });
 
 const searchBusiness = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user.userId; // from JWT middleware
-  const result = await businessService.searchBusinesses(req.query, userId);
+  const userId = req.user?.userId; // নিরাপদভাবে access
+  const { address,city,town, ...query } = req.query; // address,city & town আলাদা করে নিলাম
+
+  const result = await businessService.searchBusinesses(
+    query as Record<string, unknown>, // টাইপ কাস্ট
+    userId,
+    address as string | undefined,
+    city as string | undefined,
+    town as string | undefined,
+  );
 
   sendResponse(res, {
     statusCode: 200,
@@ -375,6 +383,9 @@ const wizardSearchBusiness = catchAsync(async (req: Request, res: Response) => {
     longitude,
     latitude,
     maxDistance,  // Get maxDistance from query parameters
+    address,
+    city,
+    town,
     ...restQuery
   } = req.query;
 
@@ -385,6 +396,9 @@ const wizardSearchBusiness = catchAsync(async (req: Request, res: Response) => {
     longitude: longitude ? Number(longitude) : undefined,
     latitude: latitude ? Number(latitude) : undefined,
     maxDistance: maxDistance ? Number(maxDistance) : 50000,  // Default to 50 km if not provided
+    address: address ? address : "",
+    city: city ? city : "",
+    town: town ? town : ""
   };
 
 

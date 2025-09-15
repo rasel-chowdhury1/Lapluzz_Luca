@@ -135,6 +135,87 @@ const getAllInspirationsGroupedByCategory = async () => {
 };
 
 
+const getAllInspirationsgroupBySubcategory = async () => {
+  const data = await Inspiration.aggregate([
+    // Step 1: Lookup category info
+    {
+      $lookup: {
+        from: 'categories', // Assuming 'Categories' collection
+        localField: 'category',
+        foreignField: '_id',
+        as: 'categoryInfo',
+      },
+    },
+    {
+      $unwind: '$categoryInfo',
+    },
+
+    // Step 2: Lookup author info
+    {
+      $lookup: {
+        from: 'users', // Assuming 'users' collection
+        localField: 'author',
+        foreignField: '_id',
+        as: 'authorInfo',
+      },
+    },
+    {
+      $unwind: '$authorInfo',
+    },
+
+    // Step 3: Group by subCategory
+    {
+      $group: {
+        _id: '$subCategory', // Group by the subCategory field
+        subCategoryName: { $first: '$subCategory' },
+        inspirations: {
+          $push: {
+            _id: '$_id',
+            title: '$title',
+            type: '$type',
+            description: '$description',
+            coverImage: '$coverImage',
+            imageGallery: '$imageGallery',
+            category: {
+              _id: '$categoryInfo._id',
+              name: '$categoryInfo.name',
+            },
+            author: {
+              _id: '$authorInfo._id',
+              name: '$authorInfo.name',
+              profileImage: '$authorInfo.profileImage',
+              role: '$authorInfo.role',
+            },
+            createdAt: '$createdAt',
+            updatedAt: '$updatedAt',
+          },
+        },
+      },
+    },
+
+    // Step 4: Sort by subCategory and then newest (createdAt)
+    {
+      $sort: {
+        subCategoryName: 1, // Sort by subCategory
+        'inspirations.createdAt': -1, // Sort inspirations by createdAt (newest first)
+      },
+    },
+
+    // Step 5: Project the final structure
+    {
+      $project: {
+        _id: 0,
+        subCategory: '$subCategoryName',
+        inspirations: 1,
+      },
+    },
+  ]);
+
+  return { data };
+};
+
+
+
 const getSpecificCategoryInspiration = async (
   categoryId: string,
   query: Record<string, any>
@@ -188,5 +269,6 @@ export const InspirationService = {
   getInspirationById,
   updateInspiration,
   deleteInspiration,
+  getAllInspirationsgroupBySubcategory,
   getAllInspirationsGroupedByCategory
 };

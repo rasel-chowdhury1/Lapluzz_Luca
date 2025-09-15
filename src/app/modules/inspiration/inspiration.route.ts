@@ -38,6 +38,11 @@ router.post(
   )
 
   .get(
+    "/group-by/subcategory",
+    inspirationController.getAllInspirationsgroupBySubcategory
+  )
+
+  .get(
       '/category/:categoryId', 
       inspirationController.getSpecificCategoryInspiration
   )

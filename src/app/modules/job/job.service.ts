@@ -12,6 +12,7 @@ import { monthNames } from '../business/business.utils';
 import JobApplicant from '../jobApplicant/jobApplicant.model';
 import WishList from '../wishlist/wishlist.model';
 import { User } from '../user/user.models';
+import Category from '../category/category.model';
 
 const createJob = async (payload: IJob) => {
   const result = await Job.create(payload);
@@ -19,23 +20,148 @@ const createJob = async (payload: IJob) => {
   return result;
 };
 
-const getAllJobs = async (query: Record<string, any>) => {
+const getAllJobs = async (userId: string, query: Record<string, any>) => {
   query['isDeleted'] = false;
-  const queryBuilder = new QueryBuilder(Job.find(), query)
+  query['isActive'] = true;
+
+  const baseQuery = Job.find({ isDeleted: false, isActive: true, author: { $ne: userId } });
+
+  const jobModel = new QueryBuilder(baseQuery, query)
     .search(['title', 'email', 'phoneNumber', 'category', 'address'])
     .filter()
     .paginate()
     .sort()
     .fields();
 
-  const data = await queryBuilder.modelQuery;
-  const meta = await queryBuilder.countTotal();
+  let data = await jobModel.modelQuery;
+  const meta = await jobModel.countTotal();
+
+  if (!data?.length) return { data, meta };
+
+  // 🟢 Fetch user's wishlist job IDs
+  const wishList = await WishList.findOne({ userId }).lean();
+  const wishListJobIds = new Set<string>();
+
+  if (wishList?.folders?.length) {
+    wishList.folders.forEach((folder) => {
+      folder.jobs?.forEach((jid) => wishListJobIds.add(jid.toString()));
+    });
+  }
+
+  // 🔀 Merge wishlist flag
+  data = data.map((job) => {
+    const id = job._id.toString();
+    return {
+      ...job.toObject(),
+      isWishlisted: wishListJobIds.has(id),
+    };
+  });
+
+  // 🔽 Sort: subscription first (with type priority), then others by newest
+  const subscriptionOrder = ['visualTop', 'visualMedia', 'visualBase', 'none'];
+
+  data = data.sort((a, b) => {
+    // যদি subscription type থাকে তবে priority অনুযায়ী sort হবে
+    const posA = subscriptionOrder.indexOf(a.subscriptionType ?? 'none');
+    const posB = subscriptionOrder.indexOf(b.subscriptionType ?? 'none');
+
+    if (posA !== posB) return posA - posB;
+
+    // একই টাইপ হলে নতুন job আগে আসবে
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
 
   return { data, meta };
 };
 
+
+const getJobs = async (
+  userId: string,
+  query: Record<string, any>,
+  isSubscription: boolean
+) => {
+  query['isDeleted'] = false;
+
+  // 🟢 Build base query (filter by subscription flag)
+  const baseQuery = Job.find({
+    author: { $ne: userId },
+    isSubscription,
+  });
+
+  const jobModel = new QueryBuilder(baseQuery, query)
+    .search(['title', 'email', 'phoneNumber', 'category', 'address'])
+    .filter()
+    .paginate()
+    .sort()
+    .fields();
+
+  let data = await jobModel.modelQuery;
+  const meta = await jobModel.countTotal();
+
+  if (!data?.length) return { data, meta };
+
+  // 🟢 Fetch user's wishlist jobs
+  const wishList = await WishList.findOne({ userId }).lean();
+  const wishListJobIds = new Set<string>();
+
+  if (wishList?.folders?.length) {
+    wishList.folders.forEach((folder) => {
+      folder.jobs?.forEach((jid) => wishListJobIds.add(jid.toString()));
+    });
+  }
+
+  // 🔀 Merge wishlist flag
+  data = data.map((job) => {
+    const id = job._id.toString();
+    return {
+      ...job.toObject(),
+      isWishlisted: wishListJobIds.has(id),
+    };
+  });
+
+  // 🔽 Sorting
+  if (isSubscription) {
+    // Subscription: priority by subscriptionType, then newest
+    const subscriptionOrder = ['visualTop', 'visualMedia', 'visualBase', 'none'];
+    data = data.sort((a, b) => {
+      const posA = subscriptionOrder.indexOf(a.subscriptionType ?? 'none');
+      const posB = subscriptionOrder.indexOf(b.subscriptionType ?? 'none');
+      if (posA !== posB) return posA - posB;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+  } else {
+    // Unsubscription: newest first
+    data = data.sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
+
+  return { data, meta };
+};
+
+const getAllCategoryAndJobName = async() => {
+   // Fetch all categories with only the name
+    const categories = await Category.find(
+      { type: "job", isDeleted: false },
+      'name'  // Only select the 'name' field for categories
+    );
+
+    // Fetch all businesses with their name and category
+    const jobs = await Job.find({isDeleted: false, isActive: true}, 'title');  // Adjust the field if needed
+
+   // Combine categories and businesses into a single array
+    const combinedData = [
+      ...categories.map((category) => ({ type: 'category', name: category.name })),
+      ...jobs.map((job) => ({ type: 'job', name: job.title }))
+    ];
+
+    return combinedData;
+}
+
 const getSubscriptionJobs = async (userId: string, query: Record<string, any>) => {
   query['isDeleted'] = false;
+  query['isActive'] = true;
 
   const baseQuery = Job.find({ author: { $ne: userId },  isSubscription: true});
 
@@ -88,6 +214,7 @@ const getSubscriptionJobs = async (userId: string, query: Record<string, any>) =
 
 const getUnsubscriptionJobs = async (userId: string, query: Record<string, any>) => {
   query['isDeleted'] = false;
+  query['isActive'] = true;
 
   const baseQuery = Job.find({
     author: { $ne: userId },
@@ -682,5 +809,6 @@ export const jobService = {
   getSpecificJobStats,
   getAllJobsList,
   activateJobById,
-  calculateCompetitionScoreForJob
+  calculateCompetitionScoreForJob,
+  getAllCategoryAndJobName
 };

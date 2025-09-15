@@ -12,6 +12,14 @@ const searchRecordSchema = new Schema<ISearchRecord>(
       type: String,
       default: ""
     },
+    city: {
+      type: String,
+      default: ""
+    },
+    town: {
+      type: String,
+      default: ""
+    },
     keyword: {
       type: String,
       required: true,

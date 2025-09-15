@@ -31,6 +31,7 @@ router.post(
     parseData(),
     jobController.updateJob
   )
+
   .patch(
     '/activate/:jobId', 
     auth(USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
@@ -39,8 +40,16 @@ router.post(
 
   .get(
       '/', 
+      auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN),
       jobController.getAllJobs
 )
+
+
+  .get(
+      "/categoryJobNameList",
+      jobController.getAllCategoryAndJobtName
+    )
+
   .get(
     '/my', 
     auth(USER_ROLE.USER, USER_ROLE.ORGANIZER),

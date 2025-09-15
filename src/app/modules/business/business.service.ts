@@ -13,10 +13,10 @@ import { Inspiration } from '../inspiration/inspiration.model';
 import SearchRecord from '../searchRecord/searchRecord.model';
 import { User } from '../user/user.models';
 import { CompetitionResult, IBusiness, WizardFilters } from './business.interface';
-import Business from './business.model';
-import { monthNames } from './business.utils';
+import { monthNames, shuffleArray } from './business.utils';
 import WishList from '../wishlist/wishlist.model';
 import Job from '../job/job.model';
+import Business from './business.model';
 
 const createBusiness = async (payload: IBusiness) => {
   const { longitude, latitude, ...rest } = payload;
@@ -66,11 +66,18 @@ const createBusiness = async (payload: IBusiness) => {
 //   };
 // };
 
-const getAllBusinessByLocation = async (userId: string, query: Record<string, any>, userLocation: { latitude: number, longitude: number }, maxDistance: number = 5000) => {
+const getAllBusinessByLocation = async (
+  userId: string,
+  query: Record<string, any>,
+  userLocation: { latitude: number, longitude: number },
+  maxDistance: number = 50000
+) => {
   query['isActive'] = true;
   query['isDeleted'] = false;
 
   const { latitude, longitude } = userLocation;
+
+  console.log({ latitude, longitude });
 
   // Aggregate query to include $geoNear for geospatial sorting by distance
   const aggregateQuery = Business.aggregate([
@@ -88,6 +95,7 @@ const getAllBusinessByLocation = async (userId: string, query: Record<string, an
     {
       $match: {
         author: { $ne: new mongoose.Types.ObjectId(userId) },
+        providerType: new mongoose.Types.ObjectId(query.providerType),
         isActive: true,
         isDeleted: false,
       },
@@ -103,10 +111,40 @@ const getAllBusinessByLocation = async (userId: string, query: Record<string, an
         priceRange: 1,
         maxGuest: 1,
         subscriptionType: 1,
+        subBlueVerifiedBadge: 1,
         createdAt: 1,
-        providerType: 1,
+        providerType: 1, // Include providerType for population
         location: 1,
         distance: 1, // Include the calculated distance
+      },
+    },
+    {
+      $lookup: {
+        from: 'categories', // Assuming 'Category' collection is named 'categories'
+        localField: 'providerType',
+        foreignField: '_id',
+        as: 'providerType',
+      },
+    },
+    {
+      $unwind: {
+        path: '$providerType', // Unwind the array returned by $lookup to access providerType as an object
+        preserveNullAndEmptyArrays: true, // If no providerType exists, keep the business object
+      },
+    },
+    {
+      $project: {
+        name: 1,
+        coverImage: 1,
+        address: 1,
+        priceRange: 1,
+        maxGuest: 1,
+        subscriptionType: 1,
+        subBlueVerifiedBadge: 1,
+        createdAt: 1,
+        location: 1,
+        distance: 1,
+        providerType: { _id: 1,name: 1 }, // Select only the 'name' field from providerType
       },
     },
   ]);
@@ -120,14 +158,20 @@ const getAllBusinessByLocation = async (userId: string, query: Record<string, an
   const paginatedData = aggregateQuery.skip(skip).limit(limit);
 
   let data = await paginatedData;
+  const total = await Business.countDocuments({
+    author: { $ne: new mongoose.Types.ObjectId(userId) },
+    isActive: true,
+    isDeleted: false,
+  });
+
+  // Calculate total pages
+  const totalPage = Math.ceil(total / limit);
+
   const meta = {
-    total: await Business.countDocuments({
-      author: { $ne: new mongoose.Types.ObjectId(userId) },
-      isActive: true,
-      isDeleted: false,
-    }),
     page,
     limit,
+    total,
+    totalPage, // Add totalPage
   };
 
   // Handle case where no business is found within the location
@@ -227,23 +271,35 @@ const getAllBusinessByLocation = async (userId: string, query: Record<string, an
       ...biz, // No need to use .toObject() as `biz` is already a plain object
       ...ratingInfo,
       ...engagementInfo,
-      blueVerifiedBadge: biz.subscriptionType === 'exclusive',
+      blueVerifiedBadge: biz.subBlueVerifiedBadge,
       isWishlisted: wishListBusinessIds.has(id), // ✅ true if in wishlist, else false
     };
   });
 
   // 🔽 Sort: subscriptionType then newest
   const subscriptionOrder = ['exclusive', 'elite', 'prime', 'none'];
-  data = data.sort((a, b) => {
-    const posA = subscriptionOrder.indexOf(a.subscriptionType ?? 'none');
-    const posB = subscriptionOrder.indexOf(b.subscriptionType ?? 'none');
 
-    if (posA !== posB) return posA - posB;
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-  });
+  const groupedData = subscriptionOrder.reduce((acc, type) => {
+    acc[type] = data.filter((biz) => biz.subscriptionType === type);
+    return acc;
+  }, {} as Record<string, any[]>);
+
+  const shuffleArray = (array: any[]): any[] => {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]]; // Swap elements
+    }
+    return array;
+  };
+
+  const shuffledData = subscriptionOrder.map((type) => shuffleArray(groupedData[type]));
+
+  data = [].concat(...shuffledData);
 
   return { data, meta };
 };
+
+
 
 
 
@@ -1239,7 +1295,10 @@ const getBusinessAndEventsJobsForMap = async (userId?: string) => {
 
 const searchBusinesses = async (
   query: Record<string, unknown>,
-  userId?: string
+  userId?: string,
+  address?: string,
+  city?: string,
+  town?: string
 ) => {
   const searchTerm = query.searchTerm as string;
 
@@ -1338,6 +1397,9 @@ const searchBusinesses = async (
 
   // 7. Store search record
   await SearchRecord.create({
+    address,
+    city,
+    town,
     keyword: searchTerm,
     totalResults: results.length,
     userId,
@@ -1357,6 +1419,9 @@ const wizardSearchBusinesses = async (userId:string, filters: WizardFilters) => 
     services = [],
     priceRange,
     maxDistance = 50000, // default to 50km if not provided
+    address,
+    city,
+    town
   } = filters;
 
   const query: any = { isDeleted: false };
@@ -1471,13 +1536,15 @@ const wizardSearchBusinesses = async (userId:string, filters: WizardFilters) => 
       ...rating,
       ...businessRatingMap[id],
       ...businessEngagementMap[id],
-      blueVerifiedBadge: biz.subscriptionType === 'exclusive',
+      blueVerifiedBadge: biz.subBlueVerifiedBadge,
       type: "business"
     };
+
   });
 
   return populatedBusinesses;
 };
+
 
 const filterSearchBusinesses = async (
   userId: string,

@@ -98,6 +98,18 @@ const updateJob = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getAllCategoryAndJobtName = catchAsync(async (req: Request, res: Response) => {
+  const result = await jobService.getAllCategoryAndJobName();
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: '',
+    data: result
+  });
+});
+
+
 const activateJobById = catchAsync(async (req: Request, res: Response) => {
   const result = await jobService.activateJobById(req.user.userId, req.params.jobId);
   sendResponse(res, {
@@ -109,7 +121,8 @@ const activateJobById = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllJobs = catchAsync(async (req: Request, res: Response) => {
-  const result = await jobService.getAllJobs(req.query);
+  const {userId} = req.user;
+  const result = await jobService.getAllJobs(userId,  req.query);
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -247,5 +260,6 @@ export const jobController = {
   getSpecificJobStats,
   getAllJobList,
   activateJobById,
-  getCalculateCompetitionScore
+  getCalculateCompetitionScore,
+  getAllCategoryAndJobtName
 };

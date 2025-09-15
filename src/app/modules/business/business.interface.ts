@@ -1,12 +1,17 @@
 import { Date, Model, ObjectId, Types } from 'mongoose';
 
-interface WizardFilters {
+export interface WizardFilters {
   categoryName?: string[];
   longitude?: number;
   latitude?: number;
   maxGuest?: string;
   services?: string[];
   priceRange?: 'budget' | 'medium' | 'high' | 'luxury';
+  maxDistance: number;
+  address?: string,
+  city?: string,
+  town?: string
+  
 }
 
 export interface CompetitionResult {

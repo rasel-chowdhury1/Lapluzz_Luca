@@ -79,6 +79,18 @@ const getMyInspirations = catchAsync(
   }
 );
 
+const getAllInspirationsgroupBySubcategory = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await InspirationService.getAllInspirationsgroupBySubcategory();
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'All inspirations grouped by sub category fetched successfully',
+      data: result,
+    });
+  }
+);
+
 const getAllInspirationsGroupedByCategory = catchAsync(
   async (req: Request, res: Response) => {
     const result = await InspirationService.getAllInspirationsGroupedByCategory();
@@ -177,6 +189,7 @@ export const inspirationController = {
   getMyInspirations,
   getAllInspirations,
     getAllInspirationsGroupedByCategory,
+    getAllInspirationsgroupBySubcategory,
     getInspirationById,
     getSpecificCategoryInspiration,
     updateInspiration,
