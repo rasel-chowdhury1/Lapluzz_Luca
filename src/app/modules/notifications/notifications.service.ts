@@ -10,6 +10,8 @@ import { startOfDay, endOfDay } from 'date-fns';
 import Job from '../job/job.model';
 import { Types } from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
+import { User } from '../user/user.models';
+import MySubscription from '../mySubscription/mySubscription.model';
 
 interface ICreateNotificationProps {
   userId: string;
@@ -27,6 +29,7 @@ interface ISendMassNotificationParams {
     text: string;
   };
   senderId: string; // The user sending the notification
+  unActivePackUser: boolean
 }
 
 const createNotification = async ({
@@ -53,9 +56,12 @@ const sendMassNotification = async ({
   category,
   message,
   senderId,
+  unActivePackUser
 }: ISendMassNotificationParams) => {
   let receiverIds: string[] = [];
 
+
+  console.log({location,rangeKm,category,senderId, unActivePackUser})
   // 1️⃣ Build location query
   const locationQuery = {
     location: {
@@ -68,30 +74,48 @@ const sendMassNotification = async ({
     },
   };
 
+
+
   // 2️⃣ Fetch business authors
   if (category === "business" || category === "all") {
-    const businesses = await Business.find({ ...locationQuery, isDelete: false }, { author: 1 }).lean();
+
+    const businesses = await Business.find({ ...locationQuery, isDeleted: false }, { author: 1 }).lean();
+    console.log("businesses =>>> ", businesses)
     receiverIds.push(...businesses.map((b) => b.author.toString()));
   }
 
   // 3️⃣ Fetch event authors
   if (category === "event" || category === "all") {
-    const events = await Event.find({ ...locationQuery, isDelete: false }, { author: 1 }).lean();
+    const events = await Event.find({ ...locationQuery, isDeleted: false }, { author: 1 }).lean();
     receiverIds.push(...events.map((e) => e.author.toString()));
   }
 
     // 4️⃣ Fetch job authors
   if (category === "job" || category === "all") {
-    const jobs = await Job.find({ ...locationQuery, isDelete: false }, { author: 1 }).lean();
+    const jobs = await Job.find({ ...locationQuery, isDeleted: false }, { author: 1 }).lean();
     receiverIds.push(...jobs.map((j) => j.author.toString()));
   }
+
 
   // 4️⃣ Remove duplicates
   receiverIds = [...new Set(receiverIds)];
 
+      // 6️⃣ If unActivePackUser is true, filter out receivers who have "notActivate" status
+  if (unActivePackUser) {
+    const activeUserIds = await MySubscription.find({
+      user: { $in: receiverIds },
+      status: "notActivate",
+    }).select("user").lean();
+
+    const inactiveUserIds = new Set(activeUserIds.map((sub) => sub.user.toString()));
+    receiverIds = receiverIds.filter((receiverId) => inactiveUserIds.has(receiverId));
+  }
+
   if (receiverIds.length === 0) {
     return { count: 0, receivers: [] };
   }
+
+
 
   // 3️⃣ Generate a unique notificationEventId for this mass send
   const notificationEventId = uuidv4();
@@ -106,7 +130,8 @@ const sendMassNotification = async ({
           image: message.image || "",
           text: message.text,
         },
-        notificationEventId
+        notificationEventId,
+        sentCount: receiverIds.length || 1
       })
     )
   );
@@ -351,6 +376,40 @@ const getMassNotifications = async () => {
     .exec();
 };
 
+const getUniqueNotificationsByMass = async (userId: string) => {
+  const types: string[] = ["direct", "mass"];
+
+  // 1️⃣ Aggregate to get unique notifications per notificationEventId
+  const notifications = await Notification.aggregate([
+    {
+      $match: {
+        type: { $in: types },
+      },
+    },
+    {
+      $sort: { createdAt: -1 }, // newest first
+    },
+    {
+      $group: {
+        _id: "$notificationEventId", // group by event ID
+        doc: { $first: "$$ROOT" },   // take first notification per event
+      },
+    },
+    {
+      $replaceRoot: { newRoot: "$doc" }, // unwrap the doc
+    },
+  ]);
+
+  // 2️⃣ Populate receiverId after aggregation
+  await Notification.populate(notifications, {
+    path: "receiverId",
+    select: "name sureName email customId role",
+  });
+
+  return notifications;
+};
+
+
 
 const markAsRead = async (id: string) => {
   const notification = await Notification.findByIdAndUpdate(
@@ -468,5 +527,6 @@ export const notificationService = {
   getUnreadCount,
   deleteNotification,
   getTotalSentNotificationsByTypeAndId,
-  getMySentedNotificationsByTypeAndId
+  getMySentedNotificationsByTypeAndId,
+  getUniqueNotificationsByMass
 };

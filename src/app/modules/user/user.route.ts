@@ -3,10 +3,10 @@ import auth from '../../middleware/auth';
 import fileUpload from '../../middleware/fileUpload';
 import parseData from '../../middleware/parseData';
 import validateRequest from '../../middleware/validateRequest';
-import { resentOtpValidations } from '../otp/otp.validation';
 import { USER_ROLE } from './user.constants';
 import { userController } from './user.controller';
 import { userValidation } from './user.validation';
+import { resentOtpValidations } from '../otp/otp.validation';
 const upload = fileUpload('./public/uploads/profile');
 
 export const userRoutes = Router();

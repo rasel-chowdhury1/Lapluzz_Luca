@@ -110,7 +110,6 @@ const userSchema = new Schema<TUser>(
       default: 0,
     },
     fcmToken: { type: String, required: false, default: "" },
-    subscriptionStatus: { type: String, enum: ["none", "activate", "notActivate"] },
     isBlocked: {
       type: Boolean,
       default: false,

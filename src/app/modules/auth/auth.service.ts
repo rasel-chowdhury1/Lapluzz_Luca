@@ -1,20 +1,20 @@
 import bcrypt from 'bcrypt';
 import httpStatus from 'http-status';
 import config from '../../config';
-import AppError from '../../error/AppError';
 import { otpSendEmail } from '../../utils/emailNotifiacation';
 import { createToken, verifyToken } from '../../utils/tokenManage';
-import { otpServices } from '../otp/otp.service';
-import { generateOptAndExpireTime } from '../otp/otp.utils';
 import { TUser } from '../user/user.interface';
 import { User } from '../user/user.models';
 import { OTPVerifyAndCreateUserProps } from '../user/user.service';
 import { TLogin } from './auth.interface';
 import { Request } from 'express';
 import UAParser from 'ua-parser-js';
-import Otp from '../otp/otp.model';
 import { Login_With, USER_ROLE } from '../user/user.constants';
 import { generateAndReturnTokens } from '../user/user.utils';
+import AppError from '../../error/AppError';
+import { otpServices } from '../otp/otp.service';
+import { generateOptAndExpireTime } from '../otp/otp.utils';
+import Otp from '../otp/otp.model';
 // Login
 const login = async ( payload: TLogin, req: Request) => {
   console.log('payload', payload);

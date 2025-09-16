@@ -35,6 +35,9 @@ const sentNotificationToDirect = catchAsync(async (req: Request, res: Response) 
     });
   }
 
+      // 3️⃣ Generate a unique notificationEventId for this mass send
+    const notificationEventId = uuidv4();
+
   if (sendAll) {
     // ✅ Determine target users
     let userList: { _id: mongoose.Types.ObjectId }[] = [];
@@ -64,8 +67,7 @@ const sentNotificationToDirect = catchAsync(async (req: Request, res: Response) 
       });
     }
 
-    // 3️⃣ Generate a unique notificationEventId for this mass send
-    const notificationEventId = uuidv4();
+
 
     // ✅ Send notifications serially
     for (const user of userList) {
@@ -73,7 +75,8 @@ const sentNotificationToDirect = catchAsync(async (req: Request, res: Response) 
         userId: senderId,
         receiverId: new mongoose.Types.ObjectId(user._id),
         userMsg: message,
-        notificationEventId
+        notificationEventId,
+        sentCount: userList.length
       });
       console.log(`Sending notification to ${user._id.toString()}:`, message);
     }
@@ -98,7 +101,9 @@ const sentNotificationToDirect = catchAsync(async (req: Request, res: Response) 
     await emitDirectNotification({
       userId: senderId,
       receiverId: new mongoose.Types.ObjectId(receiverId),
-      userMsg: message
+      userMsg: message,
+      notificationEventId,
+        sentCount: 1
     });
     console.log(`Sending direct message to ${receiverId}:`, message);
 
@@ -111,6 +116,28 @@ const sentNotificationToDirect = catchAsync(async (req: Request, res: Response) 
   }
 });
 
+const sentNotificationToMass = catchAsync(async (req: Request, res: Response) => {
+  const senderId = req.user.userId; // Current logged-in user
+
+  console.log(req.body)
+  const { location, rangeKm, category, message,unActivePackUser } = req.body;
+
+  const result = await notificationService.sendMassNotification({
+    location,
+    rangeKm,
+    category,
+    message,
+    senderId,
+    unActivePackUser
+  });
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: `Mass notification sent to ${result.count} receivers`,
+    data: result, // Contains count & receivers list
+  });
+});
 
 const sentNotificationToFollowersOfBusiness = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.userId;
@@ -239,29 +266,11 @@ const getAllNotifications = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const sentNotificationToMass = catchAsync(async (req: Request, res: Response) => {
-  const senderId = req.user.userId; // Current logged-in user
 
-  const { location, rangeKm, category, message } = req.body;
-
-  const result = await notificationService.sendMassNotification({
-    location,
-    rangeKm,
-    category,
-    message,
-    senderId,
-  });
-
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: `Mass notification sent to ${result.count} receivers`,
-    data: result, // Contains count & receivers list
-  });
-});
 
 const getMassNotifications = catchAsync(async (req: Request, res: Response) => {
-  const result = await notificationService.getMassNotifications();
+  const {userId} = req.user;
+  const result = await notificationService.getUniqueNotificationsByMass(userId);
 
   sendResponse(res, {
     success: true,

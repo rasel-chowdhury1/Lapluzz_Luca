@@ -94,7 +94,6 @@ const activateSubscription = async (userId: string, mySubId: string) => {
       );
     }
 
-        await User.findByIdAndUpdate(mySubscription.user, {subscriptionStatus: "activate"}, {new: true, session})
 
         // ✅ Calculate expireDate dynamically
     const activateDate = new Date(); // today
@@ -258,8 +257,7 @@ const stopSubscription = async (userId: string, mySubId: string) => {
 
       // 4. Add credits to the user account
       await User.findByIdAndUpdate(subscription.user, {
-        $inc: { totalCredits: creditAmount },
-        subscriptionStatus: "none"
+        $inc: { totalCredits: creditAmount }
       }).session(session);
     }
 

@@ -5,15 +5,11 @@ import { emitNotification, notifyUserCreditAdded } from '../../../socketIo';
 import QueryBuilder from '../../builder/QueryBuilder';
 import config from '../../config';
 import { getAdminId } from '../../DB/adminStore';
-import AppError from '../../error/AppError';
 import { buildLocation } from '../../utils/buildLocation';
 import { otpSendEmail, welcomeEmail } from '../../utils/emailNotifiacation';
 import { createToken, verifyToken } from '../../utils/tokenManage';
 import Event from '../event/event.model';
 import Job from '../job/job.model';
-import { TPurposeType } from '../otp/otp.interface';
-import { otpServices } from '../otp/otp.service';
-import { generateOptAndExpireTime } from '../otp/otp.utils';
 import SubscriptionPayment from '../subscriptionPayment/subscriptionPayment.model';
 import { DeleteAccountPayload, TUser, TUserCreate } from './user.interface';
 import { User } from './user.models';
@@ -22,7 +18,10 @@ import Business from '../business/business.model';
 import BusinessEngagementStats from '../businessEngaagementStats/businessEngaagementStats.model';
 import BusinessReview from '../businessReview/businessReview.model';
 import { Request } from 'express';
-import Otp from '../otp/otp.model';
+import { otpServices } from '../otp/otp.service';
+import { generateOptAndExpireTime } from '../otp/otp.utils';
+import { TPurposeType } from '../otp/otp.interface';
+import AppError from '../../error/AppError';
 
 export type IFilter = {
   searchTerm?: string;
@@ -196,8 +195,7 @@ try {
     role,
     gender,
     phone,
-    dateOfBirth: dateOfBirth && !isNaN(new Date(dateOfBirth).getTime()) ? new Date(dateOfBirth) : null,
-    subscriptionStatus: "none"
+    dateOfBirth: dateOfBirth && !isNaN(new Date(dateOfBirth).getTime()) ? new Date(dateOfBirth) : null
   });
 
     // 5) Referral logic (transactional): +5 to referrer and +5 to claimant
