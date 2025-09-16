@@ -323,9 +323,18 @@ const initiateSubscriptionPayment = catchAsync(async (req: Request, res: Respons
         subscriptionType = subscription.title.toLowerCase();  // 'none', 'diamond', 'emerald', 'ruby', or 'custom'
       }
     } else if (subscriptionForType === 'Job') {
-      if (['none', 'visualTop', 'visualMedia', 'visualBase', 'custom'].includes(subscription.title.toLowerCase())) {
-        subscriptionType = subscription.title.toLowerCase();  // 'none', 'visualTop', 'visualMedia', 'visualBase', or 'custom'
-      }
+      // if (['none', 'visualTop', 'visualMedia', 'visualBase', 'custom'].includes(subscription.title.toLowerCase())) {
+      //   subscriptionType = subscription.title.toLowerCase();  // 'none', 'visualTop', 'visualMedia', 'visualBase', or 'custom'
+      // }
+      // Normalize title: lowercase + trim + collapse spaces
+       const normalizeTitle = (title: string) => title.toLowerCase().trim();
+        const jobMap: Record<string, string> = {
+          "none": "none",
+          "visual top": "visualTop",
+          "visual media": "visualMedia",
+          "visual base": "visualBase",
+        };
+        subscriptionType = jobMap[normalizeTitle(subscription.title)] || "custom";
     } else {
       subscriptionType = 'custom'; // Default to 'custom' for any other subscriptionForType
     }
