@@ -648,6 +648,7 @@ const handleWooPaymentWebhook = catchAsync(async (req: Request, res: Response) =
       { session } // Pass the session to the query
     );
 
+    await User.findById(updated.userId, {subscriptionStatus: "notActivate"}, {new: true, session})
     // ✅ Increment coupon usage if applicable
     if (updated.couponCode) {
       await Coupon.findOneAndUpdate(

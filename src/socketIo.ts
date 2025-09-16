@@ -606,11 +606,13 @@ export const emitDirectNotification = async ({
   userId,
   receiverId,
   userMsg,
+  notificationEventId,
   type,
 }: {
   userId: mongoose.Types.ObjectId;
   receiverId: mongoose.Types.ObjectId;
   userMsg?: { image: string; text: string; name: string };
+  notificationEventId?: string;
   type?: string;
 }): Promise<void> => {
 
@@ -646,6 +648,8 @@ export const emitDirectNotification = async ({
     receiverId, // Ensure that receiverId is of type mongoose.Types.ObjectId
     message: userMsg,
     type: "direct", // Use the provided type (default to "FollowRequest")
+    sentCount: 1,
+    notificationEventId,
     isRead: false, // Set to false since the notification is unread initially
     timestamp: new Date(), // Timestamp of when the notification is created
   };
@@ -664,11 +668,13 @@ export const emitDirectNotification = async ({
 export const emitMassNotification = async ({
   userId,
   receiverId,
-  userMsg
+  userMsg,
+  notificationEventId,
 }: {
   userId: mongoose.Types.ObjectId;
   receiverId: mongoose.Types.ObjectId;
   userMsg?: { image: string; text: string;  };
+  notificationEventId: string;
   type?: string;
 }): Promise<void> => {
 
@@ -704,6 +710,8 @@ export const emitMassNotification = async ({
     receiverId, // Ensure that receiverId is of type mongoose.Types.ObjectId
     message: userMsg,
     type: "mass", // Use the provided type (default to "FollowRequest")
+    notificationEventId,
+    sentCount: 1,
     isRead: false, // Set to false since the notification is unread initially
     timestamp: new Date(), // Timestamp of when the notification is created
   };

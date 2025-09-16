@@ -266,6 +266,163 @@ const getSubscrptionEvent = async (userId: string, query: Record<string, any>) =
 };
 
 
+const getSubscrptionEventByLocation = async (
+  userId: string,
+  query: Record<string, any>,
+  userLocation?: { latitude: number; longitude: number }
+) => {
+  query['isDeleted'] = false;
+
+  let data: any[] = [];
+  let meta: any = {};
+
+  if (userLocation) {
+    // 🌍 Geo-location sorting using aggregation
+    const { latitude, longitude } = userLocation;
+
+    const aggregateQuery = Event.aggregate([
+      {
+        $geoNear: {
+          near: { type: 'Point', coordinates: [longitude, latitude] },
+          distanceField: 'distance',
+          spherical: true,
+          query: {
+            isSubscription: true,
+            isDeleted: false,
+            isActive: true,
+            author: { $ne: new mongoose.Types.ObjectId(userId) },
+          },
+        },
+      },
+    ]);
+
+    // Pagination
+    const page = parseInt(query.page) || 1;
+    const limit = parseInt(query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    data = await aggregateQuery.skip(skip).limit(limit);
+
+    // Total count
+    const total = await Event.countDocuments({
+      isSubscription: true,
+      isDeleted: false,
+      isActive: true,
+    });
+
+    meta = {
+      page,
+      limit,
+      total,
+      totalPage: Math.ceil(total / limit),
+    };
+  } else {
+    // 🔹 Normal QueryBuilder flow
+    const baseQuery = Event.find({ isSubscription: true });
+    const eventModel = new QueryBuilder(baseQuery, query)
+      .search(['name', 'email', 'phoneNumber', 'address', 'priceRange'])
+      .filter()
+      .paginate()
+      .sort()
+      .fields();
+
+    data = await eventModel.modelQuery;
+    meta = await eventModel.countTotal();
+  }
+
+  if (!data || data.length === 0) return { data, meta };
+
+  const eventIds = data.map((event) => event._id);
+
+  // ⭐ Aggregate reviews
+  const ratings = await EventReview.aggregate([
+    { $match: { eventId: { $in: eventIds } } },
+    {
+      $group: {
+        _id: '$eventId',
+        averageRating: { $avg: '$rating' },
+        totalReviews: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const ratingMap: Record<string, { averageRating: number; totalReviews: number }> = {};
+  ratings.forEach((r) => {
+    ratingMap[r._id.toString()] = {
+      averageRating: parseFloat(r.averageRating.toFixed(1)),
+      totalReviews: r.totalReviews,
+    };
+  });
+
+  // ⭐ Get engagement stats
+  const engagementStats = await EventEngagementStats.find({
+    eventId: { $in: eventIds },
+  }).select('eventId likes comments');
+
+  const engagementMap: Record<string, { totalLikes: number; totalComments: number; isLiked: boolean }> = {};
+  engagementStats.forEach((stat) => {
+    const id = stat.eventId.toString();
+    engagementMap[id] = {
+      totalLikes: stat.likes?.length || 0,
+      totalComments: 0,
+      isLiked: stat.likes?.some((like) => like.toString() === userId) || false,
+    };
+
+    // ⭐ Count comments + replies
+    const totalCommentsWithReplies = stat.comments.reduce((acc, comment) => {
+      acc += 1;
+      if (comment.replies && Array.isArray(comment.replies)) {
+        acc += comment.replies.length;
+      }
+      return acc;
+    }, 0);
+
+    engagementMap[id].totalComments = totalCommentsWithReplies;
+  });
+
+  // ⭐ Fetch user wishlist events
+  const wishList = await WishList.findOne({ userId }).lean();
+  const wishListEventIds = new Set<string>();
+  if (wishList && wishList.folders?.length) {
+    wishList.folders.forEach((folder) => {
+      if (folder.events?.length) {
+        folder.events.forEach((eid) => wishListEventIds.add(eid.toString()));
+      }
+    });
+  }
+
+  // 🔀 Merge all info
+  data = data.map((event) => {
+    const id = event._id.toString();
+
+    const ratingInfo = ratingMap[id] || { averageRating: 0, totalReviews: 0 };
+    const engagementInfo = engagementMap[id] || { totalLikes: 0, totalComments: 0, isLiked: false };
+
+    return {
+      ...event, // No need for .toObject() since it's already a plain object
+      ...ratingInfo,
+      ...engagementInfo,
+      blueVerifiedBadge: ['diamond', 'emerald'].includes(event.subscriptionType),
+      isWishlisted: wishListEventIds.has(id),
+    };
+  });
+
+  // 🔽 Sort by subscription tier first, then by creation date
+  const subscriptionOrder = ['diamond', 'emerald', 'ruby', 'none'];
+  data = data.sort((a, b) => {
+    const posA = subscriptionOrder.indexOf(a.subscriptionType ?? 'none');
+    const posB = subscriptionOrder.indexOf(b.subscriptionType ?? 'none');
+
+    if (posA !== posB) return posA - posB;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+
+  return { data, meta };
+};
+
+
+
+
 
 
 // const getUnsubscriptionEvent = async (query: Record<string, any>) => {
@@ -286,6 +443,136 @@ const getSubscrptionEvent = async (userId: string, query: Record<string, any>) =
 
 //   return { data, meta };
 // };
+
+
+
+const getUnsubscriptionEventByLocation = async (
+  userId: string,
+  query: Record<string, any>,
+  userLocation: { latitude: number; longitude: number }
+) => {
+    query['isDeleted'] = false;
+
+  let data: any[] = [];
+  let meta = {};
+
+  if (userLocation) {
+    // Use aggregation to sort by nearest first
+    const { latitude, longitude } = userLocation;
+
+    const aggregateQuery = Event.aggregate([
+      {
+        $geoNear: {
+          near: { type: 'Point', coordinates: [longitude, latitude] },
+          distanceField: 'distance',
+          spherical: true,
+          query: { isSubscription: false, isDeleted: false, isActive: true, author: { $ne: new mongoose.Types.ObjectId(userId) } },
+        },
+      },
+      // Apply QueryBuilder filters manually here if needed
+    ]);
+
+
+    console.log("aggregation query sub event =>>>>> ", aggregateQuery)
+    // Pagination
+    const page = parseInt(query.page) || 1;
+    const limit = parseInt(query.limit) || 10;
+    const skip = (page - 1) * limit;
+    data = await aggregateQuery.skip(skip).limit(limit);
+
+    // Count total
+    const total = await Event.countDocuments({ isSubscription: false, isDeleted: false, isActive: true });
+    meta = {
+      page,
+      limit,
+      total,
+      totalPage: Math.ceil(total / limit),
+    };
+  } else {
+    // Use your original QueryBuilder for normal subscription events
+    const baseQuery = Event.find({ isSubscription: true });
+    const eventModel = new QueryBuilder(baseQuery, query)
+      .search(['name', 'email', 'phoneNumber', 'address', 'priceRange'])
+      .filter()
+      .paginate()
+      .sort()
+      .fields();
+
+    data = await eventModel.modelQuery;
+    meta = await eventModel.countTotal();
+  }
+
+  if (!data || data.length === 0) return { data, meta };
+
+  const eventIds = data.map((event) => event._id);
+
+  // ⭐ Ratings
+  const ratings = await EventReview.aggregate([
+    { $match: { eventId: { $in: eventIds } } },
+    {
+      $group: {
+        _id: "$eventId",
+        averageRating: { $avg: "$rating" },
+        totalReviews: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const ratingMap: Record<string, { averageRating: number; totalReviews: number }> = {};
+  ratings.forEach((r) => {
+    ratingMap[r._id.toString()] = {
+      averageRating: parseFloat(r.averageRating.toFixed(1)),
+      totalReviews: r.totalReviews,
+    };
+  });
+
+  // ⭐ Engagement
+  const engagementStats = await EventEngagementStats.find({
+    eventId: { $in: eventIds },
+  }).select("eventId likes comments");
+
+  const engagementMap: Record<
+    string,
+    { totalLikes: number; totalComments: number; isLiked: boolean }
+  > = {};
+
+  engagementStats.forEach((stat) => {
+    const id = stat.eventId.toString();
+    const totalCommentsWithReplies = stat.comments.reduce((acc, comment) => {
+      acc += 1;
+      if (comment.replies && Array.isArray(comment.replies)) acc += comment.replies.length;
+      return acc;
+    }, 0);
+
+    engagementMap[id] = {
+      totalLikes: stat.likes?.length || 0,
+      totalComments: totalCommentsWithReplies,
+      isLiked: stat.likes?.some((like) => like.toString() === userId) || false,
+    };
+  });
+
+  // ⭐ Wishlist
+  const wishList = await WishList.findOne({ userId }).lean();
+  const wishListEventIds = new Set<string>();
+  if (wishList?.folders?.length) {
+    wishList.folders.forEach((folder) => {
+      folder.events?.forEach((eid) => wishListEventIds.add(eid.toString()));
+    });
+  }
+
+  // 🔀 Merge data
+  data = data.map((event) => {
+    const id = event._id.toString();
+    return {
+      ...event,
+      ...ratingMap[id],
+      ...engagementMap[id],
+      isWishlisted: wishListEventIds.has(id),
+    };
+  });
+
+  return { data, meta };
+};
 
 const getUnsubscriptionEvent = async (userId: string, query: Record<string, any>) => {
   query['isDeleted'] = false;
@@ -838,13 +1125,43 @@ const getMyEventList = async (userId: string) => {
 
 const updateEvent = async (
   eventId: string,
-  updateData: Partial<IEvent>
+  updateData: Partial<IEvent> & { deleteGallery?: string[] }
 ) => {
- 
- const updatedEvent = await Event.findByIdAndUpdate( eventId, updateData, {new: true})
+  // Fetch the existing event
+  const existingEvent = await Event.findById(eventId);
+  if (!existingEvent) {
+    throw new Error("Event not found");
+  }
+
+  let newGallery = existingEvent.gallery || [];
+
+  // Remove images if deleteGallery is provided
+  if (updateData.deleteGallery && updateData.deleteGallery.length > 0) {
+    newGallery = newGallery.filter(
+      img => !updateData.deleteGallery!.includes(img)
+    );
+  }
+
+  // Append new images if provided
+  if (updateData.gallery && updateData.gallery.length > 0) {
+    newGallery = [...newGallery, ...updateData.gallery];
+  }
+
+  // Update the gallery in updateData
+  updateData.gallery = newGallery;
+
+  // Remove deleteGallery from updateData to avoid saving it in DB
+  delete updateData.deleteGallery;
+
+  const updatedEvent = await Event.findByIdAndUpdate(
+    eventId,
+    { ...updateData },
+    { new: true }
+  );
 
   return updatedEvent;
 };
+
 
 
 const activateEventById = async (
@@ -1059,5 +1376,7 @@ export const eventService = {
   getEventList,
   activateEventById,
   calculateCompetitionScoreForEvent,
-  getAllCategoryAndEventName
+  getAllCategoryAndEventName,
+  getUnsubscriptionEventByLocation,
+  getSubscrptionEventByLocation
 };

@@ -95,6 +95,7 @@ export interface IBusiness {
   subscriptionEndTime?: Date;
   isActive: boolean;
   isDeleted: boolean;
+  deleteGallery?: []
 }
 
 export type IBusinessModules = Model<IBusiness, Record<string, unknown>>;

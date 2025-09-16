@@ -5,6 +5,8 @@ import catchAsync from '../../utils/catchAsync';
 import { notificationService } from './notifications.service';
 import { emitDirectNotification, emitNotificationToApplicantsOfJob, emitNotificationToFollowersOfBusiness, emitNotificationToInterestUsersOfEvent, emitSearchNotificationToBusiness } from '../../../socketIo';
 import mongoose from 'mongoose';
+import { User } from '../user/user.models';
+import { v4 as uuidv4 } from 'uuid';
 
 const createNotification = catchAsync(async (req: Request, res: Response) => {
   const {userId} = req.user;
@@ -19,25 +21,96 @@ const createNotification = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+
 const sentNotificationToDirect = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user.userId;
+  const senderId = req.user.userId;
+  const { message, sendAll, receiverId, role } = req.body;
 
-  console.log(req.body)
-  const { message, receiverId } = req.body;
+  if (!message || !message.text) {
+    return sendResponse(res, {
+      statusCode: httpStatus.BAD_REQUEST,
+      success: false,
+      message: 'Message text is required',
+      data: null,
+    });
+  }
 
-  await emitDirectNotification({
-    userId: new mongoose.Types.ObjectId(userId),
-    receiverId,
-    userMsg: message
-  });
+  if (sendAll) {
+    // ✅ Determine target users
+    let userList: { _id: mongoose.Types.ObjectId }[] = [];
 
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: 'Direct notification sent successfully to the specified user',
-    data: null,
-  });
+    if (role === 'user') {
+      userList = await User.find({ role: 'user', isDeleted: false })
+        .select('_id')
+        .lean();
+    } else if (role === 'organizer') {
+      userList = await User.find({ role: 'organizer', isDeleted: false })
+        .select('_id')
+        .lean();
+    } else if (role === 'all') {
+      // All users except admin & super_admin
+      userList = await User.find({
+        role: { $nin: ['admin', 'super_admin'] },
+        isDeleted: false,
+      })
+        .select('_id')
+        .lean();
+    } else {
+      return sendResponse(res, {
+        statusCode: httpStatus.BAD_REQUEST,
+        success: false,
+        message: 'Invalid role for sendAll',
+        data: null,
+      });
+    }
+
+    // 3️⃣ Generate a unique notificationEventId for this mass send
+    const notificationEventId = uuidv4();
+
+    // ✅ Send notifications serially
+    for (const user of userList) {
+      await emitDirectNotification({
+        userId: senderId,
+        receiverId: new mongoose.Types.ObjectId(user._id),
+        userMsg: message,
+        notificationEventId
+      });
+      console.log(`Sending notification to ${user._id.toString()}:`, message);
+    }
+
+    return sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: `Notification broadcasted successfully to all relevant users serially`,
+      data: null,
+    });
+  } else {
+    // ✅ Direct notification to specific receiver
+    if (!receiverId) {
+      return sendResponse(res, {
+        statusCode: httpStatus.BAD_REQUEST,
+        success: false,
+        message: 'receiverId is required when sendAll is false',
+        data: null,
+      });
+    }
+
+    await emitDirectNotification({
+      userId: senderId,
+      receiverId: new mongoose.Types.ObjectId(receiverId),
+      userMsg: message
+    });
+    console.log(`Sending direct message to ${receiverId}:`, message);
+
+    return sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'Direct notification sent successfully to the specified user',
+      data: null,
+    });
+  }
 });
+
 
 const sentNotificationToFollowersOfBusiness = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.userId;

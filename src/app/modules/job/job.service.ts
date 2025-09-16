@@ -578,9 +578,37 @@ const getMyJobsList = async (userId: string) => {
   return jobs;
 };
 
-const updateJob = async (id: string, payload: Partial<IJob>) => {
+const updateJob = async (
+  id: string,
+  payload: Partial<IJob> & { deleteGallery?: string[] } // adjust array name if different
+) => {
+  // Fetch existing job
+  const existingJob = await Job.findById(id);
+  if (!existingJob) throw new AppError(httpStatus.BAD_REQUEST, 'Job not found');
+
+  let newGallery = existingJob.gallery || []; // adjust field name if needed
+
+  // Remove images if deleteGallery is provided
+  if (payload.deleteGallery && payload.deleteGallery.length > 0) {
+    newGallery = newGallery.filter(
+      img => !payload.deleteGallery!.includes(img)
+    );
+  }
+
+  // Append new images if provided
+  if (payload.gallery && payload.gallery.length > 0) {
+    newGallery = [...newGallery, ...payload.gallery];
+  }
+
+  // Update the gallery in payload
+  payload.gallery = newGallery;
+
+  // Remove deleteGallery to avoid saving in DB
+  delete payload.deleteGallery;
+
   const result = await Job.findByIdAndUpdate(id, payload, { new: true });
   if (!result) throw new AppError(httpStatus.BAD_REQUEST, 'Failed to update job');
+
   return result;
 };
 

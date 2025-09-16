@@ -172,5 +172,7 @@ const EventSchema = new Schema<IEvent>(
 }
 );
 
+EventSchema.index({ location: "2dsphere" });
+
 const Event = model<IEvent, IEventModel>('Event', EventSchema);
 export default Event;

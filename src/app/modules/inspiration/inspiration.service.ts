@@ -250,9 +250,37 @@ const getInspirationById = async (id: string) => {
   return await Inspiration.findById(id).populate('author', 'name profileImage role').populate('category', 'name');
 };
 
-const updateInspiration = async (id: string, payload: Partial<IInspiration>) => {
+const updateInspiration = async (id: string, updateData: Partial<IInspiration> & { deleteGallery?: string[] }) => {
 
-  const result = await Inspiration.findByIdAndUpdate(id, payload, { new: true });
+  console.log("updateData ->>> ", { ...updateData });
+
+  // Fetch the current business first
+  const existingInspiration = await Inspiration.findById(id);
+  if (!existingInspiration) {
+    throw new Error("Business not found");
+  }
+
+  let newGallery = existingInspiration?.imageGallery || [];
+
+  // Remove images if deleteGallery is provided
+  if (updateData.deleteGallery && updateData.deleteGallery.length > 0) {
+    newGallery = newGallery.filter(
+      img => !updateData.deleteGallery!.includes(img)
+    );
+  }
+
+  // Append new images if provided
+  if (updateData.imageGallery && updateData.imageGallery.length > 0) {
+    newGallery = [...newGallery, ...updateData.imageGallery];
+  }
+
+  // Update the gallery in updateData
+  updateData.imageGallery = newGallery;
+
+    // Remove deleteGallery from updateData to avoid saving it in DB
+  delete updateData.deleteGallery;
+
+  const result = await Inspiration.findByIdAndUpdate(id, updateData, { new: true });
 
   return result;
 };

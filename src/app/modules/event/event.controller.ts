@@ -172,6 +172,65 @@ const getSubscriptionEvents = catchAsync(async (req: Request, res: Response) => 
   });
 });
 
+
+
+const getSubscrptionEventByLocation = catchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.user;
+
+  // Extract latitude and longitude from the query parameters or body
+  const { latitude, longitude, ...rest } = req.query;
+
+  // Ensure latitude and longitude are valid numbers
+  if (!latitude || !longitude) {
+    return sendResponse(res, {
+      statusCode: 400,
+      success: false,
+      message: 'Latitude and longitude are required',
+      data: ""
+    });
+  }
+  const result = await eventService.getSubscrptionEventByLocation(userId,rest, {
+    latitude: parseFloat(latitude as string),
+    longitude: parseFloat(longitude as string),
+  });
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'All subscription events fetched successfully',
+    data: result,
+  });
+});
+
+
+const getUnsubscriptionEventsByLocation = catchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.user;
+
+  // Extract latitude and longitude from the query parameters or body
+  const { latitude, longitude, ...rest } = req.query;
+
+  // Ensure latitude and longitude are valid numbers
+  if (!latitude || !longitude) {
+    return sendResponse(res, {
+      statusCode: 400,
+      success: false,
+      message: 'Latitude and longitude are required',
+      data: ""
+    });
+  }
+  const result = await eventService.getUnsubscriptionEventByLocation(userId,rest, {
+    latitude: parseFloat(latitude as string),
+    longitude: parseFloat(longitude as string),
+  });
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'All unsubscription events fetched successfully',
+    data: result,
+  });
+});
+
 const getUnsubscriptionEvents = catchAsync(async (req: Request, res: Response) => {
 
   const {userId} = req.user;
@@ -299,6 +358,7 @@ export const eventController = {
   getSearchEvents,
   getSubscriptionEvents,
   getUnsubscriptionEvents,
+  getUnsubscriptionEventsByLocation,
   getEventById,
   updateEvent,
   deleteEvent,
@@ -309,5 +369,6 @@ export const eventController = {
   getAllEventList,
   activateEventById,
   getCalculateCompetitionScore,
-  getAllCategoryAndEventName
+  getAllCategoryAndEventName,
+  getSubscrptionEventByLocation
 };

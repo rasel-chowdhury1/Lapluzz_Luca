@@ -85,12 +85,16 @@ const activateSubscription = async (userId: string, mySubId: string) => {
       _id: { $ne: mySubId }, // ignore current subscription
     }).session(session);
 
+
+
     if (activeSubscription) {
       throw new AppError(
         httpStatus.BAD_REQUEST,
         "You already have an active subscription for this entity. Please stop it before activating a new one."
       );
     }
+
+        await User.findByIdAndUpdate(mySubscription.user, {subscriptionStatus: "activate"}, {new: true, session})
 
         // ✅ Calculate expireDate dynamically
     const activateDate = new Date(); // today
@@ -254,7 +258,8 @@ const stopSubscription = async (userId: string, mySubId: string) => {
 
       // 4. Add credits to the user account
       await User.findByIdAndUpdate(subscription.user, {
-        $inc: { totalCredits: creditAmount }
+        $inc: { totalCredits: creditAmount },
+        subscriptionStatus: "none"
       }).session(session);
     }
 

@@ -9,6 +9,7 @@ import Event from '../event/event.model';
 import { startOfDay, endOfDay } from 'date-fns';
 import Job from '../job/job.model';
 import { Types } from 'mongoose';
+import { v4 as uuidv4 } from 'uuid';
 
 interface ICreateNotificationProps {
   userId: string;
@@ -69,19 +70,19 @@ const sendMassNotification = async ({
 
   // 2️⃣ Fetch business authors
   if (category === "business" || category === "all") {
-    const businesses = await Business.find(locationQuery, { author: 1 }).lean();
+    const businesses = await Business.find({ ...locationQuery, isDelete: false }, { author: 1 }).lean();
     receiverIds.push(...businesses.map((b) => b.author.toString()));
   }
 
   // 3️⃣ Fetch event authors
   if (category === "event" || category === "all") {
-    const events = await Event.find(locationQuery, { author: 1 }).lean();
+    const events = await Event.find({ ...locationQuery, isDelete: false }, { author: 1 }).lean();
     receiverIds.push(...events.map((e) => e.author.toString()));
   }
 
     // 4️⃣ Fetch job authors
   if (category === "job" || category === "all") {
-    const jobs = await Job.find(locationQuery, { author: 1 }).lean();
+    const jobs = await Job.find({ ...locationQuery, isDelete: false }, { author: 1 }).lean();
     receiverIds.push(...jobs.map((j) => j.author.toString()));
   }
 
@@ -91,6 +92,9 @@ const sendMassNotification = async ({
   if (receiverIds.length === 0) {
     return { count: 0, receivers: [] };
   }
+
+  // 3️⃣ Generate a unique notificationEventId for this mass send
+  const notificationEventId = uuidv4();
 
   // 5️⃣ Emit notifications (handles DB insert + socket)
   await Promise.all(
@@ -102,6 +106,7 @@ const sendMassNotification = async ({
           image: message.image || "",
           text: message.text,
         },
+        notificationEventId
       })
     )
   );
@@ -340,7 +345,7 @@ const getTotalSentNotificationsByTypeAndId = async (userId: string, notification
 const getMassNotifications = async () => {
   return await Notification.find({
     type: { $in: ["adminProvide", "mass", "direct"] }
-  }).populate("receiverId", "name sureName email customId")
+  }).populate("receiverId", "name sureName email customId role")
     .sort({ createdAt: -1 })
     .lean()
     .exec();

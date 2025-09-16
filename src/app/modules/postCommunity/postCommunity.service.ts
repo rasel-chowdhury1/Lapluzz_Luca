@@ -714,18 +714,120 @@ const getLatestPosts = async (userId: string, limit: number = 10) => {
   return posts;
 };
 
+// const getSpecificCategoryOrRegionPosts = async (
+//   userId: string,
+//   limit: number = 10,
+//   filters?: { category?: string; region?: string }
+// ) => {
+
+//   console.log({userId, limit, filters})
+//   const matchStage: any = {
+//     isDeleted: false, 
+//     creator: { $ne: new mongoose.Types.ObjectId(userId) },
+//   };
+
+//   if (filters?.category) {
+//     const categoryExists = await PostCommunity.exists({ category: filters.category });
+//     if (!categoryExists) return [];
+//     matchStage.category = filters.category;
+//   }
+
+//   if (filters?.region) {
+//     matchStage.region = filters.region;
+//   }
+
+//   const posts = await PostCommunity.aggregate([
+//     { $match: matchStage },
+//     { $sort: { createdAt: -1 } },
+//     { $limit: limit },
+//     {
+//       $lookup: {
+//         from: 'postcommunityengagementstats',
+//         localField: '_id',
+//         foreignField: 'postId',
+//         as: 'engagement',
+//       },
+//     },
+//     {
+//       $addFields: {
+//         engagementStats: { $arrayElemAt: ['$engagement', 0] },
+//       },
+//     },
+//     {
+//       $addFields: {
+//         totalLikes: {
+//           $size: { $ifNull: ['$engagementStats.likes', []] },
+//         },
+//         $add: [
+//             { $size: { $ifNull: ['$engagementStats.comments', []] } }, // Count the comments
+//             { 
+//               $sum: { // Sum the replies for each comment
+//                 $map: {
+//                   input: { $ifNull: ['$engagementStats.comments.replies', []] },
+//                   as: 'reply',
+//                   in: { $size: { $ifNull: ['$$reply', []] } } // Count replies for each comment
+//                 }
+//               }
+//             },
+//           ],
+//         isLiked: {
+//           $in: [new mongoose.Types.ObjectId(userId), { $ifNull: ['$engagementStats.likes', []] }],
+//         },
+//       },
+//     },
+//     {
+//       $lookup: {
+//         from: 'users',
+//         let: { creatorId: '$creator' },
+//         pipeline: [
+//           { $match: { $expr: { $eq: ['$_id', '$$creatorId'] } } },
+//           {
+//             $project: {
+//               name: 1,
+//               sureName: 1,
+//               profileImage: 1,
+//               role: 1
+//             },
+//           },
+//         ],
+//         as: 'creator',
+//       },
+//     },
+//     {
+//       $unwind: {
+//         path: '$creator',
+//         preserveNullAndEmptyArrays: true,
+//       },
+//     },
+//     {
+//       $project: {
+//         engagement: 0,
+//         engagementStats: 0,
+//       },
+//     },
+//   ]);
+
+//   console.log("posts ->>>>> ", posts)
+
+//   return posts;
+// };
+
 const getSpecificCategoryOrRegionPosts = async (
   userId: string,
   limit: number = 10,
   filters?: { category?: string; region?: string }
 ) => {
+  console.log({ userId, limit, filters });
+
   const matchStage: any = {
-    isDeleted: false, 
+    isDeleted: false,
     creator: { $ne: new mongoose.Types.ObjectId(userId) },
   };
 
   if (filters?.category) {
-    const categoryExists = await PostCommunity.exists({ category: filters.category });
+    const categoryExists = await PostCommunity.exists({
+      category: filters.category,
+    });
     if (!categoryExists) return [];
     matchStage.category = filters.category;
   }
@@ -738,6 +840,8 @@ const getSpecificCategoryOrRegionPosts = async (
     { $match: matchStage },
     { $sort: { createdAt: -1 } },
     { $limit: limit },
+
+    // ⭐ lookup engagement stats
     {
       $lookup: {
         from: 'postcommunityengagementstats',
@@ -751,28 +855,37 @@ const getSpecificCategoryOrRegionPosts = async (
         engagementStats: { $arrayElemAt: ['$engagement', 0] },
       },
     },
+
+    // ⭐ add calculated fields
     {
       $addFields: {
         totalLikes: {
           $size: { $ifNull: ['$engagementStats.likes', []] },
         },
-        $add: [
-            { $size: { $ifNull: ['$engagementStats.comments', []] } }, // Count the comments
-            { 
-              $sum: { // Sum the replies for each comment
+        totalComments: {
+          $add: [
+            { $size: { $ifNull: ['$engagementStats.comments', []] } }, // মূল comment count
+            {
+              $sum: {
                 $map: {
-                  input: { $ifNull: ['$engagementStats.comments.replies', []] },
-                  as: 'reply',
-                  in: { $size: { $ifNull: ['$$reply', []] } } // Count replies for each comment
-                }
-              }
+                  input: { $ifNull: ['$engagementStats.comments', []] },
+                  as: 'comment',
+                  in: { $size: { $ifNull: ['$$comment.replies', []] } }, // প্রতিটি comment এর replies count
+                },
+              },
             },
           ],
+        },
         isLiked: {
-          $in: [new mongoose.Types.ObjectId(userId), { $ifNull: ['$engagementStats.likes', []] }],
+          $in: [
+            new mongoose.Types.ObjectId(userId),
+            { $ifNull: ['$engagementStats.likes', []] },
+          ],
         },
       },
     },
+
+    // ⭐ lookup creator info
     {
       $lookup: {
         from: 'users',
@@ -784,7 +897,7 @@ const getSpecificCategoryOrRegionPosts = async (
               name: 1,
               sureName: 1,
               profileImage: 1,
-              role: 1
+              role: 1,
             },
           },
         ],
@@ -797,6 +910,8 @@ const getSpecificCategoryOrRegionPosts = async (
         preserveNullAndEmptyArrays: true,
       },
     },
+
+    // ⭐ cleanup
     {
       $project: {
         engagement: 0,
@@ -805,8 +920,12 @@ const getSpecificCategoryOrRegionPosts = async (
     },
   ]);
 
+  console.log('posts ->>>>> ', posts);
+
   return posts;
 };
+
+
 
 const getMostViewedPosts = async (userId: string, limit: number = 10) => {
   const posts = await PostCommunity.aggregate([

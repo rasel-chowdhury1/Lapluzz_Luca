@@ -196,7 +196,8 @@ try {
     role,
     gender,
     phone,
-    dateOfBirth: dateOfBirth && !isNaN(new Date(dateOfBirth).getTime()) ? new Date(dateOfBirth) : null
+    dateOfBirth: dateOfBirth && !isNaN(new Date(dateOfBirth).getTime()) ? new Date(dateOfBirth) : null,
+    subscriptionStatus: "none"
   });
 
     // 5) Referral logic (transactional): +5 to referrer and +5 to claimant
@@ -557,6 +558,7 @@ const getBusinessUserList = async () => {
         customId: user.customId,
         name: user.name || 'Unknown',
         sureName: user.sureName || 'Unknown',
+        email: user.email || "Unknown",
         activeSponsorship,
         totalBusiness,
         totalEvent,

@@ -77,9 +77,21 @@ router.post(
 )
 
 .get(
+    '/sub/location', 
+    auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
+    eventController.getSubscrptionEventByLocation
+)
+
+.get(
   '/all',
   auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
   eventController.getUnsubscriptionEvents
+)
+
+.get(
+  '/unSub/location',
+  auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
+  eventController.getUnsubscriptionEventsByLocation
 )
 
 .get(

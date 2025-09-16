@@ -7,6 +7,7 @@ export interface ISearchRecord extends Document {
   town?: string;
   keyword: string;
   totalResults: number;
+  type?: string;
   searchDate: Date;
 }
 

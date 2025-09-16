@@ -1140,15 +1140,40 @@ const updateBusiness = async (
   businessId: string,
   updateData: Partial<IBusiness>
 ) => {
+  console.log("updateData ->>> ", { ...updateData });
 
-  console.log("updateData ->>> ",{...updateData})
+  // Fetch the current business first
+  const existingBusiness = await Business.findById(businessId);
+  if (!existingBusiness) {
+    throw new Error("Business not found");
+  }
+
+  let newGallery = existingBusiness.gallery || [];
+
+  // Remove images if deleteGallery is provided
+  if (updateData.deleteGallery && updateData.deleteGallery.length > 0) {
+    newGallery = newGallery.filter(
+      img => !updateData.deleteGallery!.includes(img)
+    );
+  }
+
+  // Append new images if provided
+  if (updateData.gallery && updateData.gallery.length > 0) {
+    newGallery = [...newGallery, ...updateData.gallery];
+  }
+
+  // Update the gallery in updateData
+  updateData.gallery = newGallery;
+
+    // Remove deleteGallery from updateData to avoid saving it in DB
+  delete updateData.deleteGallery;
+
   const updatedBusiness = await Business.findByIdAndUpdate(
     businessId,
-    {...updateData},
+    { ...updateData },
     { new: true }
   );
 
-  
   return updatedBusiness;
 };
 

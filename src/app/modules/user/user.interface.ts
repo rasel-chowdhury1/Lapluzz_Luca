@@ -35,7 +35,7 @@ export interface TUserCreate {
   role: string;
   phone?: string;
   termsAndConditions: boolean;
-
+  subscriptionStatus?: string;
   device: {
     ip: string;
     browser: string;

@@ -28,6 +28,10 @@ const searchRecordSchema = new Schema<ISearchRecord>(
       type: Number,
       required: true,
     },
+    type: {
+      type: String,
+      required: false,
+    },
     searchDate: {
       type: Date,
       default: Date.now,

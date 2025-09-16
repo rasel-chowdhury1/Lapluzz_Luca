@@ -4,6 +4,7 @@ import dayjs from "dayjs";
 import Business from "../modules/business/business.model";
 import Event from "../modules/event/event.model";
 import Job from "../modules/job/job.model";
+import { User } from "../modules/user/user.models";
 
 export const autoStopExpiredSubscriptions = async () => {
   const session = await mongoose.startSession();
@@ -20,8 +21,19 @@ export const autoStopExpiredSubscriptions = async () => {
 
     if (expiredSubscriptions.length === 0) {
       console.log("No expired subscriptions found.");
+      await session.endSession();
       return 0; // Exit early if no expired subscriptions
     }
+
+        // 2️⃣ Update all related users subscriptionStatus to "none"
+    const userUpdates = expiredSubscriptions.map((sub) => ({
+      updateOne: {
+        filter: { _id: sub.user },
+        update: { subscriptionStatus: "none" },
+      },
+    }));
+    await User.bulkWrite(userUpdates, { session });
+
 
     // 2️⃣ Prepare bulk updates for subscriptions and related entities
     const subscriptionUpdates = [];
