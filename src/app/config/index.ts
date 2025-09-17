@@ -44,3 +44,8 @@ export default {
   credits_recived_img: process.env.creditsRecived,
   coupon_offer_img: process.env.couponOffer 
 };
+
+export const REDIS_HOST = "localhost" || "127.0.0.1";
+export const REDIS_PORT = process.env.REDIS_PORT || "6379"; // as string, convert later if needed
+export const REDIS_PASSWORD = process.env.REDIS_PASSWORD || "";
+export const REDIS_DB = process.env.REDIS_DB || "0";

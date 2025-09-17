@@ -10,7 +10,7 @@
     "prettier": "prettier --ignore-path .gitignore --write \"./src/**/*.+(js|ts|json)\"",
     "prettier:fix": "prettier --write .",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start:prod": "node ./dist/server.js"
+    "start": "node ./dist/server.js"
   },
   "keywords": [],
   "author": "Rasel Chowdhury",
@@ -31,6 +31,7 @@
     "express-rate-limit": "^8.0.1",
     "firebase-admin": "^13.5.0",
     "http-status": "^2.1.0",
+    "ioredis": "^5.7.0",
     "jsonwebtoken": "^9.0.2",
     "moment": "^2.30.1",
     "moment-timezone": "^0.6.0",

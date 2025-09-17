@@ -335,6 +335,7 @@ const initiateSubscriptionPayment = catchAsync(async (req: Request, res: Respons
           "visual base": "visualBase",
         };
         subscriptionType = jobMap[normalizeTitle(subscription.title)] || "custom";
+        
     } else {
       subscriptionType = 'custom'; // Default to 'custom' for any other subscriptionForType
     }
