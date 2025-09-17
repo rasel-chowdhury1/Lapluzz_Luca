@@ -45,11 +45,11 @@ const sentNotificationToDirect = catchAsync(async (req: Request, res: Response) 
     if (role === 'user') {
       userList = await User.find({ role: 'user', isDeleted: false })
         .select('_id')
-        .lean();
+        .lean() as any;
     } else if (role === 'organizer') {
       userList = await User.find({ role: 'organizer', isDeleted: false })
         .select('_id')
-        .lean();
+        .lean() as any;
     } else if (role === 'all') {
       // All users except admin & super_admin
       userList = await User.find({
@@ -57,7 +57,7 @@ const sentNotificationToDirect = catchAsync(async (req: Request, res: Response) 
         isDeleted: false,
       })
         .select('_id')
-        .lean();
+        .lean() as any;
     } else {
       return sendResponse(res, {
         statusCode: httpStatus.BAD_REQUEST,

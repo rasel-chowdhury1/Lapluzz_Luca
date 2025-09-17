@@ -245,30 +245,30 @@ const forgotPasswordByEmail = async (email: string) => {
 };
 
 // forgot Password by number
-const forgotPasswordByNumber = async (phoneNumber: string) => {
-  if (!phoneNumber) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'phone number is required');
-  }
+// const forgotPasswordByNumber = async (phoneNumber: string) => {
+//   if (!phoneNumber) {
+//     throw new AppError(httpStatus.BAD_REQUEST, 'phone number is required');
+//   }
 
 
-  // Generate a random 6-digit OTP
-  const otp = Math.floor(100000 + Math.random() * 900000);
+//   // Generate a random 6-digit OTP
+//   const otp = Math.floor(100000 + Math.random() * 900000);
 
-  try {
-    // // Send the SMS
-    await client.messages.create({
-      body: `Your OTP is ${otp}`,
-      from: twilioPhone,
-      to: phoneNumber,
-    });
+//   try {
+//     // // Send the SMS
+//     await client.messages.create({
+//       body: `Your OTP is ${otp}`,
+//       from: twilioPhone,
+//       to: phoneNumber,
+//     });
 
-    return { message: 'OTP sent successfully', otp };
-    // res.status(200).json({ message: "OTP sent successfully", otp }); // For dev, include OTP (remove in prod)
-  } catch (error: any) {
-    return { message: 'Failed to send OTP', error: error.message };
-    // res.status(500).json({ message: "Failed to send OTP", error: error.message });
-  }
-};
+//     return { message: 'OTP sent successfully', otp };
+//     // res.status(200).json({ message: "OTP sent successfully", otp }); // For dev, include OTP (remove in prod)
+//   } catch (error: any) {
+//     return { message: 'Failed to send OTP', error: error.message };
+//     // res.status(500).json({ message: "Failed to send OTP", error: error.message });
+//   }
+// };
 
 // forgot  Password Otp Match
 const forgotPasswordOtpMatch = async ({
@@ -427,7 +427,7 @@ const refreshToken = async (token: string) => {
     access_secret: config.jwt_refresh_secret as string,
   });
 
-  const { email } = decoded;
+  const { email } = decoded as any;
 
   const activeUser = await User.isUserActive(email);
 
@@ -466,7 +466,7 @@ export const authServices = {
   forgotPasswordOtpMatch,
   changePassword,
   forgotPasswordByEmail,
-  forgotPasswordByNumber,
+  // forgotPasswordByNumber,
   resetPassword,
   refreshToken,
 };

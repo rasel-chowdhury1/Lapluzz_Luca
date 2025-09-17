@@ -18,7 +18,7 @@ const createToken = ({
   access_secret,
   expity_time,
 }: CreateTokenParams): string => {
-  const token = jwt.sign(payload, access_secret, {
+  const token = (jwt as any).sign(payload, access_secret, {
     expiresIn: expity_time,
   });
 

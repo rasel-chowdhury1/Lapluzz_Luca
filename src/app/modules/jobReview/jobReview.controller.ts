@@ -40,7 +40,7 @@ const deleteReview = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     statusCode: 200,
     success: true,
-    message: result.message,
+    message: (result as any).message,
     data: null
   });
 });

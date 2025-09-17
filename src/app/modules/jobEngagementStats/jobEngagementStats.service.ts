@@ -11,7 +11,7 @@ const addComment = async (jobId: string, userId: string, text: string) => {
       comments: [{ user: userId, text }]
     });
   } else {
-    engagement.comments.push({ user: userId, text });
+    (engagement.comments as any).push({ user: userId, text });
     await engagement.save();
   }
 

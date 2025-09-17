@@ -57,15 +57,15 @@ const createUseCredits = async (payload: {
     let userMsg = {};
 
     // For 'gotCredits', the message informs the user about receiving credits
-    userMsg.name = "Credits Received";
-    userMsg.text = `You received ${usedCredits} credits from the user ${userData.name} for the business "${businessData?.name}".`;
-    userMsg.image = config.credits_recived_img
+    (userMsg as any).name = "Credits Received";
+    (userMsg as any).text = `You received ${usedCredits} credits from the user ${userData.name} for the business "${businessData?.name}".`;
+    (userMsg as any).image = config.credits_recived_img
 
     // Emit notification for credits usage
     emitNotificationforGotCredits({
-      userId: userId, 
-      receiverId: businessData?.author, 
-      userMsg: userMsg,  // Pass the properly constructed message object
+      userId: userId as any, 
+      receiverId: businessData?.author as any, 
+      userMsg: userMsg as any,  // Pass the properly constructed message object
     });
 
     }

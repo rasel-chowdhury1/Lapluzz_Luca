@@ -30,105 +30,105 @@ const addPaymentData = async (paymentDataBody: any) => {
   // return paymentData;
 };
 
-const createPayment = async (res: any, payload: any) => {
-  const result = await createCheckoutSession(res, payload);
-  return result;
-};
+// const createPayment = async (res: any, payload: any) => {
+//   const result = await createCheckoutSession(res, payload);
+//   return result;
+// };
 
-const confirmPayment = async (data: any) => {
-  console.log('==== confirm payment data ===>>>>>n ', data);
-  const { userId, subcriptionId,subscriptionFor,subscriptionForType, amount, duration, paymentIntentId } = data;
+// const confirmPayment = async (data: any) => {
+//   console.log('==== confirm payment data ===>>>>>n ', data);
+//   const { userId, subcriptionId,subscriptionFor,subscriptionForType, amount, duration, paymentIntentId } = data;
 
-  if (!paymentIntentId) {
-    // return res.status(400).json({ success: false, message: "Missing sessionId" });
-    throw new AppError(httpStatus.BAD_REQUEST, 'Missing sessionId');
-  }
+//   if (!paymentIntentId) {
+//     // return res.status(400).json({ success: false, message: "Missing sessionId" });
+//     throw new AppError(httpStatus.BAD_REQUEST, 'Missing sessionId');
+//   }
 
-  // Fetch session details from Stripe
-  const session = await stripe.checkout.sessions.retrieve(
-    paymentIntentId as string,
-  );
+//   // Fetch session details from Stripe
+//   const session = await stripe.checkout.sessions.retrieve(
+//     paymentIntentId as string,
+//   );
 
-  if (!session.payment_intent) {
-    // return res.status(400).json({ success: false, message: "Payment Intent not found" });
-    throw new AppError(httpStatus.BAD_REQUEST, 'Payment Intent not found');
-  }
+//   if (!session.payment_intent) {
+//     // return res.status(400).json({ success: false, message: "Payment Intent not found" });
+//     throw new AppError(httpStatus.BAD_REQUEST, 'Payment Intent not found');
+//   }
 
-  const paymentDataBody = {
-    paymentId: session.payment_intent,
-    amount: Number(amount),
-    subscription: subcriptionId,
-    user: userId,
-    paymentType: 'Card',
-  };
+//   const paymentDataBody = {
+//     paymentId: session.payment_intent,
+//     amount: Number(amount),
+//     subscription: subcriptionId,
+//     user: userId,
+//     paymentType: 'Card',
+//   };
 
-  const isExistPaymentId = await SubscriptionPayment.findOne({
-    paymentId: session.payment_intent,
-  });
+//   const isExistPaymentId = await SubscriptionPayment.findOne({
+//     paymentId: session.payment_intent,
+//   });
 
-  if (isExistPaymentId) {
-    // return res.status(400).json({ success: false, message: "Payment Intent not found" });
-    throw new AppError(httpStatus.BAD_REQUEST, 'Payment id already use');
-  }
+//   if (isExistPaymentId) {
+//     // return res.status(400).json({ success: false, message: "Payment Intent not found" });
+//     throw new AppError(httpStatus.BAD_REQUEST, 'Payment id already use');
+//   }
 
-  console.log('==== payment data body ===>>>> ', paymentDataBody);
+//   console.log('==== payment data body ===>>>> ', paymentDataBody);
 
-  let paymentData;
+//   let paymentData;
 
-  try {
-    paymentData = new SubscriptionPayment(paymentDataBody);
-    await paymentData.save();
+//   try {
+//     paymentData = new SubscriptionPayment(paymentDataBody);
+//     await paymentData.save();
 
-    const today = new Date();
+//     const today = new Date();
 
-    const expiryDate = new Date(today);
-    expiryDate.setDate(today.getDate() + Number(duration));
+//     const expiryDate = new Date(today);
+//     expiryDate.setDate(today.getDate() + Number(duration));
 
-    const updateUser = await User.findByIdAndUpdate(
-      userId,
-      { isSubcription: true },
-      { new: true },
-    );
+//     const updateUser = await User.findByIdAndUpdate(
+//       userId,
+//       { isSubcription: true },
+//       { new: true },
+//     );
 
 
 
-    if (!updateUser) {
-      throw new AppError(httpStatus.BAD_REQUEST, 'User not exist');
-    }
+//     if (!updateUser) {
+//       throw new AppError(httpStatus.BAD_REQUEST, 'User not exist');
+//     }
 
-    if (subscriptionFor === "business") {
-      const updateBusiness = await Business.findByIdAndUpdate(subscriptionFor, {
-        isSubscription: true,
-        subscriptionType: subscriptionForType === "EXCLUSIVE" ? "exclusive" : subscriptionForType === "ELITE" ? "elite" : subscriptionForType === "PRIME" ? "prime" : "none",
-        expireSubscriptionTime: expiryDate,
-        $push: subcriptionList.$push
-      } )
-    }
+//     if (subscriptionFor === "business") {
+//       const updateBusiness = await Business.findByIdAndUpdate(subscriptionFor, {
+//         isSubscription: true,
+//         subscriptionType: subscriptionForType === "EXCLUSIVE" ? "exclusive" : subscriptionForType === "ELITE" ? "elite" : subscriptionForType === "PRIME" ? "prime" : "none",
+//         expireSubscriptionTime: expiryDate,
+//         $push: subcriptionList.$push
+//       } )
+//     }
 
-    const existingSubscription =
-      (await MySubscription.findOne({ user: userId })) ?? false;
+//     const existingSubscription =
+//       (await MySubscription.findOne({ user: userId })) ?? false;
 
-    if (existingSubscription) {
-      existingSubscription.subscription = subcriptionId;
-      existingSubscription.expiryDate = expiryDate;
+//     if (existingSubscription) {
+//       existingSubscription.subscription = subcriptionId;
+//       existingSubscription.expiryDate = expiryDate;
 
-      await existingSubscription.save();
-    } else {
-      const newSubscription = new MySubscription({
-        user: userId,
-        subscription: subcriptionId,
-        expiryDate,
-      });
+//       await existingSubscription.save();
+//     } else {
+//       const newSubscription = new MySubscription({
+//         user: userId,
+//         subscription: subcriptionId,
+//         expiryDate,
+//       });
 
-      await newSubscription.save();
-    }
-  } catch (error) {
-    console.error('Error in confirmPayment:', error);
-    throw new Error('Failed to process the payment and subscription.');
-  }
+//       await newSubscription.save();
+//     }
+//   } catch (error) {
+//     console.error('Error in confirmPayment:', error);
+//     throw new Error('Failed to process the payment and subscription.');
+//   }
 
-  return paymentData;
-};
+//   return paymentData;
+// };
 
 
 const buySubscription = async (data: any) => {
@@ -274,8 +274,8 @@ export const SubcriptionPaymentService = {
   addPaymentData,
   
   //=== stripe start === 
-  createPayment,
-  confirmPayment,
+  // createPayment,
+  // confirmPayment,
   buySubscription,
   mySubscription,
   getEarningList

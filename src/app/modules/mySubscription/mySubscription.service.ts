@@ -27,7 +27,7 @@ const getMySubscriptions = async (userId: string) => {
 
       // Get subscription option price and expiration days
       const plan = sub.subscription as any; // populated subscription
-      const selectedOption = plan.options[sub.subscriptionOptionIndex];
+      const selectedOption = plan.options[(sub as any).subscriptionOptionIndex];
       if (selectedOption && unusedDays > 0) {
         const totalDays = selectedOption.expirationDays || 0;
         const perDayPrice = selectedOption.price / totalDays;
@@ -189,9 +189,9 @@ const activateSubscription = async (userId: string, mySubId: string) => {
     session.endSession();
 
     return mySubscription;
-  } catch (error) {
+  } catch (error ) {
 
-    console.log(error.message)
+    console.log((error as any).message)
     // If an error occurs, abort the transaction and rollback
     await session.abortTransaction();
     session.endSession();
@@ -234,7 +234,7 @@ const stopSubscription = async (userId: string, mySubId: string) => {
       throw new AppError(httpStatus.NOT_FOUND, "Subscription plan not found");
     }
 
-    const selectedOption = plan.options[subscription.subscriptionOptionIndex];
+    const selectedOption = plan.options[(subscription as any).subscriptionOptionIndex];
 
     console.log("selected option =>>>> ", selectedOption)
     if (!selectedOption) {

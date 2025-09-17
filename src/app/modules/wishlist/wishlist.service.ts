@@ -60,9 +60,9 @@ const createFolder = async (
 const createOrUpdateFolder = async (
   userId: string,
   folderName: string,
-  businessId?: string,
-  eventId?: string,
-  jobId?: string
+  businessId?: any,
+  eventId?: any,
+  jobId?: any
 ) => {
   const hasValidInput = !!businessId || !!eventId || !!jobId;
   if (!hasValidInput) {
@@ -395,13 +395,13 @@ const removeServiceFromFolder = async (
   // Remove the service from the corresponding array (businesses, events, or jobs)
   switch (serviceType) {
     case 'businesses':
-      folder.businesses.pull(serviceId);
+      (folder.businesses as any).pull(serviceId);
       break;
     case 'events':
-      folder.events.pull(serviceId);
+      (folder.events as any).pull(serviceId);
       break;
     case 'jobs':
-      folder.jobs.pull(serviceId);
+      (folder.jobs as any).pull(serviceId);
       break;
     default:
       throw new AppError(httpStatus.BAD_REQUEST, 'Invalid service type');

@@ -104,7 +104,7 @@ const resendOtpEmail = async ({ token }: { token: string }) => {
     access_secret: config.jwt_access_secret as string,
   });
   
-  const { email } = decodeData;
+  const { email } = decodeData as any;
 
   const { isExist, isExpireOtp } = await checkOtpByEmail(email);
 

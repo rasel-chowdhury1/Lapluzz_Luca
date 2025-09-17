@@ -19,7 +19,7 @@ const auth = (...userRoles: string[]) => {
       access_secret: config.jwt_access_secret as string,
     });
     
-    const { role, userId } = decodeData;
+    const { role, userId } = decodeData as any;
 
     const isUserExist = await User.IsUserExistById(userId);
     if (!isUserExist) {
@@ -29,7 +29,7 @@ const auth = (...userRoles: string[]) => {
     if (userRoles && !userRoles.includes(role)) {
       throw new AppError(httpStatus.UNAUTHORIZED, 'You are not authorized');
     }
-    req.user = decodeData;
+    req.user = decodeData as any;
     next();
   });
 };

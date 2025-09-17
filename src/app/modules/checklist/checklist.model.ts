@@ -38,7 +38,7 @@ const defaultItems = [
 ChecklistSchema.pre('save', function (next) {
   // If items array is empty, push the predefined items
   if (this.items.length === 0) {
-    this.items = defaultItems;
+    this.items = defaultItems as any;
   }
   next();
 });

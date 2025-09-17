@@ -178,11 +178,11 @@ const getMySentedNotifications = async (userId: string) => {
   // Loop through notifications and attach names or titles
   notifications = await Promise.all(
     notifications.map(async (notification) => {
-      if (notification.message?.types && notification.message?.notificationFor) {
+      if ((notification.message as any)?.types && notification.message?.notificationFor) {
         let model;
 
         // Determine the appropriate model based on the notification type
-        switch (notification.message.types) {
+        switch ((notification.message as any).types) {
           case 'business':
             model = Business;
             break;
@@ -198,7 +198,7 @@ const getMySentedNotifications = async (userId: string) => {
 
         if (model) {
           // Find the related document and attach name or title
-          const doc = await model
+          const doc = await (model as any)
             .findById(notification.message.notificationFor)
             .select('name title')
             .lean();
@@ -285,7 +285,7 @@ const getMySentedNotificationsByTypeAndId = async (
 
         if (model) {
           // Find the related document and attach name or title
-          const doc = await model
+          const doc = await (model as any)
             .findById(notification.message.notificationFor)
             .select('name title')
             .lean();

@@ -236,7 +236,7 @@ const getPollById = async (pollId: string, userId: string) => {
     description: poll.description,
     category: poll.category,
     region: poll.region,
-    createdAt: poll.createdAt,
+    createdAt: (poll as any).createdAt,
     totalVotes,
     options,
     creator: poll.creator

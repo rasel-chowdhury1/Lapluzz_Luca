@@ -22,7 +22,7 @@ const geocodeAddress = async (address: string): Promise<[number, number] | null>
 
     return [lon, lat]; // MongoDB expects [longitude, latitude]
   } catch (error) {
-    console.error('Geocoding failed:', error.message);
+    console.error('Geocoding failed:', (error as any).message);
     return null;
   }
 };

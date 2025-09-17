@@ -187,7 +187,7 @@ const dealCloseByChatById = async (userId: string, chatId: string, profileImage:
       : isExistChat.users[1];
  
 
-       const contextId = isExistChat?.contextId ? new mongoose.Types.ObjectId(isExistChat?.contextId) : undefined;
+       const contextId = isExistChat?.contextId ? new mongoose.Types.ObjectId((isExistChat as any)?.contextId) : undefined;
     // 5. Prepare the notification message
     const userMsg = {
       image: profileImage,

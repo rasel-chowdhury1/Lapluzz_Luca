@@ -22,6 +22,7 @@ import { otpServices } from '../otp/otp.service';
 import { generateOptAndExpireTime } from '../otp/otp.utils';
 import { TPurposeType } from '../otp/otp.interface';
 import AppError from '../../error/AppError';
+import Otp from '../otp/otp.model';
 
 export type IFilter = {
   searchTerm?: string;
@@ -529,7 +530,7 @@ const getBusinessUserList = async () => {
         b =>
           b.subscriptionType !== 'none' &&
           b.expireSubscriptionTime &&
-          new Date(b.expireSubscriptionTime) > now
+          new Date((b as any).expireSubscriptionTime) > now
       ).length;
 
       // Count events and jobs

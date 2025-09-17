@@ -322,7 +322,7 @@ class QueryBuilder<T> {
 
   // Handle date range
   if (this.query.from || this.query.to) {
-    filterConditions.createdAt = {};
+    (filterConditions as any).createdAt = {};
     if (this.query.from) {
       filterConditions.createdAt.$gte = new Date(this.query.from as string);
     }

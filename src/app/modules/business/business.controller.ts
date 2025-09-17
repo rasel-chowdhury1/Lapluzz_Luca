@@ -403,7 +403,7 @@ const wizardSearchBusiness = catchAsync(async (req: Request, res: Response) => {
 
 
   console.log({ filters })
-  const data = await businessService.wizardSearchBusinesses(userId, filters);
+  const data = await businessService.wizardSearchBusinesses(userId, filters as any);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -433,7 +433,7 @@ const filterSearchBusinesses = catchAsync(async (req: Request, res: Response) =>
 
 
   console.log({ filters })
-  const data = await businessService.filterSearchBusinesses(userId, filters);
+  const data = await businessService.filterSearchBusinesses(userId, filters as any);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,

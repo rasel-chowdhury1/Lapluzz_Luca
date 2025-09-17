@@ -294,7 +294,7 @@ const getAllBusinessByLocation = async (
 
   const shuffledData = subscriptionOrder.map((type) => shuffleArray(groupedData[type]));
 
-  data = [].concat(...shuffledData);
+  data = [].concat(...shuffledData as any);
 
   return { data, meta };
 };
@@ -319,7 +319,7 @@ const getAllBusiness = async (userId: string, query: Record<string, any>) => {
     .fields()
     .sort();
 
-  let data = await businessModel.modelQuery;
+  let data = await businessModel.modelQuery ;
   const meta = await businessModel.countTotal();
 
   if (!data || data.length === 0) return { data, meta };
@@ -425,7 +425,7 @@ const getAllBusiness = async (userId: string, query: Record<string, any>) => {
       blueVerifiedBadge: biz.subscriptionType === 'exclusive',
       isWishlisted: wishListBusinessIds.has(id), // ✅ true if in wishlist, else false
     };
-  });
+  }) as any;
 
   // 🔽 Sort: subscriptionType then newest
   const subscriptionOrder = ['exclusive', 'elite', 'prime', 'none'];
@@ -434,7 +434,7 @@ const getAllBusiness = async (userId: string, query: Record<string, any>) => {
     const posB = subscriptionOrder.indexOf(b.subscriptionType ?? 'none');
 
     if (posA !== posB) return posA - posB;
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    return new Date((b as any).createdAt).getTime() - new Date((a as any).createdAt).getTime();
   });
 
   return { data, meta };
@@ -521,7 +521,7 @@ const getBusinessList = async (userId: string) => {
     const posB = subscriptionOrder.indexOf(b.subscriptionType ?? 'none');
 
     if (posA !== posB) return posA - posB;
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    return new Date((b as any).createdAt).getTime() - new Date((a as any).createdAt).getTime();
   });
 
   return result;
@@ -637,7 +637,7 @@ const getSpecificCategoryBusiness = async (
       ...engagementInfo,
       blueVerifiedBadge: biz.subscriptionType === 'exclusive',
     };
-  });
+  }) as any;
 
   // 🔽 Sort By Subscription Type then Newest
   const subscriptionOrder = ['exclusive', 'elite', 'prime', 'none'];
@@ -646,7 +646,7 @@ const getSpecificCategoryBusiness = async (
     const posB = subscriptionOrder.indexOf(b.subscriptionType ?? 'none');
 
     if (posA !== posB) return posA - posB;
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    return new Date((b as any).createdAt).getTime() - new Date((a as any).createdAt).getTime();
   });
 
   return { data, meta };
@@ -684,8 +684,8 @@ const getSubscrptionBusiness = async (query: Record<string, any>) => {
       return posA - posB;
     }
 
-    const dateA = new Date(a.createdAt).getTime();
-    const dateB = new Date(b.createdAt).getTime();
+    const dateA = new Date((a as any).createdAt).getTime();
+    const dateB = new Date((b as any).createdAt).getTime();
 
     return dateB - dateA; // newest first
   });
@@ -802,7 +802,7 @@ const getBusinessById = async (userId: string, id: string) => {
     isLiked: engagementInfo.isLiked,
     isFollowed: engagementInfo.isFollowed,
     blueVerifiedBadge: business.subscriptionType === 'exclusive',
-    categoryName: business.providerType?.name || null,
+    categoryName: (business.providerType as any).name || null,
     reviews
   };
 };
@@ -892,7 +892,7 @@ const getMyBusinesses = async (userId: string) => {
         isLiked: engagementInfo.isLiked,
         isFollowed: engagementInfo.isFollowed,
         blueVerifiedBadge: business.subscriptionType === 'exclusive',
-        categoryName: business.providerType?.name || null,
+        categoryName: (business.providerType as any)?.name || null,
         reviews,
       };
     })
@@ -950,8 +950,8 @@ const getExtraBusinessDataById = async (userId: string, id: string) => {
     isDeleted: false,
   });
 
-  const currentRaw = allEvents.filter((e) => e.startDate >= now);
-  const pastRaw = allEvents.filter((e) => e.startDate < now);
+  const currentRaw = allEvents.filter((e) => (e as any).startDate >= now);
+  const pastRaw = allEvents.filter((e) => (e as any).startDate < now);
 
   const currentEvents = await Promise.all(currentRaw.map((event) => enrichEvent(event, userId))) || [];
   const pastEvents = await Promise.all(pastRaw.map((event) => enrichEvent(event, userId))) || [];
@@ -1030,7 +1030,7 @@ const getExtraBusinessDataById = async (userId: string, id: string) => {
     currentEvents,
     pastEvents,
     inspirationBlogs,
-    comments: stats?.comments || [],
+    comments: (stats as any)?.comments || [],
     relatedBusinesses,
   };
 };
@@ -1106,7 +1106,7 @@ const getSpecificBusinessStats = async (businessId: string) => {
   // 5️⃣ Get active subscription info
   const now = new Date();
   const activeSubscriptions = business.subcriptionList?.filter(
-    (sub) => sub.expireDate && new Date(sub.expireDate) > now
+    (sub) => sub.expireDate && new Date((sub as any).expireDate) > now
   ) || [];
 
   const activeSubscription = activeSubscriptions[0] || null;
@@ -1153,7 +1153,7 @@ const updateBusiness = async (
   // Remove images if deleteGallery is provided
   if (updateData.deleteGallery && updateData.deleteGallery.length > 0) {
     newGallery = newGallery.filter(
-      img => !updateData.deleteGallery!.includes(img)
+      img => !(updateData.deleteGallery as any)?.includes(img)
     );
   }
 
@@ -1357,7 +1357,7 @@ const searchBusinesses = async (
   const results = await queryBuilder.modelQuery;
   const meta = await queryBuilder.countTotal();
 
-  const businessIds = results.map((biz) => biz._id);
+  const businessIds = results.map((biz) => (biz as any)._id);
 
   // 4. ⭐ Get ratings
   const ratingAgg = await BusinessReview.aggregate([
@@ -1397,7 +1397,7 @@ const searchBusinesses = async (
 
   // 6. Final response
   const populatedBusinesses = results.map((biz) => {
-    const id = biz._id.toString();
+    const id = (biz as any)._id.toString();
 
     const rating = ratingMap[id] || {
       averageRating: 0,
@@ -1412,7 +1412,7 @@ const searchBusinesses = async (
     };
 
     return {
-      ...biz.toObject(),
+      ...(biz as any).toObject(),
       ...rating,
       ...engagement,
       blueVerifiedBadge: biz.subscriptionType === 'exclusive',
@@ -1572,7 +1572,7 @@ const wizardSearchBusinesses = async (userId:string, filters: WizardFilters) => 
 
 
 const filterSearchBusinesses = async (
-  userId: string,
+  userId: any,
   filters: {
     categoryName?: string[];
     longitude?: number;

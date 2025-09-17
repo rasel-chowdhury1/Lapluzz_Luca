@@ -36,8 +36,8 @@ export const autoStopExpiredSubscriptions = async () => {
 
 
     // 2️⃣ Prepare bulk updates for subscriptions and related entities
-    const subscriptionUpdates = [];
-    const entityUpdates = [];
+    const subscriptionUpdates = [] as any;
+    const entityUpdates = [] as any;
 
     expiredSubscriptions.forEach((sub) => {
       // Update subscription status to "stop" and set stopDate
@@ -89,9 +89,9 @@ export const autoStopExpiredSubscriptions = async () => {
     // 3️⃣ Perform bulk updates in parallel for subscriptions and related entities
     await Promise.all([
       MySubscription.bulkWrite(subscriptionUpdates, { session }), // Bulk update subscriptions
-      Business.bulkWrite(entityUpdates.filter((u) => u.updateOne.filter && u.updateOne.update.subscriptionForType === 'Business'), { session }), // Bulk update Businesses
-      Event.bulkWrite(entityUpdates.filter((u) => u.updateOne.filter && u.updateOne.update.subscriptionForType === 'Event'), { session }), // Bulk update Events
-      Job.bulkWrite(entityUpdates.filter((u) => u.updateOne.filter && u.updateOne.update.subscriptionForType === 'Job'), { session }), // Bulk update Jobs
+      Business.bulkWrite(entityUpdates.filter((u: any) => u.updateOne.filter && u.updateOne.update.subscriptionForType === 'Business'), { session }), // Bulk update Businesses
+      Event.bulkWrite(entityUpdates.filter((u: any) => u.updateOne.filter && u.updateOne.update.subscriptionForType === 'Event'), { session }), // Bulk update Events
+      Job.bulkWrite(entityUpdates.filter((u: any) => u.updateOne.filter && u.updateOne.update.subscriptionForType === 'Job'), { session }), // Bulk update Jobs
     ]);
 
     // Commit the transaction
