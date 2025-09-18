@@ -120,7 +120,7 @@ const sentNotificationToMass = catchAsync(async (req: Request, res: Response) =>
   const senderId = req.user.userId; // Current logged-in user
 
   console.log(req.body)
-  const { location, rangeKm, category, message,unActivePackUser } = req.body;
+  const { location, rangeKm, category, message,userType } = req.body;
 
   const result = await notificationService.sendMassNotification({
     location,
@@ -128,7 +128,7 @@ const sentNotificationToMass = catchAsync(async (req: Request, res: Response) =>
     category,
     message,
     senderId,
-    unActivePackUser
+    userType
   });
 
   sendResponse(res, {

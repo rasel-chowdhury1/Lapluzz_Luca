@@ -54,6 +54,16 @@ const getAllCategory = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getBusinessCategories = catchAsync(async (req: Request, res: Response) => {
+  const result = await categoryService.getBusinessCategories(req.query);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'All categories fetched successfully',
+    data: result,
+  });
+});
+
 const getDynamicCategory = catchAsync(async (req: Request, res: Response) => {
   const {categoryName}  = req.params;
 
@@ -130,6 +140,7 @@ const deleteCategory = catchAsync(async (req: Request, res: Response) => {
 export const categoryController = {
   createCategory,
   getAllCategory,
+  getBusinessCategories,
   getDynamicCategory,
   getCategoryById,
   updateCategory,

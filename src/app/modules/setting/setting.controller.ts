@@ -65,34 +65,29 @@ const getBusinessPrivacyPolicy  = async (req: Request, res: Response) => {
         });
 };
 
-// Get the term conditions
-const getTermConditions = async (req: Request, res: Response) => {
-    const {role} = req.user;
-    try {
-        let policy;
-        if(role === USER_ROLE.USER || role === USER_ROLE.ADMIN){
-          policy = await settingsService.getSettingsByKey({key: "term_condition"}) ;
-        }
-        else if(role === USER_ROLE.ORGANIZER){
-          policy = await businessSettingsService.getSettingsByKey({key: "term_condition"});
-        }
-        
+const getBusinessTermConditions  = async (req: Request, res: Response) => {
 
-        sendResponse(res, {
+
+   let policy = await businessSettingsService.getSettingsByKey({key: "term_condition"});
+    
+    sendResponse(res, {
             statusCode: httpStatus.OK,
             success: true,
-            message: "Term and conditions retrieved successfully",
-            data: policy || [],
+            message: " Business term conditions retrieved successfully",
+            data: policy || null,
         });
-    } catch (error: any) {
-        console.error("Error retrieving privacy policy:", error.message);
-        sendResponse(res, {
-            statusCode: httpStatus.INTERNAL_SERVER_ERROR,
-            success: false,
-            message: "Failed to retrieve term and conditions",
-            data: null,
+};
+
+// Get the term conditions
+const getTermConditions = async (req: Request, res: Response) => {
+   let policy = await settingsService.getSettingsByKey({key: "term_condition"}) ;
+
+       sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: " Regular term conditions retrieved successfully",
+            data: policy || null,
         });
-    }
 };
 
 // Get the term conditions
@@ -178,4 +173,5 @@ export const settingsController = {
     updateSettingsByKey,
     getAnyonePrivacyPolicy,
     getBusinessPrivacyPolicy,
+    getBusinessTermConditions
 };

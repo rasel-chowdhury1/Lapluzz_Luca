@@ -4,6 +4,7 @@ export interface ICategory {
   _id: string;
   name: string;
   type: string;
+  subcategory?: string;
   icon: string;
   description?: string;
   banner: string;

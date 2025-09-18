@@ -71,6 +71,12 @@ router.post(
 )
 
 .get(
+    '/all/location', 
+    auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
+    eventController.getEventsByLocation
+)
+
+.get(
     '/sub', 
     auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
     eventController.getSubscriptionEvents

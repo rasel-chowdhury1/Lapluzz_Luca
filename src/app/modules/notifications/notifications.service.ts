@@ -29,7 +29,7 @@ interface ISendMassNotificationParams {
     text: string;
   };
   senderId: string; // The user sending the notification
-  unActivePackUser: boolean
+  userType: "all" | "regular" | "organizer" | "inactivePack";
 }
 
 const createNotification = async ({
@@ -56,12 +56,12 @@ const sendMassNotification = async ({
   category,
   message,
   senderId,
-  unActivePackUser
+  userType
 }: ISendMassNotificationParams) => {
   let receiverIds: string[] = [];
 
 
-  console.log({location,rangeKm,category,senderId, unActivePackUser})
+  console.log({location,rangeKm,category,senderId, userType})
   // 1️⃣ Build location query
   const locationQuery = {
     location: {
@@ -75,41 +75,57 @@ const sendMassNotification = async ({
   };
 
 
+    // 6️⃣ Filter based on userType
+  if (userType === "all") {
+    // If userType is "all", exclude 'admin' and 'super_admin' roles
+    const users = await User.find({ _id: { $in: receiverIds }, role: { $nin: ['admin', 'super_admin'] } }).lean();
+    receiverIds = users.map((user) => user._id.toString());
+  } else if (userType === "regular") {
+    // If userType is "regular", include only users with role 'user'
+    const users = await User.find({ _id: { $in: receiverIds }, role: 'user' }).lean();
+    receiverIds = users.map((user) => user._id.toString());
+  }
+  else {
 
-  // 2️⃣ Fetch business authors
-  if (category === "business" || category === "all") {
+          // 2️⃣ Fetch business authors
+      if (category === "business" || category === "all") {
 
-    const businesses = await Business.find({ ...locationQuery, isDeleted: false }, { author: 1 }).lean();
-    console.log("businesses =>>> ", businesses)
-    receiverIds.push(...businesses.map((b) => b.author.toString()));
+        const businesses = await Business.find({ ...locationQuery, isDeleted: false }, { author: 1 }).lean();
+        console.log("businesses =>>> ", businesses)
+        receiverIds.push(...businesses.map((b) => b.author.toString()));
+      }
+
+      // 3️⃣ Fetch event authors
+      if (category === "event" || category === "all") {
+        const events = await Event.find({ ...locationQuery, isDeleted: false }, { author: 1 }).lean();
+        receiverIds.push(...events.map((e) => e.author.toString()));
+      }
+
+        // 4️⃣ Fetch job authors
+      if (category === "job" || category === "all") {
+        const jobs = await Job.find({ ...locationQuery, isDeleted: false }, { author: 1 }).lean();
+        receiverIds.push(...jobs.map((j) => j.author.toString()));
+      }
+
+      
+      // 4️⃣ Remove duplicates
+      receiverIds = [...new Set(receiverIds)];
+
+          // 6️⃣ If unActivePackUser is true, filter out receivers who have "notActivate" status
+      if (userType === 'inactivePack') {
+        const activeUserIds = await MySubscription.find({
+          user: { $in: receiverIds },
+          status: "notActivate",
+        }).select("user").lean();
+
+        const inactiveUserIds = new Set(activeUserIds.map((sub) => sub.user.toString()));
+        receiverIds = receiverIds.filter((receiverId) => inactiveUserIds.has(receiverId));
+      }
   }
 
-  // 3️⃣ Fetch event authors
-  if (category === "event" || category === "all") {
-    const events = await Event.find({ ...locationQuery, isDeleted: false }, { author: 1 }).lean();
-    receiverIds.push(...events.map((e) => e.author.toString()));
-  }
-
-    // 4️⃣ Fetch job authors
-  if (category === "job" || category === "all") {
-    const jobs = await Job.find({ ...locationQuery, isDeleted: false }, { author: 1 }).lean();
-    receiverIds.push(...jobs.map((j) => j.author.toString()));
-  }
 
 
-  // 4️⃣ Remove duplicates
-  receiverIds = [...new Set(receiverIds)];
 
-      // 6️⃣ If unActivePackUser is true, filter out receivers who have "notActivate" status
-  if (unActivePackUser) {
-    const activeUserIds = await MySubscription.find({
-      user: { $in: receiverIds },
-      status: "notActivate",
-    }).select("user").lean();
-
-    const inactiveUserIds = new Set(activeUserIds.map((sub) => sub.user.toString()));
-    receiverIds = receiverIds.filter((receiverId) => inactiveUserIds.has(receiverId));
-  }
 
   if (receiverIds.length === 0) {
     return { count: 0, receivers: [] };

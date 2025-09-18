@@ -301,6 +301,221 @@ const getAllBusinessByLocation = async (
 
 
 
+const getExclusiveBusinessByLocation = async (
+  userId: string,
+  query: Record<string, any>,
+  userLocation: { latitude: number, longitude: number },
+  maxDistance: number = 50000
+) => {
+  query['isActive'] = true;
+  query['isDeleted'] = false;
+  query['subscriptionType'] = 'exclusive'; // Only get businesses with 'exclusive' subscription type
+
+  const { latitude, longitude } = userLocation;
+
+  console.log({ latitude, longitude });
+
+  // Aggregate query to include $geoNear for geospatial sorting by distance
+  const aggregateQuery = Business.aggregate([
+    {
+      $geoNear: {
+        near: {
+          type: 'Point',
+          coordinates: [longitude, latitude], // [longitude, latitude]
+        },
+        distanceField: 'distance', // Add a field to store the distance from the point
+        maxDistance: maxDistance, // Max distance in meters
+        spherical: true, // Use spherical coordinates for accurate distance calculation
+      },
+    },
+    {
+      $match: {
+        author: { $ne: new mongoose.Types.ObjectId(userId) },
+        isActive: true,
+        isDeleted: false,
+        
+        subscriptionType: 'exclusive', // Filter by exclusive subscription type
+      },
+    },
+    {
+      $sort: { distance: 1 }, // Sort by distance, ascending (nearest businesses first)
+    },
+    {
+      $project: {
+        name: 1,
+        coverImage: 1,
+        address: 1,
+        priceRange: 1,
+        maxGuest: 1,
+        subscriptionType: 1,
+        subBlueVerifiedBadge: 1,
+        createdAt: 1,
+        providerType: 1, // Include providerType for population
+        location: 1,
+        distance: 1, // Include the calculated distance
+      },
+    },
+    {
+      $lookup: {
+        from: 'categories', // Assuming 'Category' collection is named 'categories'
+        localField: 'providerType',
+        foreignField: '_id',
+        as: 'providerType',
+      },
+    },
+    {
+      $unwind: {
+        path: '$providerType', // Unwind the array returned by $lookup to access providerType as an object
+        preserveNullAndEmptyArrays: true, // If no providerType exists, keep the business object
+      },
+    },
+    {
+      $project: {
+        name: 1,
+        coverImage: 1,
+        address: 1,
+        priceRange: 1,
+        maxGuest: 1,
+        subscriptionType: 1,
+        subBlueVerifiedBadge: 1,
+        createdAt: 1,
+        location: 1,
+        distance: 1,
+        providerType: { _id: 1, name: 1 }, // Select only the 'name' field from providerType
+      },
+    },
+  ]);
+
+  // Pagination logic after aggregation
+  const page = parseInt(query.page) || 1; // Default to page 1 if not provided
+  const limit = parseInt(query.limit) || 10; // Default to 10 items per page
+  const skip = (page - 1) * limit;
+
+  // Paginate the results from the aggregation
+  const paginatedData = aggregateQuery.skip(skip).limit(limit);
+
+  let data = await paginatedData;
+  const total = await Business.countDocuments({
+    author: { $ne: new mongoose.Types.ObjectId(userId) },
+    isActive: true,
+    isDeleted: false,
+    subscriptionType: 'exclusive', // Only count 'exclusive' businesses
+  });
+
+  // Calculate total pages
+  const totalPage = Math.ceil(total / limit);
+
+  const meta = {
+    page,
+    limit,
+    total,
+    totalPage, // Add totalPage
+  };
+
+  // Handle case where no business is found within the location
+  if (!data || data.length === 0) {
+    return { data: [], meta, message: 'No exclusive businesses found near your location.' };
+  }
+
+  const businessIds = data.map((biz) => biz._id);
+
+  // ⭐ Aggregate reviews
+  const ratings = await BusinessReview.aggregate([
+    { $match: { businessId: { $in: businessIds } } },
+    {
+      $group: {
+        _id: '$businessId',
+        averageRating: { $avg: '$rating' },
+        totalReviews: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const ratingMap: Record<string, { averageRating: number; totalReviews: number }> = {};
+  ratings.forEach((r) => {
+    ratingMap[r._id.toString()] = {
+      averageRating: parseFloat(r.averageRating.toFixed(1)),
+      totalReviews: r.totalReviews,
+    };
+  });
+
+  // ⭐ Get engagement stats (likes/comments)
+  const engagementStats = await BusinessEngagementStats.find({
+    businessId: { $in: businessIds },
+  }).select('businessId likes comments');
+
+  const engagementMap: Record<
+    string,
+    {
+      totalLikes: number;
+      totalComments: number;
+      isLiked: boolean;
+      isFollowed: boolean;
+    }
+  > = {};
+
+  engagementStats.forEach((stat) => {
+    const id = stat.businessId.toString();
+    engagementMap[id] = {
+      totalLikes: stat.likes?.length || 0,
+      totalComments: 0,
+      isLiked: stat.likes?.some((like) => like.toString() === userId) || false,
+      isFollowed: stat.followers?.some((f) => f.toString() === userId) || false,
+    };
+
+    const totalCommentsWithReplies = stat.comments.reduce((acc, comment) => {
+      acc += 1;
+      if (comment.replies && Array.isArray(comment.replies)) {
+        acc += comment.replies.length;
+      }
+      return acc;
+    }, 0);
+
+    engagementMap[id].totalComments = totalCommentsWithReplies;
+  });
+
+  // ⭐ Fetch user wishlist events
+  const wishList = await WishList.findOne({ userId }).lean();
+  const wishListBusinessIds = new Set<string>();
+
+  if (wishList && wishList.folders?.length) {
+    wishList.folders.forEach((folder) => {
+      if (folder.businesses?.length) {
+        folder.businesses.forEach((eid) => wishListBusinessIds.add(eid.toString()));
+      }
+    });
+  }
+
+  // 🔀 Merge into final response
+  data = data.map((biz) => {
+    const id = biz._id.toString();
+
+    const ratingInfo = ratingMap[id] || {
+      averageRating: 0,
+      totalReviews: 0,
+    };
+
+    const engagementInfo = engagementMap[id] || {
+      totalLikes: 0,
+      totalComments: 0,
+      isLiked: false,
+      isFollowed: false,
+    };
+
+    return {
+      ...biz, // No need to use .toObject() as biz is already a plain object
+      ...ratingInfo,
+      ...engagementInfo,
+      blueVerifiedBadge: biz.subBlueVerifiedBadge,
+      isWishlisted: wishListBusinessIds.has(id), // ✅ true if in wishlist, else false
+    };
+  });
+
+  return { data, meta };
+};
+
+
+
 
 
 const getAllBusiness = async (userId: string, query: Record<string, any>) => {
@@ -1567,6 +1782,31 @@ const wizardSearchBusinesses = async (userId:string, filters: WizardFilters) => 
 
   });
 
+
+  // 7️⃣ Construct Search Term (Keyword)
+  const searchTerm = [
+    categoryName.join(", "), // Category Names
+    maxGuest,
+    services.join(", "),
+    priceRange,
+    maxDistance
+  ]
+    .filter(Boolean) // Remove any undefined or null values
+    .join(" | "); // Join the filters into a single string
+
+    console.log("search term =>>> ",{searchTerm})
+
+  // 8️⃣ Store search record with the constructed search term
+  await SearchRecord.create({
+    address,
+    city,
+    town,
+    keyword: searchTerm, // Set the search term (keyword)
+    totalResults: results.length,
+    userId,
+    searchDate: new Date(),
+  });
+  
   return populatedBusinesses;
 };
 
@@ -1844,5 +2084,6 @@ export const businessService = {
   getAllBusinessByLocation,
   searchEntities,
   getAllCategoryAndBusinessName,
-  getAllBusinessesNameList
+  getAllBusinessesNameList,
+  getExclusiveBusinessByLocation
 };

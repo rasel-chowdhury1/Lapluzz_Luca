@@ -17,6 +17,10 @@ const categorySchema = new Schema<ICategory>(
         'community'
       ],
     },
+    subcategory: {
+      type: 'string',
+      default: ""
+    },
     description: { type: 'string', required: false, default: "" },
     icon: { type: 'string', required: false, default: "" },
     banner: { type: 'string', required: false, default: "" },

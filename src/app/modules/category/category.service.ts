@@ -56,6 +56,31 @@ const getDynamicCategories = async (categoryName: string, query: any) => {
   };
 };
 
+const getBusinessCategories = async (query: Record<string, any>) => {
+  // ✅ Always sort by createdAt (newest first by default)
+  query.sort = query.sort || "createdAt";
+
+  // ✅ Build base query
+  const baseQuery = Category.find({
+    type: "Provider",
+    subcategory: { $ne: "" }, // not empty string
+    isDeleted: false,
+  });
+
+  // ✅ Apply QueryBuilder utilities
+  const categoriesModel = new QueryBuilder(baseQuery, query)
+    .search(["name", "type"])
+    .filter()
+    .paginate()
+    .sort()
+    .fields();
+
+  const data = await categoriesModel.modelQuery.lean(); // lean() → faster
+  const meta = await categoriesModel.countTotal();
+
+  return { data, meta };
+};
+
 const getCategoryById = async (id: string) => {
   const result = await Category.findById(id);
   if (!result) {
@@ -88,6 +113,7 @@ const deleteCategory = async (id: string) => {
 export const categoryService = {
   createCategory,
   getAllCategories,
+  getBusinessCategories,
   getDynamicCategories,
   getCategoryById,
   updateCategory,

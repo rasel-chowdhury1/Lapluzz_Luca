@@ -41,6 +41,10 @@ router.post(
     categoryController.getAllCategory
   )
   .get(
+    '/business',
+    categoryController.getBusinessCategories
+  )
+  .get(
     '/id/:id',
     categoryController.getCategoryById
   )

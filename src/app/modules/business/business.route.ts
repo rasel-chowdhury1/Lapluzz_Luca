@@ -66,6 +66,12 @@ router.post(
     auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
     businessController.getAllBusinessByLocation
 )
+
+  .get(
+    '/exclusive/location',
+    auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
+    businessController.getExclusiveBusinessByLocation
+)
   
   .get(
     '/list',
