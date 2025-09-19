@@ -134,6 +134,165 @@ const getEventList = async () => {
 // };
 
 
+// const getEventsByLocation = async (
+//   userId: string,
+//   query: Record<string, any>,
+//   userLocation?: { latitude: number; longitude: number }
+// ) => {
+//   query['isDeleted'] = false;
+
+//   const page = parseInt(query.page) || 1;
+//   const limit = parseInt(query.limit) || 10;
+//   const skip = (page - 1) * limit;
+
+//   let data: any[] = [];
+//   let meta: any = {};
+
+//   // Helper function to get aggregate query
+//   const getGeoNearQuery = (isSubscription: boolean) => ({
+//     $geoNear: {
+//       near: { type: 'Point', coordinates: [query.longitude, query.latitude] },
+//       distanceField: 'distance',
+//       spherical: true,
+//       query: {
+//         isSubscription,
+//         isDeleted: false,
+//         isActive: true,
+//         // author: { $ne: new mongoose.Types.ObjectId(userId) },
+//       },
+//     },
+//   });
+
+//   const geoNearQuery = userLocation ? [
+//     getGeoNearQuery(true),  // Subscription events
+//     getGeoNearQuery(false), // Unsubscription events
+//   ] : [];
+
+//   // Aggregate Subscription and Unsubscription Events
+//   const aggregateQuerySubscription = geoNearQuery.length 
+//     ? Event.aggregate(geoNearQuery[0]) 
+//     : Event.find({ isSubscription: true });
+
+//   const aggregateQueryUnsubscription = geoNearQuery.length 
+//     ? Event.aggregate(geoNearQuery[1]) 
+//     : Event.find({ isSubscription: false });
+
+//   // Fetch Subscription and Unsubscription Events Data
+//   const [subscriptionData, unsubscriptionData] = await Promise.all([
+//     aggregateQuerySubscription.skip(skip).limit(limit),
+//     aggregateQueryUnsubscription.skip(skip).limit(limit)
+//   ]);
+
+//   // Merge the results
+//   data = [...subscriptionData, ...unsubscriptionData];
+
+//   // Total counts for subscription and unsubscription
+//   const totalSubscription = await Event.countDocuments({
+//     isSubscription: true,
+//     isDeleted: false,
+//     isActive: true,
+//   });
+
+//   const totalUnsubscription = await Event.countDocuments({
+//     isSubscription: false,
+//     isDeleted: false,
+//     isActive: true,
+//   });
+
+//   meta = {
+//     page,
+//     limit,
+//     total: totalSubscription + totalUnsubscription,
+//     totalPage: Math.ceil((totalSubscription + totalUnsubscription) / limit),
+//   };
+
+//   if (!data || data.length === 0) return { data, meta };
+
+//   const eventIds = data.map((event) => event._id);
+
+//   // ⭐ Ratings
+//   const ratings = await EventReview.aggregate([
+//     { $match: { eventId: { $in: eventIds } } },
+//     {
+//       $group: {
+//         _id: "$eventId",
+//         averageRating: { $avg: "$rating" },
+//         totalReviews: { $sum: 1 },
+//       },
+//     },
+//   ]);
+
+//   const ratingMap = ratings.reduce((acc, r) => {
+//     acc[r._id.toString()] = {
+//       averageRating: parseFloat(r.averageRating.toFixed(1)),
+//       totalReviews: r.totalReviews,
+//     };
+//     return acc;
+//   }, {});
+
+//   // ⭐ Engagement
+//   const engagementStats = await EventEngagementStats.find({
+//     eventId: { $in: eventIds },
+//   }).select("eventId likes comments");
+
+//   const engagementMap = engagementStats.reduce((acc, stat) => {
+//     const id = stat.eventId.toString();
+//     const totalCommentsWithReplies = stat.comments.reduce(
+//       (acc, comment) => {
+//         acc += 1;
+//         if ((comment as any).replies && Array.isArray((comment as any).replies)) {
+//           acc += (comment as any).replies.length;
+//         }
+//         return acc;
+//       },
+//       0
+//     );
+
+//     acc[id] = {
+//       totalLikes: stat.likes?.length || 0,
+//       totalComments: totalCommentsWithReplies,
+//       isLiked: stat.likes?.some((like) => like.toString() === userId) || false,
+//     };
+//     return acc;
+//   }, {});
+
+//   // ⭐ Fetch user wishlist events
+//   const wishList = await WishList.findOne({ userId }).lean();
+//   const wishListEventIds = new Set<string>();
+//   if (wishList?.folders?.length) {
+//     wishList.folders.forEach((folder) => {
+//       folder.events?.forEach((eid) => wishListEventIds.add(eid.toString()));
+//     });
+//   }
+
+//   // 🔀 Merge all info
+//   data = data.map((event) => {
+//     const id = event._id.toString();
+//     const ratingInfo = ratingMap[id] || { averageRating: 0, totalReviews: 0 };
+//     const engagementInfo = engagementMap[id] || { totalLikes: 0, totalComments: 0, isLiked: false };
+
+//     return {
+//       ...event,
+//       ...ratingInfo,
+//       ...engagementInfo,
+//       isWishlisted: wishListEventIds.has(id),
+//     };
+//   });
+
+//   // 🔽 Sort by subscription tier first, then by creation date
+//   const subscriptionOrder = ['diamond', 'emerald', 'ruby', 'none'];
+//   data = data.sort((a, b) => {
+//     const posA = subscriptionOrder.indexOf(a.subscriptionType ?? 'none');
+//     const posB = subscriptionOrder.indexOf(b.subscriptionType ?? 'none');
+
+//     if (posA !== posB) return posA - posB;
+//     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+//   });
+
+//   return { data, meta };
+// };
+
+
 const getEventsByLocation = async (
   userId: string,
   query: Record<string, any>,
@@ -158,7 +317,6 @@ const getEventsByLocation = async (
         isSubscription,
         isDeleted: false,
         isActive: true,
-        // author: { $ne: new mongoose.Types.ObjectId(userId) },
       },
     },
   });
@@ -183,8 +341,14 @@ const getEventsByLocation = async (
     aggregateQueryUnsubscription.skip(skip).limit(limit)
   ]);
 
-  // Merge the results
-  data = [...subscriptionData, ...unsubscriptionData];
+  // Merge the results and remove duplicates by _id
+  const combinedData = [...subscriptionData, ...unsubscriptionData];
+  const eventMap = new Map();
+  combinedData.forEach((event) => {
+    eventMap.set(event._id.toString(), event); // Ensure unique events by _id
+  });
+  
+  data = Array.from(eventMap.values()); // Convert map values back to an array
 
   // Total counts for subscription and unsubscription
   const totalSubscription = await Event.countDocuments({
