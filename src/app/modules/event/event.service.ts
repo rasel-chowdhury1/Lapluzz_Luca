@@ -158,7 +158,7 @@ const getEventsByLocation = async (
         isSubscription,
         isDeleted: false,
         isActive: true,
-        author: { $ne: new mongoose.Types.ObjectId(userId) },
+        // author: { $ne: new mongoose.Types.ObjectId(userId) },
       },
     },
   });

@@ -94,7 +94,7 @@ const getAllBusinessByLocation = async (
     },
     {
       $match: {
-        author: { $ne: new mongoose.Types.ObjectId(userId) },
+        // author: { $ne: new mongoose.Types.ObjectId(userId) },
         providerType: new mongoose.Types.ObjectId(query.providerType),
         isActive: true,
         isDeleted: false,
@@ -330,10 +330,10 @@ const getExclusiveBusinessByLocation = async (
     },
     {
       $match: {
-        author: { $ne: new mongoose.Types.ObjectId(userId) },
+        // author: { $ne: new mongoose.Types.ObjectId(userId) },
         isActive: true,
         isDeleted: false,
-        
+        isSubscirpiotn: true,
         subscriptionType: 'exclusive', // Filter by exclusive subscription type
       },
     },
