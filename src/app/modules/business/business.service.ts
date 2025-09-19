@@ -1643,6 +1643,7 @@ const searchBusinesses = async (
     keyword: searchTerm,
     totalResults: results.length,
     userId,
+    type: "Search",
     searchDate: new Date(),
   });
 
@@ -1804,6 +1805,7 @@ const wizardSearchBusinesses = async (userId:string, filters: WizardFilters) => 
     keyword: searchTerm, // Set the search term (keyword)
     totalResults: results.length,
     userId,
+    type: "Wizard",
     searchDate: new Date(),
   });
   
