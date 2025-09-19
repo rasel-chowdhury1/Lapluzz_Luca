@@ -311,6 +311,8 @@ const getExclusiveBusinessByLocation = async (
   query['isDeleted'] = false;
   query['subscriptionType'] = 'exclusive'; // Only get businesses with 'exclusive' subscription type
 
+  console.log(query)
+
   const { latitude, longitude } = userLocation;
 
   console.log({ latitude, longitude });
@@ -333,7 +335,7 @@ const getExclusiveBusinessByLocation = async (
         // author: { $ne: new mongoose.Types.ObjectId(userId) },
         isActive: true,
         isDeleted: false,
-        isSubscirpiotn: true,
+        isSubscription: true,
         subscriptionType: 'exclusive', // Filter by exclusive subscription type
       },
     },
