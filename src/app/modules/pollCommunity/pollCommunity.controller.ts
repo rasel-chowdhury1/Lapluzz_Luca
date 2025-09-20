@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import { pollCommunityService } from './pollCommunity.service';
+import httpStatus from 'http-status';
 
 const createPoll = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user;
@@ -13,6 +14,21 @@ const createPoll = catchAsync(async (req: Request, res: Response) => {
     statusCode: 201,
     success: true,
     message: 'Poll created successfully',
+    data: result
+  });
+});
+
+const updatePoll = catchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.user;
+
+  const pollId = req.params.id;
+
+  const result = await pollCommunityService.updatePoll(pollId, userId,req.body);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Poll updated successfully',
     data: result
   });
 });
@@ -94,6 +110,7 @@ const deletePoll = catchAsync(async (req: Request, res: Response) => {
 
 export const pollCommunityController = {
   createPoll,
+  updatePoll,
   getAllPolls,
   getPollById,
   vote,

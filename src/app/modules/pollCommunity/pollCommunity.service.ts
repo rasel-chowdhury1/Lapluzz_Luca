@@ -2,10 +2,27 @@ import PollCommunity from './pollCommunity.model';
 import httpStatus from 'http-status';
 import AppError from '../../error/AppError';
 import mongoose from 'mongoose';
+import { userValidation } from '../user/user.validation';
 
 const createPoll = async (payload: any) => {
   const poll = await PollCommunity.create(payload);
   return poll;
+};
+
+const updatePoll = async (pollId: string, userId: string, updatedData: Record<string, any>) => {
+
+    // Find the poll by its ID and update with the new data
+    const updatedPoll = await PollCommunity.findByIdAndUpdate(
+      { _id: pollId,creator: userId, isDeleted: false },
+      updatedData,
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedPoll) {
+      throw new AppError(httpStatus.NOT_FOUND, 'Poll not found');
+    }
+
+    return updatedPoll;
 };
 
 const getAllPolls = async (query: Record<string, any>) => {
@@ -285,6 +302,7 @@ const deletePoll = async (id: string) => {
 
 export const pollCommunityService = {
   createPoll,
+  updatePoll,
   getAllPolls,
   getPollById,
   votePollOption,

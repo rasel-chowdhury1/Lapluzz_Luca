@@ -457,7 +457,7 @@ const wizardSearchBusiness = catchAsync(async (req: Request, res: Response) => {
     ...restQuery,
     longitude: longitude ? Number(longitude) : undefined,
     latitude: latitude ? Number(latitude) : undefined,
-    maxDistance: maxDistance ? Number(maxDistance) : 50000,  // Default to 50 km if not provided
+    maxDistance: maxDistance ? Number(maxDistance) * 1000 : 50000,  // Default to 50 km if not provided
     address: address ? address : "",
     city: city ? city : "",
     town: town ? town : ""

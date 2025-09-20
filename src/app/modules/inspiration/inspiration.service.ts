@@ -61,6 +61,7 @@ const getMyInspirations = async (userId: string, query: Record<string, any>) => 
 
 const getAllInspirationsGroupedByCategory = async () => {
   const data = await Inspiration.aggregate([
+    // Step 1: Lookup category info
     {
       $lookup: {
         from: 'categories',
@@ -86,10 +87,24 @@ const getAllInspirationsGroupedByCategory = async () => {
       $unwind: '$authorInfo'
     },
 
+    // Step 3: Match only the desired categories
+    {
+      $match: {
+        'categoryInfo.name': {
+          $in: [
+            'Getting Started Ideas',
+            'Seasonal Trends',
+            'Real Events That Inspire',
+            'Style & Mood'
+          ]
+        }
+      }
+    },
+
+    // Step 4: Group by category and gather inspirations
     {
       $group: {
-        _id: '$category',
-        categoryName: { $first: '$categoryInfo.name' },
+        _id: '$categoryInfo.name',  // Group by category name
         categoryDescription: { $first: '$categoryInfo.description' },
         inspirations: {
           $push: {
@@ -113,19 +128,19 @@ const getAllInspirationsGroupedByCategory = async () => {
       }
     },
 
-    // Step 3: Sort by category's createdAt field
+    // Step 5: Sort by category's createdAt field
     {
       $sort: {
         categoryCreatedAt: 1, // Sort categories by the createdAt field in ascending order
-      },
+      }
     },
-    
+
+    // Step 6: Project the final output
     {
       $project: {
         _id: 0,
-        categoryId: '$_id',
-        categoryName: 1,
-        categoryDescription: 1,
+        subCategory: '$_id',
+        // categoryDescription: 1,
         inspirations: 1
       }
     }
@@ -133,6 +148,7 @@ const getAllInspirationsGroupedByCategory = async () => {
 
   return { data };
 };
+
 
 
 const getAllInspirationsgroupBySubcategory = async () => {

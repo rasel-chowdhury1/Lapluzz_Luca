@@ -18,6 +18,7 @@ export interface UpdatePostCommunityPayload {
   region?: string;
   description?: string;
   image?: string;
+  gallery?: string[] | null;
   isDeleted?: boolean;
 }
 

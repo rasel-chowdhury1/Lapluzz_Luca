@@ -13,19 +13,43 @@ const createPost = async (payload: any) => {
 const updatePostCommunityById = async (
   userId: string,
   postId: string,
-  payload: Partial<UpdatePostCommunityPayload>
+  payload: Partial<UpdatePostCommunityPayload> & { deleteGallery?: string[] }
 ) => {
-  // Only update the post if the creator matches userId
+  // 1️⃣ Fetch existing post
+  const existingPost = await PostCommunity.findOne({ _id: postId, creator: userId, isDeleted: false });
+  if (!existingPost) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Post not found or you are not authorized');
+  }
+
+  // 2️⃣ Prepare updated gallery
+  let newGallery = existingPost.gallery || [];
+
+  // Remove images if deleteGallery is provided
+  if (payload.deleteGallery && payload.deleteGallery.length > 0) {
+    newGallery = newGallery.filter(img => !payload.deleteGallery!.includes(img));
+  }
+
+  // Append new images if provided
+  if (payload.gallery && payload.gallery.length > 0) {
+    newGallery = [...newGallery, ...payload.gallery];
+  }
+
+  // Update the gallery in payload
+  payload.gallery = newGallery;
+
+  // Remove deleteGallery from payload to avoid saving in DB
+  delete payload.deleteGallery;
+
+
+    // 3️⃣ Update the post
   const updatedPost = await PostCommunity.findOneAndUpdate(
-    { _id: postId, creator: userId }, // query ensures only creator can update
+    { _id: postId, creator: userId },
     payload,
     { new: true }
   );
-
-  if (!updatedPost) {
-    throw new AppError(httpStatus.BAD_REQUEST,'Post not found or you are not authorized');
+  if (!updatedPost) {   
+    throw new AppError(httpStatus.BAD_REQUEST, 'Failed to update post');  
   }
-
   return updatedPost;
 };
 

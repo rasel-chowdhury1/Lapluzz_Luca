@@ -11,6 +11,11 @@ router
         auth(USER_ROLE.USER),
         pollCommunityController.createPoll
     )
+    .patch(
+        '/update/:id',
+        auth(USER_ROLE.USER),
+        pollCommunityController.updatePoll
+    )
     .get(
         '/',
         pollCommunityController.getAllPolls
