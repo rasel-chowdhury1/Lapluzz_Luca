@@ -12,14 +12,20 @@ router
     .post(
             '/add', 
             auth(USER_ROLE.USER, USER_ROLE.ORGANIZER), 
-            upload.single('image'),
+            upload.fields([
+                { name: 'image', maxCount: 1 },
+                { name: 'gallery', maxCount: 10 },
+                ]),
             parseData(),
             postCommunityController.createPost
         )
     .patch(
             '/:id', 
             auth(USER_ROLE.USER, USER_ROLE.ORGANIZER), 
-            upload.single('image'),
+            upload.fields([
+                { name: 'image', maxCount: 1 },
+                { name: 'gallery', maxCount: 10 },
+                ]),
             parseData(),
             postCommunityController.updatePostCommunityById
         )

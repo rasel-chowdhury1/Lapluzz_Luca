@@ -5,6 +5,7 @@ import { eventService } from './event.service';
 import { storeFiles } from '../../utils/fileHelper';
 import httpStatus from 'http-status';
 import { uploadMultipleFilesToS3 } from '../../utils/fileUploadS3';
+import fs, { access } from 'fs';
 
 const createEvent = catchAsync(async (req: Request, res: Response) => {
 
@@ -26,7 +27,7 @@ const createEvent = catchAsync(async (req: Request, res: Response) => {
         req.files as { [fieldName: string]: Express.Multer.File[] }
       );
 
-        console.log({uploadedFiles})
+
 
       if (uploadedFiles.logo?.[0]) {
         req.body.logo = uploadedFiles.logo[0];
@@ -79,6 +80,7 @@ const updateEvent = catchAsync(async (req: Request, res: Response) => {
       const uploadedFiles = await uploadMultipleFilesToS3(
         req.files as { [fieldName: string]: Express.Multer.File[] }
       );
+
 
 
       if (uploadedFiles.logo?.[0]) {

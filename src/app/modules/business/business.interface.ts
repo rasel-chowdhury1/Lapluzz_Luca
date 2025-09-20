@@ -6,6 +6,7 @@ export interface WizardFilters {
   latitude?: number;
   maxGuest?: string;
   services?: string[];
+  extraServices?: string[];
   priceRange?: 'budget' | 'medium' | 'high' | 'luxury';
   maxDistance: number;
   address?: string,

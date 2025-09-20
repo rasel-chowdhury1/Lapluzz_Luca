@@ -7,6 +7,7 @@ export interface IPostCommunity {
   region: string;
   description: string;
   image: string;
+  gallery?: string[] | null;
   isDeleted: boolean;
 }
 

@@ -3,7 +3,8 @@ import catchAsync from '../../utils/catchAsync';
 import { categoryService } from './category.service';
 import sendResponse from '../../utils/sendResponse'; 
 import { uploadMultipleFilesToS3 } from '../../utils/fileUploadS3';
-
+import fs, { access } from 'fs';
+import httpStatus from 'http-status';
 const createCategory = catchAsync(async (req: Request, res: Response) => {
   
    if (req.files) {
@@ -12,6 +13,8 @@ const createCategory = catchAsync(async (req: Request, res: Response) => {
       const uploadedFiles = await uploadMultipleFilesToS3(
         req.files as { [fieldName: string]: Express.Multer.File[] }
       );
+
+
 
 
       if (uploadedFiles.icon?.[0]) {
@@ -37,7 +40,7 @@ const createCategory = catchAsync(async (req: Request, res: Response) => {
 
   const result = await categoryService.createCategory(req.body);
   sendResponse(res, {
-    statusCode: 201,
+    statusCode: httpStatus.CREATED,
     success: true,
     message: 'Category created successfully',
     data: result,
@@ -95,6 +98,7 @@ const updateCategory = catchAsync(async (req: Request, res: Response) => {
       const uploadedFiles = await uploadMultipleFilesToS3(
         req.files as { [fieldName: string]: Express.Multer.File[] }
       );
+
 
 
       if (uploadedFiles.icon?.[0]) {

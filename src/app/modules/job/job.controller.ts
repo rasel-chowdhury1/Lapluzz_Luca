@@ -5,6 +5,7 @@ import { jobService } from './job.service';
 import { storeFiles } from '../../utils/fileHelper';
 import httpStatus from 'http-status';
 import { uploadMultipleFilesToS3 } from '../../utils/fileUploadS3';
+import fs, { access } from 'fs';
 
 const createJob = catchAsync(async (req: Request, res: Response) => {
   const { userId, email: userEmail } = req.user;
@@ -17,6 +18,20 @@ const createJob = catchAsync(async (req: Request, res: Response) => {
       const uploadedFiles = await uploadMultipleFilesToS3(
         req.files as { [fieldName: string]: Express.Multer.File[] }
       );
+
+       // cleanup local temp files after upload
+      for (const fieldName in req.files) {
+        const files = (req.files as { [fieldName: string]: Express.Multer.File[] })[fieldName];
+        for (const file of files) {
+          try {
+            if (fs.existsSync(file.path)) {
+              fs.unlinkSync(file.path);
+            }
+          } catch (err) {
+            console.error(`Failed to delete file ${file.path}:`, err);
+          }
+        }
+      }
 
 
       if (uploadedFiles.logo?.[0]) {

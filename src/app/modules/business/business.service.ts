@@ -1265,7 +1265,7 @@ const getExtraBusinessDataById = async (userId: string, id: string) => {
 const getSpecificBusinessStats = async (businessId: string) => {
   const id = new Types.ObjectId(businessId);
   // 1️⃣ Check business existence and status
-  const business = await Business.findOne({ _id: id, isDeleted: false }).select("logo author").lean();
+  const business = await Business.findOne({ _id: id, isDeleted: false }).select("logo author subscriptionStatus expireSubscriptionTime").lean();
   if (!business) {
     throw new Error('Business not found');
   }
@@ -1327,7 +1327,8 @@ const getSpecificBusinessStats = async (businessId: string) => {
   ) || [];
 
   const activeSubscription = activeSubscriptions[0] || null;
-  const totalActiveSub = activeSubscriptions.length;
+  const totalActiveSub = business.subscriptionStatus === 'activated' ? 1 : 0;
+  const subscriptionEndTime = business.expireSubscriptionTime || null;
 
   // ✅ Final return object
   return {
@@ -1348,7 +1349,8 @@ const getSpecificBusinessStats = async (businessId: string) => {
       : null,
     totalActiveSub,
     totalCredits,
-    customId: author?.customId
+    customId: author?.customId,
+    subscriptionEndTime
   };
 };
 
@@ -1632,13 +1634,28 @@ const searchBusinesses = async (
       ...(biz as any).toObject(),
       ...rating,
       ...engagement,
-      blueVerifiedBadge: biz.subscriptionType === 'exclusive',
+      blueVerifiedBadge: biz.subBlueVerifiedBadge,
       type: 'business',
     };
   });
 
-  // 7. Store search record
-  await SearchRecord.create({
+  // 7. Sorting by subscriptionType > averageRating > createdAt
+  const subscriptionPriority = ['exclusive', 'elite', 'prime', 'custom', 'none'];
+
+  const sortedBusinesses = populatedBusinesses.sort((a, b) => {
+    const subA = subscriptionPriority.indexOf(a.subscriptionType || 'none');
+    const subB = subscriptionPriority.indexOf(b.subscriptionType || 'none');
+    if (subA !== subB) return subA - subB;
+
+    if ((b.averageRating || 0) !== (a.averageRating || 0)) {
+      return (b.averageRating || 0) - (a.averageRating || 0);
+    }
+
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+
+  // 8. Store search record asynchronously
+  SearchRecord.create({
     address,
     city,
     town,
@@ -1647,9 +1664,9 @@ const searchBusinesses = async (
     userId,
     type: "Search",
     searchDate: new Date(),
-  });
+  }).catch((err) => console.error("Failed to create SearchRecord:", err));
 
-  return { data: populatedBusinesses, meta };
+  return { data: sortedBusinesses, meta };
 };
 
 
@@ -1660,6 +1677,8 @@ const wizardSearchBusinesses = async (userId:string, filters: WizardFilters) => 
     latitude,
     maxGuest,
     services = [],
+    extraServices = [],
+
     priceRange,
     maxDistance = 50000, // default to 50km if not provided
     address,
@@ -1720,6 +1739,10 @@ const wizardSearchBusinesses = async (userId:string, filters: WizardFilters) => 
   // 4. Services Filter
   if (services.length) {
     query.supportedServices = { $all: services };
+  }
+
+    if (extraServices.length) {
+    query.additionalServices = { $all: services };
   }
 
   // 5. Price Range Filter (using enum values)
@@ -1786,32 +1809,51 @@ const wizardSearchBusinesses = async (userId:string, filters: WizardFilters) => 
   });
 
 
-  // 7️⃣ Construct Search Term (Keyword)
+
+  
+  const subscriptionPriority = ['exclusive','elite','prime','custom','none'];
+
+  const sortedBusinesses = populatedBusinesses.sort((a, b) => {
+    // 1️⃣ Sort by subscriptionType priority
+    const subA = subscriptionPriority.indexOf(a.subscriptionType);
+    const subB = subscriptionPriority.indexOf(b.subscriptionType);
+    if (subA !== subB) return subA - subB; // lower index = higher priority
+
+    // 2️⃣ Sort by averageRating descending
+    if ((b.averageRating || 0) !== (a.averageRating || 0)) {
+      return (b.averageRating || 0) - (a.averageRating || 0);
+    }
+
+    // 3️⃣ Sort by latest createdAt
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+
+    // 7️⃣ Construct Search Term (Keyword)
   const searchTerm = [
-    categoryName.join(", "), // Category Names
+    categoryName?.join(", "), // Category Names
     maxGuest,
-    services.join(", "),
+    services?.join(", "),
+    extraServices?.join(", "),
     priceRange,
-    maxDistance
+    maxDistance ? `${maxDistance} km` : undefined
   ]
     .filter(Boolean) // Remove any undefined or null values
-    .join(" | "); // Join the filters into a single string
+    .join(" || "); // Join the filters into a single string
 
     console.log("search term =>>> ",{searchTerm})
 
-  // 8️⃣ Store search record with the constructed search term
-  await SearchRecord.create({
+  SearchRecord.create({
     address,
     city,
     town,
-    keyword: searchTerm, // Set the search term (keyword)
+    keyword: searchTerm,
     totalResults: results.length,
     userId,
     type: "Wizard",
     searchDate: new Date(),
-  });
-  
-  return populatedBusinesses;
+  }).catch(err => console.error("Failed to create SearchRecord:", err));
+
+  return sortedBusinesses;
 };
 
 

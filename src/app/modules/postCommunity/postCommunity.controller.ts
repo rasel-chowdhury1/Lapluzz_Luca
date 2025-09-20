@@ -4,34 +4,59 @@ import sendResponse from '../../utils/sendResponse';
 import { postCommunityService } from './postCommunity.service';
 import { storeFile } from '../../utils/fileHelper';
 import httpStatus from 'http-status';
-import { uploadFileToS3 } from '../../utils/fileUploadS3';
+import { uploadFileToS3, uploadMultipleFilesToS3 } from '../../utils/fileUploadS3';
 import fs, { access } from 'fs';
 
 const createPost = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user;
   req.body.creator = userId;
 
-  if (req?.file) {
-      // req.body.profileImage = storeFile('profile', req?.file?.filename);
-  
-          // upload file in bucket function is done
-      try {
-        const data = await uploadFileToS3(req.file)
-  
-  
-        console.log("data----->>>> ",data)
-        // deleting file after upload
-        fs.unlinkSync(req.file.path)
+      if (req.files) {
     
-        req.body.image= data.Location;
-      } catch (error) {
-        console.log("====erro9r --->>> ", error)
-        if(fs.existsSync(req.file.path)){
-          fs.unlinkSync(req.file.path)
+      
+        try {
+          
+          const uploadedFiles = await uploadMultipleFilesToS3(
+            req.files as { [fieldName: string]: Express.Multer.File[] }
+          );
+    
+    
+              // cleanup local temp files after upload
+          for (const fieldName in req.files) {
+            const files = (req.files as { [fieldName: string]: Express.Multer.File[] })[fieldName];
+            for (const file of files) {
+              try {
+                if (fs.existsSync(file.path)) {
+                  fs.unlinkSync(file.path);
+                }
+              } catch (err) {
+                console.error(`Failed to delete file ${file.path}:`, err);
+              }
+            }
+          }
+
+          
+          if (uploadedFiles.image?.[0]) {
+            req.body.image = uploadedFiles.image[0];
+          }
+    
+    
+          if (uploadedFiles.gallery?.length) {
+            req.body.gallery = uploadedFiles.gallery;
+          }
+    
+    
+          console.log("req body ==>>> ", req.body)
+        } catch (error: any) {
+          console.error('Error processing files:', error.message);
+          return sendResponse(res, {
+            statusCode: httpStatus.BAD_REQUEST,
+            success: false,
+            message: 'Failed to process uploaded files',
+            data: null,
+          });
         }
       }
-  
-    }
 
   const result = await postCommunityService.createPost(req.body);
   sendResponse(res, {
@@ -48,27 +73,53 @@ const updatePostCommunityById = catchAsync(
     const { userId } = req.user; // Logged-in user
     const updateData = req.body;
 
-  if (req?.file) {
-      // req.body.profileImage = storeFile('profile', req?.file?.filename);
-  
-          // upload file in bucket function is done
-      try {
-        const data = await uploadFileToS3(req.file)
-  
-  
-        console.log("data----->>>> ",data)
-        // deleting file after upload
-        fs.unlinkSync(req.file.path)
+      if (req.files) {
     
-        updateData.image= data.Location;
-      } catch (error) {
-        console.log("====erro9r --->>> ", error)
-        if(fs.existsSync(req.file.path)){
-          fs.unlinkSync(req.file.path)
+      
+        try {
+          
+          const uploadedFiles = await uploadMultipleFilesToS3(
+            req.files as { [fieldName: string]: Express.Multer.File[] }
+          );
+    
+    
+              // cleanup local temp files after upload
+          for (const fieldName in req.files) {
+            const files = (req.files as { [fieldName: string]: Express.Multer.File[] })[fieldName];
+            for (const file of files) {
+              try {
+                if (fs.existsSync(file.path)) {
+                  fs.unlinkSync(file.path);
+                }
+              } catch (err) {
+                console.error(`Failed to delete file ${file.path}:`, err);
+              }
+            }
+          }
+
+          
+          if (uploadedFiles.image?.[0]) {
+            updateData.image = uploadedFiles.image[0];
+          }
+    
+    
+          if (uploadedFiles.gallery?.length) {
+            updateData.gallery = uploadedFiles.gallery;
+          }
+    
+    
+          console.log("req body ==>>> ", updateData);
+          
+        } catch (error: any) {
+          console.error('Error processing files:', error.message);
+          return sendResponse(res, {
+            statusCode: httpStatus.BAD_REQUEST,
+            success: false,
+            message: 'Failed to process uploaded files',
+            data: null,
+          });
         }
       }
-  
-    }
 
 
     const updatedPost = await postCommunityService.updatePostCommunityById(

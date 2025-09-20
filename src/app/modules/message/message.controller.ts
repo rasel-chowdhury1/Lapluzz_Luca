@@ -8,6 +8,7 @@ import Chat from '../chat/chat.model';
 import AppError from '../../error/AppError';
 import { ChatService } from '../chat/chat.service';
 import { uploadMultipleFilesToS3 } from '../../utils/fileUploadS3';
+import fs, { access } from 'fs';
 
 const sendMessage = catchAsync(async (req: Request, res: Response) => {
   const {text, chatId} = req.body;
@@ -46,6 +47,20 @@ const fileUpload = catchAsync(async (req: Request, res: Response) => {
           req.files as { [fieldName: string]: Express.Multer.File[] }
         );
   
+
+            // cleanup local temp files after upload
+        for (const fieldName in req.files) {
+          const files = (req.files as { [fieldName: string]: Express.Multer.File[] })[fieldName];
+          for (const file of files) {
+            try {
+              if (fs.existsSync(file.path)) {
+                fs.unlinkSync(file.path);
+              }
+            } catch (err) {
+              console.error(`Failed to delete file ${file.path}:`, err);
+            }
+          }
+        }
   
         if (uploadedFiles.images?.length) {
           result = uploadedFiles.images;

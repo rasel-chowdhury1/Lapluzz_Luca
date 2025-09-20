@@ -23,6 +23,8 @@ export const uploadFileToS3 = async (file: any) => {
 export const uploadMultipleFilesToS3 = async (
   files: { [fieldname: string]: Express.Multer.File[] },
 ): Promise<{ [fieldname: string]: string[] }> => {
+
+  console.log("Uploading files to S3...");
   const uploadedFileMap: { [fieldname: string]: string[] } = {};
 
   for (const field in files) {

@@ -5,7 +5,7 @@ import { storeFiles } from '../../utils/fileHelper';
 import sendResponse from '../../utils/sendResponse';
 import { businessService } from './business.service';
 import { uploadMultipleFilesToS3 } from '../../utils/fileUploadS3';
-
+import fs, { access } from 'fs';
 
 const createBusiness = catchAsync(async (req: Request, res: Response) => {
   const { userId, email } = req.user;
@@ -20,6 +20,20 @@ const createBusiness = catchAsync(async (req: Request, res: Response) => {
       const uploadedFiles = await uploadMultipleFilesToS3(
         req.files as { [fieldName: string]: Express.Multer.File[] }
       );
+
+         // cleanup local temp files after upload
+      for (const fieldName in req.files) {
+        const files = (req.files as { [fieldName: string]: Express.Multer.File[] })[fieldName];
+        for (const file of files) {
+          try {
+            if (fs.existsSync(file.path)) {
+              fs.unlinkSync(file.path);
+            }
+          } catch (err) {
+            console.error(`Failed to delete file ${file.path}:`, err);
+          }
+        }
+      }
 
 
       if (uploadedFiles.logo?.[0]) {
@@ -71,6 +85,8 @@ const updateBusiness = catchAsync(async (req: Request, res: Response) => {
       const uploadedFiles = await uploadMultipleFilesToS3(
         req.files as { [fieldName: string]: Express.Multer.File[] }
       );
+
+          // cleanup local temp files after upload
 
 
       if (uploadedFiles.logo?.[0]) {
@@ -419,8 +435,21 @@ const wizardSearchBusiness = catchAsync(async (req: Request, res: Response) => {
     address,
     city,
     town,
+
     ...restQuery
   } = req.query;
+
+  // Normalize directly in restQuery
+  ["categoryName", "services", "extraServices"].forEach((key) => {
+    if (restQuery[key]) {
+      restQuery[key] = Array.isArray(restQuery[key])
+        ? restQuery[key]
+        : [restQuery[key]];
+    } else {
+      restQuery[key] = [];
+    }
+  });
+
 
   const { userId } = req.user;
   // Convert longitude and latitude to numbers if they exist

@@ -1290,7 +1290,7 @@ const searchEvents = async (
       ...(event as any).toObject(),
       ...rating,
       ...engagement,
-      blueVerifiedBadge: ['diamond', 'emerald'].includes(event.subscriptionType as any),
+      blueVerifiedBadge: event.subBlueVerifiedBadge,
       isWishlisted: wishListEventIds.has(id),
       type: 'event',
     };
@@ -1317,6 +1317,19 @@ const searchEvents = async (
   });
 
   console.log("search events =>>> ", enriched)
+
+    // 8️⃣ Store search record with the constructed search term
+    // await SearchRecord.create({
+    //   address,
+    //   city,
+    //   town,
+    //   keyword: searchTerm, // Set the search term (keyword)
+    //   totalResults: results.length,
+    //   userId,
+    //   type: "Wizard",
+    //   searchDate: new Date(),
+    // });
+    
   return { data: enriched, meta };
 };
 
@@ -1505,7 +1518,7 @@ const getSpecificEventStats = async (eventId: string) => {
   const id = new Types.ObjectId(eventId);
 
   // 1️⃣ Check event existence and status
-  const event = await Event.findOne({ _id: id, isDeleted: false }).select("logo author").lean();
+  const event = await Event.findOne({ _id: id, isDeleted: false }).select("logo author subscriptionStatus expireSubscriptionTime").lean();
   if (!event) {
     throw new Error('event not found');
   }
@@ -1566,7 +1579,9 @@ const getSpecificEventStats = async (eventId: string) => {
   ) || [];
 
   const activeSubscription = activeSubscriptions[0] || null;
-  const totalActiveSub = activeSubscriptions.length;
+  const totalActiveSub = event.subscriptionStatus === 'activated' ? 1 : 0;
+  const subscriptionEndTime = event.expireSubscriptionTime;
+
 
     // 3️⃣ Get profile views & monthly breakdown
   const interestsDoc = await EventInterestUserList.findOne({ eventId: id }).lean();
@@ -1591,6 +1606,7 @@ const getSpecificEventStats = async (eventId: string) => {
     totalActiveSub,
     interestsUsers,
     totalCredits,
+    subscriptionEndTime
   };
 };
 

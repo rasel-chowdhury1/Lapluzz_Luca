@@ -719,7 +719,7 @@ const getSpecificJobStats = async (jobId: string) => {
   const id = new Types.ObjectId(jobId);
 
   // 1️⃣ Check job existence and status
-  const job = await Job.findOne({ _id: id, isDeleted: false }).select("logo").lean();
+  const job = await Job.findOne({ _id: id, isDeleted: false }).select("logo subscriptionStatus expireSubscriptionTime").lean();
   if (!job) {
     throw new Error('job not found');
   }
@@ -763,7 +763,8 @@ const getSpecificJobStats = async (jobId: string) => {
   ) || [];
 
   const activeSubscription = activeSubscriptions[0] || null;
-  const totalActiveSub = activeSubscriptions.length;
+  const totalActiveSub = job.subscriptionStatus === 'activated' ? 1 : 0;
+  const subscriptionEndTime = job.expireSubscriptionTime || null;
 
   const applicantsDoc = await JobApplicant.findOne({ jobId: jobId }).lean();
   const jobApplicants = applicantsDoc?.applicantUsers.length || 0;
@@ -784,7 +785,8 @@ const getSpecificJobStats = async (jobId: string) => {
       : null,
     totalActiveSub,
     jobApplicants,
-    totalCredits
+    totalCredits,
+    subscriptionEndTime
   };
 };
 

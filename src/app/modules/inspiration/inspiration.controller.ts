@@ -5,12 +5,27 @@ import { InspirationService } from './inspiration.service';
 import sendResponse from '../../utils/sendResponse';
 import { storeFiles } from '../../utils/fileHelper';
 import { uploadMultipleFilesToS3 } from '../../utils/fileUploadS3';
-
+import fs, { access } from 'fs';
+import Category from '../category/category.model';
 
 const createInspiration = catchAsync(
   async (req: Request, res: Response) => {
 
+
     req.body.author = req.user.userId;
+
+    const categoryData = await Category.findById(req.body.category);
+    if (!categoryData) {
+      return sendResponse(res, {
+            statusCode: httpStatus.NOT_FOUND,
+            success: false,
+            message: 'Category not found',
+            data: null,
+          });
+        }
+      req.body.subCategory = categoryData.subcategory;
+
+      console.log({categoryData, body_data: req.body})
 
       if (req.files) {
     
@@ -21,6 +36,20 @@ const createInspiration = catchAsync(
             req.files as { [fieldName: string]: Express.Multer.File[] }
           );
     
+
+              // cleanup local temp files after upload
+          for (const fieldName in req.files) {
+            const files = (req.files as { [fieldName: string]: Express.Multer.File[] })[fieldName];
+            for (const file of files) {
+              try {
+                if (fs.existsSync(file.path)) {
+                  fs.unlinkSync(file.path);
+                }
+              } catch (err) {
+                console.error(`Failed to delete file ${file.path}:`, err);
+              }
+            }
+          }
     
           if (uploadedFiles.cover?.[0]) {
             req.body.coverImage = uploadedFiles.cover[0];
@@ -43,6 +72,8 @@ const createInspiration = catchAsync(
           });
         }
       }
+
+
     const result = await InspirationService.createInspiration(req.body);
     sendResponse(res, {
       statusCode: httpStatus.CREATED,
@@ -140,6 +171,20 @@ const getSpecificCategoryInspiration = catchAsync(
             req.files as { [fieldName: string]: Express.Multer.File[] }
           );
     
+
+              // cleanup local temp files after upload
+          for (const fieldName in req.files) {
+            const files = (req.files as { [fieldName: string]: Express.Multer.File[] })[fieldName];
+            for (const file of files) {
+              try {
+                if (fs.existsSync(file.path)) {
+                  fs.unlinkSync(file.path);
+                }
+              } catch (err) {
+                console.error(`Failed to delete file ${file.path}:`, err);
+              }
+            }
+          }
     
           if (uploadedFiles.cover?.[0]) {
             req.body.coverImage = uploadedFiles.cover[0];
