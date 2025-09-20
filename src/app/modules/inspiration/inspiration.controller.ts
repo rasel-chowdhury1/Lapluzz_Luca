@@ -23,9 +23,20 @@ const createInspiration = catchAsync(
             data: null,
           });
         }
-      req.body.subCategory = categoryData.subcategory;
 
-      console.log({categoryData, body_data: req.body})
+        if (categoryData.name === "Getting Started Ideas") {
+          req.body.subCategory ="ideas"; // Set subCategory to "ideas" for "Getting Started Ideas"
+        } else if (categoryData.name === "Seasonal Trends") {
+          req.body.subCategory = "sessional"; // Set subCategory to "sessional" for "Seasonal Trends"
+        } else if (categoryData.name === "Real Events That Inspire") {
+          req.body.subCategory = "inspire"; // Set subCategory to "inspire" for "Real Events That Inspire"
+        } else if (categoryData.name === "Style & Mood") {
+          req.body.subCategory = "styleMood"; // Set subCategory to "styleMood" for "Style & Mood"
+        }
+        else{
+          req.body.subCategory = ""; // Default to "latest" if no match found
+        }
+
 
       if (req.files) {
     

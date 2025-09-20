@@ -6,6 +6,7 @@ export interface IInspiration {
   author: ObjectId;
   title: string;
   category: Types.ObjectId;
+  subCategory: string;
   type: InspirationType;
   description?: string | null;
   coverImage: string;
