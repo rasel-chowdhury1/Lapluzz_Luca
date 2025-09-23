@@ -1,5 +1,16 @@
 import { Date, Model, ObjectId, Types } from 'mongoose';
 
+export interface searchFilters {
+  searchTerm?: string;
+  userId?: string;
+  longitude: number;
+  latitude: number;
+  address?: string,
+  city?: string,
+  town?: string
+  page?: number;  
+  limit?: number;
+}
 export interface WizardFilters {
   categoryName?: string[];
   longitude?: number;
@@ -71,7 +82,7 @@ export interface IBusiness {
   gallery: IGallery[];
   faq: IFaq[];
   providerType: ObjectId;
-  microCatogory: string;
+  microCatogory?: string;
   supportedServices: [string];
   additionalServices: [string];
   availabilities: IAvailabilities;

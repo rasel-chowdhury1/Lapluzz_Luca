@@ -424,6 +424,29 @@ const searchBusiness = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const searchBusinessesByLocation = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?.userId; // নিরাপদভাবে access
+  const { address,city,town, ...query } = req.query; // address,city & town আলাদা করে নিলাম
+
+  
+
+  const result = await businessService.searchBusinesses(
+    query as Record<string, unknown>, // টাইপ কাস্ট
+    userId,
+    address as string | undefined,
+    city as string | undefined,
+    town as string | undefined,
+  );
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Businesses search completed',
+    meta: result.meta,
+    data: result.data,
+  });
+});
+
 
 const wizardSearchBusiness = catchAsync(async (req: Request, res: Response) => {
 

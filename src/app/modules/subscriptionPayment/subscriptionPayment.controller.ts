@@ -539,6 +539,8 @@ const buySubscriptionByCredits = catchAsync(async (req: Request, res: Response) 
     await session.commitTransaction();
     session.endSession();
 
+
+    
     // 📤 Send success response
     sendResponse(res, {
       statusCode: 200,
@@ -689,12 +691,11 @@ const handleWooPaymentWebhook = catchAsync(async (req: Request, res: Response) =
       return;
     }
 
-    // Prepare the notification message
-    const userMsg = {
-      name: `🎉 Congratulations, ${user.name || 'User'}! Your Subscription is Ready to Activate`,
-      image: (adminData.profileImage ?? "") as string,
-      text: `Hi ${user?.name}, you’ve successfully completed your payment! To start boosting your ${updated.subscriptionForType} with Pianofesta, go to your sponsorship list and activate your subscription now. Let's grow your ${updated.subscriptionForType} together! 🌟`,
-    };
+const userMsg = {
+  name: `🎉 Congratulations, ${user.name || 'User'}! Your Subscription Purchase is Successful`,
+  image: (adminData.profileImage ?? "") as string,
+  text: `Hi ${user?.name}, you’ve successfully purchased your ${updated.subscriptionForType} with Pianofesta! To start boosting it, go to your sponsorship list and activate your subscription when ready. 🌟`,
+};
 
     // Send notification to the user (using Socket.IO and save it to the database)
     await emitNotificationOfSuccessfullyPamentSubcription({

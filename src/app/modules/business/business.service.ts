@@ -12,11 +12,12 @@ import { enrichEvent } from '../event/event.utils';
 import { Inspiration } from '../inspiration/inspiration.model';
 import SearchRecord from '../searchRecord/searchRecord.model';
 import { User } from '../user/user.models';
-import { CompetitionResult, IBusiness, WizardFilters } from './business.interface';
+import { CompetitionResult, IBusiness, searchFilters, WizardFilters } from './business.interface';
 import { monthNames, shuffleArray } from './business.utils';
 import WishList from '../wishlist/wishlist.model';
 import Job from '../job/job.model';
 import Business from './business.model';
+import { query } from 'winston';
 
 const createBusiness = async (payload: IBusiness) => {
   const { longitude, latitude, ...rest } = payload;
@@ -24,6 +25,14 @@ const createBusiness = async (payload: IBusiness) => {
   if (longitude !== undefined && latitude !== undefined) {
     rest.location = buildLocation(longitude, latitude) as any;
   }
+
+  const isExistCategory = await Category.findById(rest.providerType);
+
+  if(!isExistCategory) { 
+    throw new AppError(httpStatus.BAD_REQUEST, 'Category not found');
+  }
+
+  rest.microCatogory = isExistCategory.subcategory;
 
   const isExistBusiness = await Business.findOne({ author: payload.author });
 
@@ -1671,6 +1680,177 @@ const searchBusinesses = async (
   return { data: sortedBusinesses, meta };
 };
 
+import { Business } from "../models/business.model";
+import { BusinessReview } from "../models/businessReview.model";
+import { BusinessEngagementStats } from "../models/businessEngagementStats.model";
+import { Category } from "../models/category.model";
+import { SearchRecord } from "../models/searchRecord.model";
+
+interface searchFilters {
+  searchTerm?: string;
+  latitude: number;
+  longitude: number;
+  address?: string;
+  city?: string;
+  town?: string;
+  page?: number;
+  limit?: number;
+  [key: string]: any;
+}
+
+const searchBusinessesByLocation = async (userId: string, filters: searchFilters) => {
+  const {
+    searchTerm = "",
+    latitude,
+    longitude,
+    address,
+    city,
+    town,
+    page,
+    limit,
+    ...query
+  } = filters;
+
+  if (latitude === undefined || longitude === undefined) {
+    throw new Error("Latitude and longitude are required");
+  }
+
+  // 1. Match categories by name
+  const matchedCategories = await Category.find({
+    type: "Provider",
+    name: { $regex: searchTerm, $options: "i" },
+    isDeleted: false,
+  });
+  const matchedCategoryIds = matchedCategories.map((cat) => cat._id);
+
+  // 2. GeoNear aggregation (nearest within 50 km)
+  const pipeline: any[] = [
+    {
+      $geoNear: {
+        near: { type: "Point", coordinates: [parseFloat(longitude.toString()), parseFloat(latitude.toString())] },
+        distanceField: "distance",
+        spherical: true,
+        maxDistance: 50000, // 50 km in meters
+        query: {
+          isDeleted: false,
+          $or: [
+            { name: { $regex: searchTerm, $options: "i" } },
+            { description: { $regex: searchTerm, $options: "i" } },
+            { microCatogory: { $regex: searchTerm, $options: "i" } },
+            ...(matchedCategoryIds.length ? [{ providerType: { $in: matchedCategoryIds } }] : []),
+          ],
+        },
+      },
+    },
+    { $lookup: { from: "categories", localField: "providerType", foreignField: "_id", as: "providerType" } },
+    { $unwind: { path: "$providerType", preserveNullAndEmptyArrays: true } },
+  ];
+
+  // Pagination
+  const currentPage = page ? parseInt(page.toString()) : 1;
+  const perPage = limit ? parseInt(limit.toString()) : 100; // default 100 results
+  if (page && limit) {
+    pipeline.push({ $skip: (currentPage - 1) * perPage });
+    pipeline.push({ $limit: perPage });
+  }
+
+  let results = await Business.aggregate(pipeline);
+  const businessIds = results.map((biz) => biz._id);
+
+  // 3. Get ratings
+  const ratingAgg = await BusinessReview.aggregate([
+    { $match: { businessId: { $in: businessIds } } },
+    {
+      $group: {
+        _id: "$businessId",
+        averageRating: { $avg: "$rating" },
+        totalReviews: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const ratingMap: Record<string, { averageRating: number; totalReviews: number }> = {};
+  ratingAgg.forEach((entry) => {
+    ratingMap[entry._id.toString()] = {
+      averageRating: parseFloat(entry.averageRating.toFixed(1)),
+      totalReviews: entry.totalReviews,
+    };
+  });
+
+  // 4. Engagement stats
+  const businessEngagements = await BusinessEngagementStats.find({
+    businessId: { $in: businessIds },
+  }).select("businessId likes comments followers");
+
+  const businessEngagementMap: Record<string, any> = {};
+  businessEngagements.forEach((stat) => {
+    const id = stat.businessId.toString();
+    businessEngagementMap[id] = {
+      totalLikes: stat.likes?.length || 0,
+      totalComments: stat.comments?.length || 0,
+      isLiked: userId ? stat.likes?.some((like) => like.toString() === userId) : false,
+      isFollowed: userId ? stat.followers?.some((f) => f.toString() === userId) : false,
+    };
+  });
+
+  // 5. Merge ratings + engagement
+  const populatedBusinesses = results.map((biz) => {
+    const id = biz._id.toString();
+
+    const rating = ratingMap[id] || { averageRating: 0, totalReviews: 0 };
+    const engagement = businessEngagementMap[id] || {
+      totalLikes: 0,
+      totalComments: 0,
+      isLiked: false,
+      isFollowed: false,
+    };
+
+    return {
+      ...biz,
+      ...rating,
+      ...engagement,
+      blueVerifiedBadge: biz.subBlueVerifiedBadge,
+      type: "business",
+    };
+  });
+
+  // 6. Sort by subscription -> rating -> createdAt (distance already handled by geoNear)
+  const subscriptionPriority = ["exclusive", "elite", "prime", "custom", "none"];
+  const sortedBusinesses = populatedBusinesses.sort((a, b) => {
+    const subA = subscriptionPriority.indexOf(a.subscriptionType || "none");
+    const subB = subscriptionPriority.indexOf(b.subscriptionType || "none");
+    if (subA !== subB) return subA - subB;
+
+    if ((b.averageRating || 0) !== (a.averageRating || 0)) {
+      return (b.averageRating || 0) - (a.averageRating || 0);
+    }
+
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+
+  // 7. Store search record asynchronously
+  SearchRecord.create({
+    address,
+    city,
+    town,
+    keyword: searchTerm,
+    totalResults: results.length,
+    userId,
+    type: "Search",
+    searchDate: new Date(),
+  }).catch((err) => console.error("Failed to create SearchRecord:", err));
+
+  // 8. Meta object
+  const meta = {
+    page: currentPage,
+    limit: perPage,
+    total: results.length,
+    totalPage: Math.ceil(results.length / perPage),
+  };
+
+  return { data: sortedBusinesses, meta };
+};
+
 
 const wizardSearchBusinesses = async (userId:string, filters: WizardFilters) => {
   const {
@@ -2118,6 +2298,7 @@ export const businessService = {
   getBusinessAndEventsForMap,
   getMyBusinesses,
   searchBusinesses,
+  searchBusinessesByLocation,
   getExtraBusinessDataById,
   getSpecificBusinessStats,
   getMyBusinessesList,

@@ -9,6 +9,8 @@ import dayjs from 'dayjs';
 import Business from "../business/business.model";
 import Event from "../event/event.model";
 import Job from "../job/job.model";
+import { emitNotificationOfSuccessfullyPamentSubcription } from "../../../socketIo";
+import { getAdminData } from "../../DB/adminStore";
 
 const getMySubscriptions = async (userId: string) => {
   const subscriptions = await MySubscription.find({ user: userId, status: {$in: ["notActivate","activate"]} })
@@ -184,9 +186,43 @@ const activateSubscription = async (userId: string, mySubId: string) => {
       }
     }
 
+
+
     // Commit the transaction
     await session.commitTransaction();
     session.endSession();
+
+
+         // Fetch admin data (for sending a notification)
+        const adminData: any = getAdminData();
+    
+        if (!adminData || !adminData._id) {
+          console.error("Admin data not found. Cannot send reminder notifications.");
+          return; // Stop the notification process if admin data is not available
+        }
+    
+        // Fetch the user object to personalize the message
+        const user = await User.findById(mySubscription.user);  // Assuming the user exists in the updated document
+    
+        if (!user) {
+          console.error("User not found for the provided userId.");
+          return;
+        }
+    
+          const userMsg = {
+        name: `✅ Your ${mySubscription.subscriptionForType} Subscription is Now Active!`,
+        image: (adminData.profileImage ?? "") as string,
+        text: `Hi ${user?.name}, your ${mySubscription.subscriptionType?.toUpperCase()} subscription has been activated! You can now enjoy all the benefits and start boosting your ${mySubscription.subscriptionForType} with Pianofesta. Let’s grow together! 🚀`,
+      };
+
+    
+        // Send notification to the user (using Socket.IO and save it to the database)
+        await emitNotificationOfSuccessfullyPamentSubcription({
+          userId: adminData._id as mongoose.Types.ObjectId,
+          receiverId: (user as any)._id as mongoose.Types.ObjectId,
+          userMsg,
+        });
+    
 
     return mySubscription;
   } catch (error ) {
