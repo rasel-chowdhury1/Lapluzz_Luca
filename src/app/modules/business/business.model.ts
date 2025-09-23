@@ -114,6 +114,10 @@ const businessSchema = new Schema<IBusiness>(
         type: Schema.Types.ObjectId, 
         ref: 'Categories' 
       },
+    microCatogory: {
+      type: String,
+      required: true
+    },
     supportedServices: {
       type: [String],
       default: []

@@ -95,7 +95,8 @@ const getAllBusinessByLocation = async (
     {
       $match: {
         // author: { $ne: new mongoose.Types.ObjectId(userId) },
-        providerType: new mongoose.Types.ObjectId(query.providerType),
+        // providerType: new mongoose.Types.ObjectId(query.providerType),
+        microCatogory: query.microCatogory,
         isActive: true,
         isDeleted: false,
       },
@@ -1559,6 +1560,7 @@ const searchBusinesses = async (
     $or: [
       { name: { $regex: searchTerm, $options: 'i' } },
       { description: { $regex: searchTerm, $options: 'i' } },
+      { microCatogory: { $regex: searchTerm, $options: 'i' } },
       ...(matchedCategoryIds.length
         ? [{ providerType: { $in: matchedCategoryIds } }]
         : []),

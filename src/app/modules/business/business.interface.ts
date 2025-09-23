@@ -71,6 +71,7 @@ export interface IBusiness {
   gallery: IGallery[];
   faq: IFaq[];
   providerType: ObjectId;
+  microCatogory: string;
   supportedServices: [string];
   additionalServices: [string];
   availabilities: IAvailabilities;
