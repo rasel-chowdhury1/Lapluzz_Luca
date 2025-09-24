@@ -105,6 +105,12 @@ router.post(
   auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
   eventController.getSearchEvents
 )
+
+.get(
+  '/search/location',
+  auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
+  eventController.getSearchEventsByLocation
+)
   
 .get(
   '/list',

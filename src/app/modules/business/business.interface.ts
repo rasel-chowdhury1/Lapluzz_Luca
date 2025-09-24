@@ -5,6 +5,7 @@ export interface searchFilters {
   userId?: string;
   longitude: number;
   latitude: number;
+  maxDistance: number;
   address?: string,
   city?: string,
   town?: string

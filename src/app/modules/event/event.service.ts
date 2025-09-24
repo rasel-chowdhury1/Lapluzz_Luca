@@ -614,7 +614,7 @@ const getSubscrptionEventByLocation = async (
             isSubscription: true,
             isDeleted: false,
             isActive: true,
-            author: { $ne: new mongoose.Types.ObjectId(userId) },
+            // author: { $ne: new mongoose.Types.ObjectId(userId) },
           },
         },
       },
@@ -950,7 +950,12 @@ const getUnsubscriptionEventByLocation = async (
           near: { type: 'Point', coordinates: [longitude, latitude] },
           distanceField: 'distance',
           spherical: true,
-          query: { isSubscription: false, isDeleted: false, isActive: true, author: { $ne: new mongoose.Types.ObjectId(userId) } },
+          query: { 
+            isSubscription: false, 
+            isDeleted: false, 
+            isActive: true, 
+            // author: { $ne: new mongoose.Types.ObjectId(userId) } 
+          },
         },
       },
       // Apply QueryBuilder filters manually here if needed
@@ -1332,6 +1337,150 @@ const searchEvents = async (
     
   return { data: enriched, meta };
 };
+
+
+// 📌 Search Events by Location (always requires lat/lng)
+const searchEventsByLocation = async (
+  userId: string,
+  userLocation: { latitude: number; longitude: number },
+  maxDistanceInMeters: number = 50000, // Default 50 km
+  query: Record<string, any>,
+) => {
+  const searchTerm = (query.searchTerm as string) || "";
+
+  // 🌍 Geo-location query with distance filter (50 km = 50,000 meters)
+  const { latitude, longitude } = userLocation;
+  const aggregateQuery = Event.aggregate([
+    {
+      $geoNear: {
+        near: { type: "Point", coordinates: [longitude, latitude] },
+        distanceField: "distance",
+        spherical: true,
+        maxDistance: maxDistanceInMeters, // ✅ within 50km
+        query: {
+          isDeleted: false,
+          isActive: true,
+          ...(searchTerm && {
+            $or: [
+              { name: { $regex: searchTerm, $options: "i" } },
+              { description: { $regex: searchTerm, $options: "i" } },
+              { detailDescription: { $regex: searchTerm, $options: "i" } },
+              { address: { $regex: searchTerm, $options: "i" } },
+              { category: { $regex: searchTerm, $options: "i" } },
+              { type: { $regex: searchTerm, $options: "i" } },
+              { email: { $regex: searchTerm, $options: "i" } },
+              { phoneNumber: { $regex: searchTerm, $options: "i" } },
+            ],
+          }),
+        },
+      },
+    },
+  ]);
+
+  // Pagination
+  const page = parseInt(query.page) || 1;
+  const limit = parseInt(query.limit) || 10;
+  const skip = (page - 1) * limit;
+
+  let data = await aggregateQuery.skip(skip).limit(limit);
+
+  const total = await Event.countDocuments({
+    isDeleted: false,
+    isActive: true,
+  });
+
+  const meta = {
+    page,
+    limit,
+    total,
+    totalPage: Math.ceil(total / limit),
+  };
+
+  if (!data || data.length === 0) return { data, meta };
+
+  // ⭐ Ratings
+  const eventIds = data.map((e) => (e as any)._id);
+  const ratings = await EventReview.aggregate([
+    { $match: { eventId: { $in: eventIds } } },
+    {
+      $group: {
+        _id: "$eventId",
+        averageRating: { $avg: "$rating" },
+        totalReviews: { $sum: 1 },
+      },
+    },
+  ]);
+  const ratingMap: Record<string, { averageRating: number; totalReviews: number }> = {};
+  ratings.forEach((r) => {
+    ratingMap[r._id.toString()] = {
+      averageRating: parseFloat(r.averageRating.toFixed(1)),
+      totalReviews: r.totalReviews,
+    };
+  });
+
+  // ⭐ Engagement
+  const engagementStats = await EventEngagementStats.find({
+    eventId: { $in: eventIds },
+  }).select("eventId likes comments");
+
+  const engagementMap: Record<string, { totalLikes: number; totalComments: number; isLiked: boolean }> = {};
+  engagementStats.forEach((stat) => {
+    const id = stat.eventId.toString();
+    const totalCommentsWithReplies = (stat.comments || []).reduce((acc: number, c: any) => {
+      acc += 1;
+      if (Array.isArray(c?.replies)) acc += c.replies.length;
+      return acc;
+    }, 0);
+
+    engagementMap[id] = {
+      totalLikes: stat.likes?.length || 0,
+      totalComments: totalCommentsWithReplies,
+      isLiked: userId ? stat.likes?.some((l: any) => l.toString() === userId) : false,
+    };
+  });
+
+  // ⭐ Wishlist
+  const wishList = userId ? await WishList.findOne({ userId }).lean() : null;
+  const wishListEventIds = new Set<string>();
+  if (wishList?.folders?.length) {
+    wishList.folders.forEach((f: any) => {
+      f.events?.forEach((eid: any) => wishListEventIds.add(eid.toString()));
+    });
+  }
+
+  // 🔀 Merge results
+  let enriched = data.map((event) => {
+    const id = (event as any)._id.toString();
+
+    const rating = ratingMap[id] || { averageRating: 0, totalReviews: 0 };
+    const engagement = engagementMap[id] || { totalLikes: 0, totalComments: 0, isLiked: false };
+
+    return {
+      ...(event as any).toObject?.() ?? event,
+      ...rating,
+      ...engagement,
+      blueVerifiedBadge: event.subBlueVerifiedBadge,
+      isWishlisted: wishListEventIds.has(id),
+      type: "event",
+    };
+  });
+
+  // ⬆️ Sorting
+  const subscriptionOrder = ["diamond", "emerald", "ruby", "custom", "none"];
+  enriched = enriched.sort((a: any, b: any) => {
+    if (a.isSubscription !== b.isSubscription) return a.isSubscription ? -1 : 1;
+    const pa = subscriptionOrder.indexOf(a.subscriptionType ?? "none");
+    const pb = subscriptionOrder.indexOf(b.subscriptionType ?? "none");
+    if (pa !== pb) return pa - pb;
+    const prA = a.subsciptionPriorityLevel ?? 0;
+    const prB = b.subsciptionPriorityLevel ?? 0;
+    if (prA !== prB) return prB - prA;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+
+  return { data: enriched, meta };
+};
+
 
 
 // const getEventById = async (id: string) => {
@@ -1879,5 +2028,6 @@ export const eventService = {
   getAllCategoryAndEventName,
   getEventsByLocation,
   getUnsubscriptionEventByLocation,
-  getSubscrptionEventByLocation
+  getSubscrptionEventByLocation,
+  searchEventsByLocation
 };

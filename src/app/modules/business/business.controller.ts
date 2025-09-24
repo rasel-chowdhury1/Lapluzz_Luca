@@ -426,17 +426,29 @@ const searchBusiness = catchAsync(async (req: Request, res: Response) => {
 
 const searchBusinessesByLocation = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user?.userId; // নিরাপদভাবে access
-  const { address,city,town, ...query } = req.query; // address,city & town আলাদা করে নিলাম
 
-  
+    const {
+    longitude,
+    latitude,
+    maxDistance,  // Get maxDistance from query parameters
+    address,
+    city,
+    town,
 
-  const result = await businessService.searchBusinesses(
-    query as Record<string, unknown>, // টাইপ কাস্ট
-    userId,
-    address as string | undefined,
-    city as string | undefined,
-    town as string | undefined,
-  );
+    ...restQuery
+  } = req.query;
+
+    const filters = {
+    ...restQuery,
+    longitude: longitude ? Number(longitude) : undefined,
+    latitude: latitude ? Number(latitude) : undefined,
+    maxDistance: maxDistance ? Number(maxDistance) * 1000 : 50000,  // Default to 50 km if not provided
+    address: address ? address : "",
+    city: city ? city : "",
+    town: town ? town : ""
+  };
+
+  const result = await businessService.searchBusinessesByLocation(userId, filters as any);
 
   sendResponse(res, {
     statusCode: 200,
@@ -555,6 +567,7 @@ export const businessController = {
   updateBusiness,
   getExtraBusinessDataById,
   searchBusiness,
+  searchBusinessesByLocation,
   wizardSearchBusiness,
   filterSearchBusinesses,
   getSpecificBusinessStats,

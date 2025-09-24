@@ -577,6 +577,9 @@ const getMyPosts = async (userId: string) => {
   const posts = await PostCommunity.aggregate([
     { $match: { creator: new mongoose.Types.ObjectId(userId),isDeleted: false } },
     {
+      $sort: { createdAt: -1 } // 🔹 descending → latest first
+    },
+    {
       $lookup: {
         from: 'postcommunityengagementstats',
         localField: '_id',

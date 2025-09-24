@@ -284,6 +284,37 @@ const getSearchEvents = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getSearchEventsByLocation = catchAsync(async (req: Request, res: Response) => {
+   
+
+  const {userId} = req.user;
+    // Extract latitude and longitude from the query parameters or body
+  const { latitude, longitude,maxDistance, ...rest } = req.query;
+
+  // Ensure latitude and longitude are valid numbers
+  if (!latitude || !longitude) {
+    return sendResponse(res, {
+      statusCode: 400,
+      success: false,
+      message: 'Latitude and longitude are required',
+      data: ""
+    });
+  }
+  console.log("req query data ->>>> ", req.query)
+  const result = await eventService.searchEventsByLocation(userId,{
+    latitude: parseFloat(latitude as string),
+    longitude: parseFloat(longitude as string),
+  }, maxDistance ? Number(maxDistance) * 1000 : 50000, req.query);
+
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'All events fetched successfully',
+    data: result,
+  });
+});
+
 const getMyEvents = catchAsync(async (req: Request, res: Response) => {
 
   const { userId } = req.user;
@@ -399,5 +430,6 @@ export const eventController = {
   getCalculateCompetitionScore,
   getAllCategoryAndEventName,
   getEventsByLocation,
-  getSubscrptionEventByLocation
+  getSubscrptionEventByLocation,
+  getSearchEventsByLocation
 };

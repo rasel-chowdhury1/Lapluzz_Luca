@@ -1680,29 +1680,13 @@ const searchBusinesses = async (
   return { data: sortedBusinesses, meta };
 };
 
-import { Business } from "../models/business.model";
-import { BusinessReview } from "../models/businessReview.model";
-import { BusinessEngagementStats } from "../models/businessEngagementStats.model";
-import { Category } from "../models/category.model";
-import { SearchRecord } from "../models/searchRecord.model";
-
-interface searchFilters {
-  searchTerm?: string;
-  latitude: number;
-  longitude: number;
-  address?: string;
-  city?: string;
-  town?: string;
-  page?: number;
-  limit?: number;
-  [key: string]: any;
-}
 
 const searchBusinessesByLocation = async (userId: string, filters: searchFilters) => {
   const {
     searchTerm = "",
     latitude,
     longitude,
+    maxDistance = 50000,
     address,
     city,
     town,
@@ -1828,12 +1812,20 @@ const searchBusinessesByLocation = async (userId: string, filters: searchFilters
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
+  // 7️⃣ Construct Search Term (Keyword)
+const searchTerms = [
+  searchTerm || undefined,
+  maxDistance ? `${maxDistance / 1000} km` : undefined // convert meters to km
+]
+  .filter(Boolean) // Remove any undefined or null values
+  .join(" || "); // Join the filters into a single string
+
   // 7. Store search record asynchronously
   SearchRecord.create({
     address,
     city,
     town,
-    keyword: searchTerm,
+    keyword: searchTerms,
     totalResults: results.length,
     userId,
     type: "Search",
@@ -2017,7 +2009,7 @@ const wizardSearchBusinesses = async (userId:string, filters: WizardFilters) => 
     services?.join(", "),
     extraServices?.join(", "),
     priceRange,
-    maxDistance ? `${maxDistance} km` : undefined
+    maxDistance ? `${maxDistance / 1000} km` : undefined
   ]
     .filter(Boolean) // Remove any undefined or null values
     .join(" || "); // Join the filters into a single string

@@ -34,7 +34,7 @@ const createInspiration = catchAsync(
           req.body.subCategory = "styleMood"; // Set subCategory to "styleMood" for "Style & Mood"
         }
         else{
-          req.body.subCategory = ""; // Default to "latest" if no match found
+          req.body.subCategory = "latest"; // Default to "latest" if no match found
         }
 
 
