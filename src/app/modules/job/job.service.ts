@@ -163,7 +163,7 @@ const getSubscriptionJobs = async (userId: string, query: Record<string, any>) =
   query['isDeleted'] = false;
   query['isActive'] = true;
 
-  const baseQuery = Job.find({ author: { $ne: userId },  isSubscription: true});
+  const baseQuery = Job.find({  isSubscription: true});
 
   const jobModel = new QueryBuilder(baseQuery, query)
     .search(['title', 'email', 'phoneNumber', 'category', 'address'])
@@ -648,9 +648,9 @@ const getLatestJobs = async (userId: string, limit: number = 10) => {
   const jobs = await Job.aggregate([
     {
       $match: {
-        author: { $ne: new mongoose.Types.ObjectId(userId) },
+        // author: { $ne: new mongoose.Types.ObjectId(userId) },
         isDeleted: false,
-        // isActive: true
+        isActive: true
       }
     },
     { $sort: { createdAt: -1 } },
