@@ -488,7 +488,7 @@ const buySubscriptionByCredits = catchAsync(async (req: Request, res: Response) 
           "visual media": "visualMedia",
           "visual base": "visualBase",
         };
-        
+
         subscriptionType = jobMap[normalizeTitle(subscription.title)] || "custom";
 
     } else {
@@ -550,6 +550,27 @@ const buySubscriptionByCredits = catchAsync(async (req: Request, res: Response) 
     await session.commitTransaction();
     session.endSession();
 
+         // Fetch admin data (for sending a notification)
+    const adminData: any = getAdminData();
+
+    if (!adminData || !adminData._id) {
+      console.error("Admin data not found. Cannot send reminder notifications.");
+      return; // Stop the notification process if admin data is not available
+    }
+
+    const userMsg = {
+      name: `🎉 Congratulations, ${user.name || 'User'}! Your Subscription Purchase is Successful`,
+      image: (adminData.profileImage ?? "") as string,
+      text: `Hi ${user?.name}, you’ve successfully purchased your ${subscriptionForType} subscription using ${finalAmount} credits with Pianofesta! 
+    To start boosting it, go to your sponsorship list and activate your subscription when ready. 🌟`,
+    };
+
+    // Send notification to the user (using Socket.IO and save it to the database)
+    await emitNotificationOfSuccessfullyPamentSubcription({
+      userId: adminData._id as mongoose.Types.ObjectId,
+      receiverId: new mongoose.Types.ObjectId(user?._id),
+      userMsg,
+    });
 
     
     // 📤 Send success response
