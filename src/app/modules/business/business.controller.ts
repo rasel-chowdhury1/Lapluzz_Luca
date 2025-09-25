@@ -438,6 +438,7 @@ const searchBusinessesByLocation = catchAsync(async (req: Request, res: Response
     ...restQuery
   } = req.query;
 
+  console.log("location based search query data ->>> ",req.query)
     const filters = {
     ...restQuery,
     longitude: longitude ? Number(longitude) : undefined,
@@ -447,6 +448,8 @@ const searchBusinessesByLocation = catchAsync(async (req: Request, res: Response
     city: city ? city : "",
     town: town ? town : ""
   };
+
+  console.log({ filters })
 
   const result = await businessService.searchBusinessesByLocation(userId, filters as any);
 
@@ -517,8 +520,13 @@ const filterSearchBusinesses = catchAsync(async (req: Request, res: Response) =>
     longitude,
     latitude,
     maxGuest,
+    address,
+    city,
+    town,
     ...restQuery
   } = req.query;
+
+  console.log("filter search query data ->>> ",req.query)
 
   const { userId } = req.user;
   // Convert longitude and latitude to numbers if they exist
@@ -527,8 +535,12 @@ const filterSearchBusinesses = catchAsync(async (req: Request, res: Response) =>
     maxGuest: maxGuest ? Number(maxGuest) : undefined,
     longitude: longitude ? Number(longitude) : undefined,
     latitude: latitude ? Number(latitude) : undefined,
+    address: address ? address : "",
+    city: city ? city : "",
+    town: town ? town : ""
     
   };
+
 
 
   console.log({ filters })

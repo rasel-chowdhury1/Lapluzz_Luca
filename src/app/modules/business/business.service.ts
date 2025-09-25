@@ -2040,6 +2040,10 @@ const filterSearchBusinesses = async (
     priceRange?: string[];
     maxGuest?: number;
     sortPriceRange: string,
+    maxDistance: number, // default to 50km if not provided
+    address: string,
+    city?: string,
+    town?: string
   }
 ) => {
   const {
@@ -2048,7 +2052,11 @@ const filterSearchBusinesses = async (
     latitude,
     priceRange = [],
     maxGuest,
-    sortPriceRange = "asc"
+    sortPriceRange = "asc",
+    maxDistance = 50000, // default to 50km if not provided
+    address,
+    city,
+    town
   } = filters;
 
   const query: any = { isDeleted: false };
@@ -2071,7 +2079,7 @@ const filterSearchBusinesses = async (
           type: 'Point',
           coordinates: [longitude, latitude],
         },
-        $maxDistance: 50000, // 50km
+        $maxDistance: maxDistance, // 50km
       },
     };
   }
@@ -2169,6 +2177,29 @@ const filterSearchBusinesses = async (
   }
   });
 
+      // 7️⃣ Construct Search Term (Keyword)
+  const searchTerm = [
+    categoryName?.join(", "), // Category Names
+    maxGuest,
+    priceRange, 
+    sortPriceRange,
+    maxDistance ? `${maxDistance / 1000} km` : undefined
+  ]
+    .filter(Boolean) // Remove any undefined or null values
+    .join(" || "); // Join the filters into a single string
+
+    console.log("search term =>>> ",{searchTerm})
+
+  SearchRecord.create({
+    address,
+    city,
+    town,
+    keyword: searchTerm,
+    totalResults: enriched.length,
+    userId,
+    type: "Filter",
+    searchDate: new Date(),
+  }).catch(err => console.error("Failed to create SearchRecord:", err));
   return enriched;
 };
 
