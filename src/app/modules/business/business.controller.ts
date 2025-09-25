@@ -12,7 +12,7 @@ const createBusiness = catchAsync(async (req: Request, res: Response) => {
   req.body.author = userId;
   req.body.email = email;
 
-  console.log(req.files)
+  // console.log(req.files)
 
   if (req.files) {
     try {
@@ -54,7 +54,7 @@ const createBusiness = catchAsync(async (req: Request, res: Response) => {
         req.body.promotionImage = uploadedFiles.promotionImage;
       }
 
-      console.log("req body ==>>> ", req.body.promotionImage)
+      // console.log("req body ==>>> ", req.body.promotionImage)
     } catch (error: any) {
       console.error('Error processing files:', error.message);
       return sendResponse(res, {
@@ -66,7 +66,7 @@ const createBusiness = catchAsync(async (req: Request, res: Response) => {
     }
   }
 
-  console.log("create business ->>> ", req.body)
+  // console.log("create business ->>> ", req.body)
   const result = await businessService.createBusiness(req.body);
   sendResponse(res, {
     statusCode: 201,
@@ -107,7 +107,7 @@ const updateBusiness = catchAsync(async (req: Request, res: Response) => {
         req.body.promotionImage = uploadedFiles.promotionImage;
       }
 
-      console.log("req body ==>>> ", req.body.promotionImage)
+      // console.log("req body ==>>> ", req.body.promotionImage)
     } catch (error: any) {
       console.error('Error processing files:', error.message);
       return sendResponse(res, {
@@ -119,7 +119,7 @@ const updateBusiness = catchAsync(async (req: Request, res: Response) => {
     }
   }
 
-  console.log("update business =>>> ", businessId, req.body)
+  // console.log("update business =>>> ", businessId, req.body)
 
   const updatedBusiness = await businessService.updateBusiness(businessId, req.body);
 
@@ -233,7 +233,7 @@ const getAllBusinessList = catchAsync(async (req: Request, res: Response) => {
 const getSpecificCategoryBusiness = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user;
   const { categoryId } = req.params;
-  console.log("user id from controller -> ", userId)
+  // console.log("user id from controller -> ", userId)
   const result = await businessService.getSpecificCategoryBusiness(categoryId, userId, req.query);
 
   sendResponse(res, {
@@ -329,7 +329,7 @@ const getSpecificBusinessStats = catchAsync(async (req: Request, res: Response) 
 
 const getCalculateCompetitionScore = catchAsync(async (req: Request, res: Response) => {
   const { businessId } = req.params;
-  console.log("business updated id ->>> ", businessId)
+  // console.log("business updated id ->>> ", businessId)
   const result = await businessService.calculateCompetitionScore(businessId);
   sendResponse(res, {
     statusCode: 200,
@@ -462,7 +462,7 @@ const searchBusinessesByLocation = catchAsync(async (req: Request, res: Response
 
 const wizardSearchBusiness = catchAsync(async (req: Request, res: Response) => {
 
-  console.log("wizard query data ->>> ",req.query)
+  // console.log("wizard query data ->>> ",req.query)
   const {
     longitude,
     latitude,

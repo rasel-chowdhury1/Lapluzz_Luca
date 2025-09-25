@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import httpStatus from 'http-status';
-import { emitNotification, notifyUserCreditAdded } from '../../../socketIo';
+import { emitNotification, emitNotificationOfCreditsEarned, emitNotificationOfSuccessfullyPamentSubcription, notifyUserCreditAdded } from '../../../socketIo';
 import QueryBuilder from '../../builder/QueryBuilder';
 import config from '../../config';
-import { getAdminId } from '../../DB/adminStore';
+import { getAdminData, getAdminId } from '../../DB/adminStore';
 import { buildLocation } from '../../utils/buildLocation';
 import { otpSendEmail, welcomeEmail } from '../../utils/emailNotifiacation';
 import { createToken, verifyToken } from '../../utils/tokenManage';
@@ -253,7 +253,61 @@ try {
           },
           { session }
         );
+
+
+
+        
+      // 🔔 Send notifications after credit updates
+      const adminData =  getAdminData(); // or your existing admin fetch logic
+
+      
+    if (!adminData || !adminData._id) {
+      console.error("Admin data not found. Cannot send reminder notifications.");
+      return; // Stop the notification process if admin data is not available
+    }
+
+      const referrerMsg = {
+        name: `🎉 Congrats ${referrer.name || 'User'}!`,
+        image: adminData?.profileImage ?? '',
+        text: `Hi ${referrer.name}, you earned +${REWARD} credits because ${user.name || 'a user'} used your referral code! ${
+          newCount % 3 === 0 ? 'Bonus +2 credits for every 3 referrals!' : ''
+        }`,
+      };
+
+      const userMsg = {
+        name: `🎉 Welcome, ${user.name || 'User'}!`,
+        image: adminData?.profileImage ?? '',
+        text: `Hi ${user.name}, you earned +${REWARD} credits for using the referral code of ${referrer.name || 'a user'}! Start exploring Pianofesta!`,
+      };
+
+      // Fire-and-forget using setImmediate
+      setImmediate(async () => {
+        try {
+          await emitNotificationOfCreditsEarned({
+            userId: new mongoose.Types.ObjectId(adminData._id),
+            receiverId: new mongoose.Types.ObjectId(referrer._id),
+            userMsg: referrerMsg,
+          });
+        } catch (err) {
+          console.error("Failed to send referrer notification:", err);
+        }
+
+        try {
+          await emitNotificationOfCreditsEarned({
+            userId: new mongoose.Types.ObjectId(adminData._id),
+            receiverId: new mongoose.Types.ObjectId(user._id),
+            userMsg: userMsg,
+          });
+        } catch (err) {
+          console.error("Failed to send user notification:", err);
+        }
       });
+
+     
+      });
+
+
+
     } finally {
       session.endSession();
     }

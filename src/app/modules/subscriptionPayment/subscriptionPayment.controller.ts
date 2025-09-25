@@ -379,7 +379,7 @@ const initiateSubscriptionPayment = catchAsync(async (req: Request, res: Respons
 
 const buySubscriptionByCredits = catchAsync(async (req: Request, res: Response) => {
 
-  console.log("buy subscription body data ->>> ", req.body);
+  // console.log("buy subscription body data ->>> ", req.body);
 
   const { subscriptionId, subscriptionOptionIndex, subscriptionFor, subscriptionForType,couponCode } = req.body;
   const { userId } = req.user;
@@ -398,7 +398,7 @@ const buySubscriptionByCredits = catchAsync(async (req: Request, res: Response) 
 
     // 🔍 Validate subscription existence
     const subscription = await Subscription.findById(subscriptionId).session(session);
-    console.log("Specefic subscription data -==>>>> ", subscription)
+    // console.log("Specefic subscription data -==>>>> ", subscription)
     if (!subscription) {
       throw new AppError(404, 'The selected subscription does not exist.');
     }
@@ -406,10 +406,10 @@ const buySubscriptionByCredits = catchAsync(async (req: Request, res: Response) 
     // 🔍 Validate subscription option index
     const selectedOption = subscription.options?.[subscriptionOptionIndex];
 
-    console.log("selected option =>>> ", selectedOption)
+    // console.log("selected option =>>> ", selectedOption)
 
     if (!selectedOption) {
-      console.log("'Invalid subscription option index provided.'")
+      // console.log("'Invalid subscription option index provided.'")
       throw new AppError(400, 'Invalid subscription option index provided.');
     }
 
@@ -491,11 +491,13 @@ const buySubscriptionByCredits = catchAsync(async (req: Request, res: Response) 
 
         subscriptionType = jobMap[normalizeTitle(subscription.title)] || "custom";
 
+        // console.log("subscription type for job =>>> ", subscriptionType);
+
     } else {
       subscriptionType = 'custom'; // Default to 'custom' for any other subscriptionForType
     }
 
-    console.log("subscription type =>>> ", subscriptionType)
+    // console.log("subscription type =>>> ", subscriptionType)
 
     
 
