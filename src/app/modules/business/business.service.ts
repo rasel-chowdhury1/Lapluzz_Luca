@@ -1823,8 +1823,8 @@ const searchTerms = [
   // 7. Store search record asynchronously
   SearchRecord.create({
     address,
-    city,
-    town,
+    // city,
+    // town,
     keyword: searchTerms,
     totalResults: results.length,
     userId,
@@ -2018,8 +2018,8 @@ const wizardSearchBusinesses = async (userId:string, filters: WizardFilters) => 
 
   SearchRecord.create({
     address,
-    city,
-    town,
+    // city,
+    // town,
     keyword: searchTerm,
     totalResults: results.length,
     userId,
@@ -2192,8 +2192,8 @@ const filterSearchBusinesses = async (
 
   SearchRecord.create({
     address,
-    city,
-    town,
+    // city,
+    // town,
     keyword: searchTerm,
     totalResults: enriched.length,
     userId,
