@@ -52,7 +52,7 @@ app.use('/api/v1', router);
 
 app.get('/', async (req: Request, res: Response) => {
   const htmlContent = await serverHomePage(); // Wait for HTML generation
-  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  // res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.send(htmlContent); // Send the generated HTML
 });
 
