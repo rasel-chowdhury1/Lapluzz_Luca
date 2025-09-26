@@ -332,7 +332,9 @@ const stopSubscription = async (userId: string, mySubId: string) => {
     // 8. Update event-related subscription if applicable
     if (subscription.subscriptionForType === "Event") {
       await Event.findByIdAndUpdate(subscription.subscriptionFor, {
+        isSubscription: false,
         subscriptionStatus: "deactivated",
+        expireSubscriptionTime: null,
         subscriptionEndTime: today.toISOString(),
       }).session(session);
     }
@@ -340,7 +342,9 @@ const stopSubscription = async (userId: string, mySubId: string) => {
     // 9. Update job-related subscription if applicable
     if (subscription.subscriptionForType === "Job") {
       await Job.findByIdAndUpdate(subscription.subscriptionFor, {
+        isSubscription: false,
         subscriptionStatus: "deactivated",
+        expireSubscriptionTime: null,
         subscriptionEndTime: today.toISOString(),
       }).session(session);
     }
