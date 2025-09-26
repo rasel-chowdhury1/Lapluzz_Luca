@@ -217,7 +217,7 @@ const getUnsubscriptionJobs = async (userId: string, query: Record<string, any>)
   query['isActive'] = true;
 
   const baseQuery = Job.find({
-    author: { $ne: userId },
+    // author: { $ne: userId },
     isSubscription: false,
   });
 

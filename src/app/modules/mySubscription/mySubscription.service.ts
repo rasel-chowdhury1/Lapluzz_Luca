@@ -15,7 +15,7 @@ import { getAdminData } from "../../DB/adminStore";
 const getMySubscriptions = async (userId: string) => {
   const subscriptions = await MySubscription.find({ user: userId, status: {$in: ["notActivate","activate"]} })
     .populate("subscription")
-    .populate("subscriptionFor", "name")
+    .populate("subscriptionFor", "name title")
     .sort({ status: "asc", createdAt: -1 });
 
       const subscriptionsWithPotentialCredits = subscriptions.map((sub) => {
@@ -37,6 +37,8 @@ const getMySubscriptions = async (userId: string) => {
       }
     }
 
+    
+
     return {
       ...sub.toObject(),
       potentialCredits,
@@ -49,7 +51,7 @@ const getMySubscriptions = async (userId: string) => {
 const getMySubscriptionsHistory = async (userId: string) => {
   const subscriptions = await MySubscription.find({ user: userId })
     .populate("subscription")
-    .populate("subscriptionFor", "name")
+    .populate("subscriptionFor", "name title")
     .sort({ createdAt: -1 });;
   return subscriptions;
 };
