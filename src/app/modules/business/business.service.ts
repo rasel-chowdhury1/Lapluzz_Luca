@@ -352,6 +352,21 @@ const getExclusiveBusinessByLocation = async (
     {
       $sort: { distance: 1 }, // Sort by distance, ascending (nearest businesses first)
     },
+     {
+      $lookup: {
+        from: 'categories',
+        localField: 'providerType',
+        foreignField: '_id',
+        as: 'providerType',
+      },
+    },
+    { $unwind: { path: '$providerType', preserveNullAndEmptyArrays: true } },
+    // Filter only those with "planner" in providerType.name
+    {
+      $match: {
+        'providerType.name': { $regex: 'planner', $options: 'i' },
+      },
+    },
     {
       $project: {
         name: 1,
