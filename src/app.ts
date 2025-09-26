@@ -11,7 +11,7 @@ import globalErrorHandler from './app/middleware/globalErrorhandler';
 import router from './app/routes';
 import notFound from './app/middleware/notfound';
 import serverHomePage from './app/helpers/serverHomePage';
-import { logHttpRequests } from './app/utils/logger';
+import { logErrorHandler, logHttpRequests } from './app/utils/logger';
 
 
 const app: Application = express();
@@ -52,8 +52,12 @@ app.use('/api/v1', router);
 
 app.get('/', async (req: Request, res: Response) => {
   const htmlContent = await serverHomePage(); // Wait for HTML generation
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.send(htmlContent); // Send the generated HTML
 });
+
+// Error handler middleware
+app.use(logErrorHandler);
 
 app.use(globalErrorHandler);
 
