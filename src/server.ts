@@ -36,8 +36,6 @@ async function main() {
     }, 300); // Update frame every 300ms
 
 
-    // console.log('config.database_url', config.database_url);
-
 
     // Connect to MongoDB with a timeout
     await mongoose.connect(config.database_url as string, {
@@ -67,7 +65,6 @@ async function main() {
     });
   } catch (err) {
     console.error('Error starting the server:', err);
-    console.log(err);
   }
 }
 
@@ -145,7 +142,6 @@ cron.schedule("0 0 * * *", async () => {
 
     // Execute all notification promises in parallel
     await Promise.all(notificationPromises);
-    console.log(`✅ Sent reminder notifications to ${usersWithoutListings.length} users.`);
 
   } catch (err) {
     console.error("❌ Error in sending reminder notifications:", err);
@@ -156,7 +152,6 @@ cron.schedule("0 0 * * *", async () => {
 
 // Cron job for processing expired subscriptions and issuing auto-refunds
 cron.schedule("0 2 * * *", async () => {
-  console.log("🔄 Checking expired notActivated subscriptions for auto-refund...");
 
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -217,7 +212,6 @@ cron.schedule("0 2 * * *", async () => {
         });
       }
 
-      console.log(`✅ Preparing refund of ${sub.autoRefundAmount} credits for subscription ${sub._id}`);
     }
 
     // Perform batch updates in one go
@@ -235,7 +229,6 @@ cron.schedule("0 2 * * *", async () => {
 
     await session.commitTransaction();
     session.endSession();
-    console.log("🎉 Cron job completed successfully.");
   } catch (err) {
     await session.abortTransaction();
     session.endSession();

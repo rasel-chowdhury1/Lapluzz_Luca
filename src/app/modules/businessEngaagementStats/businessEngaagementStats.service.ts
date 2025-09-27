@@ -10,7 +10,6 @@ const likeBusiness = async (businessId: string, userId: string) => {
     { $addToSet: { likes: userId } },
     { upsert: true, new: true }
   );
-  console.log("result data ->>> ", result)
   return result;
 };
 

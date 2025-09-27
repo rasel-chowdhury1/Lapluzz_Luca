@@ -61,12 +61,15 @@ router.post(
     businessController.getAllBusiness
 )
 
+// this api used on home page to get business by location for user and organizer both
   .get(
     '/location',
     auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
     businessController.getAllBusinessByLocation
 )
 
+
+// this api used on home page to get exclusive business by location for user and organizer both
   .get(
     '/exclusive/location',
     auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),

@@ -86,7 +86,7 @@ const getAllBusinessByLocation = async (
 
   const { latitude, longitude } = userLocation;
 
-  console.log({ latitude, longitude });
+
 
   // Aggregate query to include $geoNear for geospatial sorting by distance
   const aggregateQuery = Business.aggregate([
@@ -322,11 +322,11 @@ const getExclusiveBusinessByLocation = async (
   query['isSubscription'] = true;
   query['subscriptionType'] = 'exclusive'; // Only get businesses with 'exclusive' subscription type
 
-  console.log(query)
+
 
   const { latitude, longitude } = userLocation;
 
-  console.log({ latitude, longitude });
+
 
   // Aggregate query to include $geoNear for geospatial sorting by distance
   const aggregateQuery = Business.aggregate([
@@ -778,14 +778,14 @@ const getSpecificCategoryBusiness = async (
   query['providerType'] = categoryId;
 
 
-  console.log("user id -> ", {userId})
+
   const baseQuery = Business.find({author: { $ne: new mongoose.Types.ObjectId(userId) },isActive: true, isDeleted: false})
     .populate('providerType', 'name')
     .select(
       'name coverImage address priceRange maxGuest subscriptionType createdAt providerType'
   );
   
-  console.log({baseQuery})
+
 
   const businessModel = new QueryBuilder(baseQuery, query)
     .search(['name', 'email', 'phoneNumber', 'address', 'subscriptionType', 'priceRange'])
@@ -932,7 +932,7 @@ const getUnsubscriptionBusiness = async (query: Record<string, any>) => {
   query['isDeleted'] = false;
   query['isSubscription'] = false; // Only unsubscription businesses
 
-  console.log({ query })
+
 
 
   const businessModel = new QueryBuilder(Business.find(), query)
@@ -1293,7 +1293,7 @@ const getSpecificBusinessStats = async (businessId: string) => {
   // ⭐ Get totalCredits of the author
   const author = await User.findById(authorId).select('totalCredits customId').lean();
 
-  console.log({business})
+
   const totalCredits = author?.totalCredits || 0;
 
   // 2️⃣ Get engagement stats (followers, likes, comments)
@@ -1377,7 +1377,7 @@ const updateBusiness = async (
   businessId: string,
   updateData: Partial<IBusiness>
 ) => {
-  console.log("updateData ->>> ", { ...updateData });
+
 
   // Fetch the current business first
   const existingBusiness = await Business.findById(businessId);
@@ -1437,7 +1437,7 @@ const activateBusinessById = async (
     { new: true }
   );
 
-  console.log({updateBusiness})
+
   return updatedBusiness;
 };
 
@@ -1523,7 +1523,7 @@ const getBusinessAndEventsForMap = async (userId?: string) => {
   const jobs = await Job.find({isDeleted: false, isActive: true})
                         .select('title description address location coverImage availability isSubscription')
 
-  console.log({businesses, events,jobs})
+
 
   return {
     businesses,
@@ -1546,7 +1546,7 @@ const getBusinessAndEventsJobsForMap = async (userId?: string) => {
   const jobs = await Job.find({isDeleted: false, isActive: true})
                         .select('title description address location coverImage availability isSubscription')
 
-  console.log({businesses, events,jobs})
+
 
   return {
     businesses,
@@ -2022,7 +2022,7 @@ const wizardSearchBusinesses = async (userId:string, filters: WizardFilters) => 
     .filter(Boolean) // Remove any undefined or null values
     .join(" || "); // Join the filters into a single string
 
-    console.log("search term =>>> ",{searchTerm})
+
 
   SearchRecord.create({
     address,
@@ -2097,7 +2097,7 @@ const filterSearchBusinesses = async (
     query.priceRange = { $in: priceRange };
   }
 
-  console.log('MAX GUEST ->>> ', typeof maxGuest)
+
   // 4. Max Guest Filter
   if (typeof maxGuest === 'number') {
     query.maxGuest = { $gte: maxGuest };
@@ -2196,7 +2196,7 @@ const filterSearchBusinesses = async (
     .filter(Boolean) // Remove any undefined or null values
     .join(" || "); // Join the filters into a single string
 
-    console.log("search term =>>> ",{searchTerm})
+
 
   SearchRecord.create({
     address,
@@ -2228,13 +2228,13 @@ const calculateCompetitionScore = async (
   businessId: string
 ) => {
 
-  console.log("service business id->> ", { businessId })
+
   // Step 1: Fetch the business
   const business = await Business.findById(businessId)
     .select('location providerType')
     .lean();
 
-  console.log({ business });
+
   if (!business || !business.location || !business.providerType) {
     throw new Error('Business must have location and category to calculate competition.');
   }
@@ -2258,7 +2258,7 @@ const calculateCompetitionScore = async (
     isDeleted: false,
   }).select('subscriptionType');
 
-  console.log("business ->>>>>>", businesses)
+
 
   const weights = {
     exclusive: 5,
@@ -2267,7 +2267,7 @@ const calculateCompetitionScore = async (
     none: 0.5,
   };
 
-  console.log({ weights })
+
 
   // Step 3: Count types
   let P1 = 0, P2 = 0, P3 = 0, FREE = 0;
@@ -2287,7 +2287,7 @@ const calculateCompetitionScore = async (
     }
   }
 
-  console.log({P1,P2,P3,FREE})
+
 
   const TOTAL = P1 + P2 + P3 + FREE;
 

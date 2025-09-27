@@ -71,7 +71,7 @@ const getDynamicCategory = catchAsync(async (req: Request, res: Response) => {
   const {categoryName}  = req.params;
 
   const result = await categoryService.getDynamicCategories(categoryName, req.query);
-  // console.log("result =>>> ", result)
+
   sendResponse(res, {
     statusCode: 200,
     success: true,

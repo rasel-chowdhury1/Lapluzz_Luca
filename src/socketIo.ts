@@ -61,7 +61,7 @@ export const onlineFriendshipUser = new Map<
   }
 >();
 
-// console.log('connectedUsers ---->>> ', connectedUsers);
+
 
 export const initSocketIO = async (server: HttpServer): Promise<void> => {
 
@@ -103,7 +103,7 @@ export const initSocketIO = async (server: HttpServer): Promise<void> => {
       );
     }
 
-    // console.log(token, 'token from socket ========================>');
+
 
     const userDetails = verifyToken({
       token,
@@ -135,18 +135,13 @@ export const initSocketIO = async (server: HttpServer): Promise<void> => {
       if (socket.user && socket.user._id) {
         connectedUsers.set(socket.user._id.toString(), { socketID: socket.id });
         emitOnlineUser(socket.user?._id);
-        // console.log(
-        //   `Registered user testing ${socket.user._id.toString()} with socket ID: ${socket.id}`,
-        // );
+
       }
 
       // (Optional) In addition to auto-registering, you can still listen for a "userConnected" event if needed.
       socket.on('chatConnected', ({ userId }: { userId: string }) => {
-        console.log("connected to chat")
-        connectedUserOnChat.set(userId, { socketID: socket.id });
-        // console.log(`User ${userId} connected with socket ID: ${socket.id}`);
 
-        console.log({connectedUserOnChat})
+        connectedUserOnChat.set(userId, { socketID: socket.id });
       });
 
       // (Optional) In addition to auto-registering, you can still listen for a "userConnected" event if needed.
@@ -154,7 +149,6 @@ export const initSocketIO = async (server: HttpServer): Promise<void> => {
         console.log("disconnected to chat")
          connectedUserOnChat.delete(userId)
 
-        console.log({connectedUserOnChat})
       });
 
 
@@ -162,42 +156,7 @@ export const initSocketIO = async (server: HttpServer): Promise<void> => {
       //----------------------online array send for front end------------------------//
       io.emit('onlineUser', Array.from(connectedUsers));
 
-      // ===================== join by user id ================================
-      // socket.join(user?._id?.toString());
 
-      //----------------------user details and messages send end for front end -->(as need to use)------------------------//
-
-      //----------------------active user list of specific user start------------------------//
-      //   socket.on('online-active-user', async ({}, callback) => {
-      //     // Query the Friendship collection to find a record for the specific user (userId)
-      //     const userList = await Friendship.findOne({
-      //       userId: (socket as any).user._id,
-      //     }).populate('friendship', 'fullName profileImage'); // Populate the 'friendship' field with 'fullName' and 'profileImage'
-
-      //     // If no friends found, return an empty array
-      //     if (!userList || !userList.friendship) {
-      //       return callback({ success: true, data: [] });
-      //     }
-
-      //     // Filter the friends list to only include those who are currently connected
-      //     const connectedFriends = userList.friendship.filter((friend) => {
-      //       return connectedUsers.has((friend as any)._id.toString()); // Check if the friend is in the connectedUsers map
-      //     });
-
-      //     console.log('connected user ->>>> ', connectedFriends);
-
-      //     const userSocket = connectedUsers.get((socket as any).user._id);
-
-      //     if (userSocket) {
-      //       io.to(userSocket?.socketID).emit('active-users', {
-      //         success: true,
-      //         data: connectedFriends,
-      //       });
-      //     }
-      //     // Return the list of connected users
-      //     callback({ success: true, data: connectedFriends });
-      //   });
-      //----------------------active user list of specific user end------------------------//
 
 
       //----------------------chat list start------------------------//
@@ -233,7 +192,6 @@ export const initSocketIO = async (server: HttpServer): Promise<void> => {
         'send-message',
         async (payload: { text: string; images: string[], chatId: string, sender: string, sendenName?: string, senderImage?: string }, callback) => {
 
-          console.log({payload})
 
           // Check if chatId is provided
           if (!payload.chatId) {
@@ -285,7 +243,8 @@ export const initSocketIO = async (server: HttpServer): Promise<void> => {
 
 
 
-            const userTimeZone = 'Asia/Dhaka'; // Dynamic time zone or default to Asia/Dhaka
+            // const userTimeZone = 'Asia/Dhaka'; // Dynamic time zone or default to Asia/Dhaka
+            const userTimeZone = 'Europe/Rome'; // Dynamic time zone or default to Europe/Rome
 
             // Get the current time in the user's time zone
             const messageTime = moment().tz(userTimeZone).format('YYYY-MM-DDTHH:mm:ss.SSS');
@@ -298,16 +257,10 @@ export const initSocketIO = async (server: HttpServer): Promise<void> => {
               createdAt: messageTime
             });
 
-            console.log(userSocketIds)
 
             // If there are users to notify, emit the message to them
             if (userSocketIds.length > 0) {
-              console.log("excute this -> ")
-              // const messageTime = new Date()
 
-
-
-              console.log({ messageTime })
               io.to(userSocketIds).emit('newMessage', {
                 success: true,
                 chatId: payload.chatId,
@@ -341,7 +294,6 @@ export const initSocketIO = async (server: HttpServer): Promise<void> => {
               chat: payload.chatId,
             });
 
-            console.log("sent messagte ===>>>>> ",receiverId,payload.text, payload.sendenName, payload.senderImage)
             sentNotificationToReciverForNewMessageByFcmToken(receiverId,payload.text, payload.sendenName, payload.senderImage)
             // Send success callback to the sender
             callbackFn(callback, {
@@ -398,7 +350,6 @@ export const initSocketIO = async (server: HttpServer): Promise<void> => {
           fullName: data.fullName,
           typingUserId: (socket as any).user._id,
         };
-        console.log('==== message === ', result);
 
         io.emit(chat, result);
         callbackFn(callback, result);
@@ -514,12 +465,9 @@ export const emitNotification = async ({
     isRead: false, // Filter by unread notifications
   });
 
-  console.log('userSocket ------>>>> ', userSocket);
-  console.log('connected ---->>> ', connectedUsers);
 
   // Notify the specific user
   if (userMsg && userSocket) {
-    console.log();
     io.to(userSocket.socketID).emit(`notification`, {
       // userId,
       // message: userMsg,
@@ -530,7 +478,6 @@ export const emitNotification = async ({
   }
 
 
-  console.log({receiverId})
   io.emit(`notification::${receiverId}`, {
       // userId,
       // message: userMsg,
@@ -555,7 +502,6 @@ export const emitNotification = async ({
   const msg = userMsg?.text || "something";
   
   sendNotificationByFcmToken(receiverId, msg)
-  console.log({ result });
 };
 
 
@@ -635,7 +581,6 @@ export const emitDirectNotification = async ({
 
   // Notify the specific user
   if (userMsg && userSocket) {
-    console.log();
     io.to(userSocket.socketID).emit(`notification`, {
       // userId,
       // message: userMsg,
@@ -664,7 +609,6 @@ export const emitDirectNotification = async ({
   
   sendNotificationByFcmToken(receiverId, msg)
 
-  console.log({ result });
 };
 
 
@@ -699,7 +643,6 @@ export const emitMassNotification = async ({
 
   // Notify the specific user
   if (userMsg && userSocket) {
-    console.log();
     io.to(userSocket.socketID).emit(`notification`, {
       // userId,
       // message: userMsg,
@@ -750,16 +693,12 @@ export const emitNotificationToFollowersOfBusiness = async ({
     businessId: userMsg?.notificationFor, // business ID
   }).select('followers');
 
-  console.log({ engagement })
 
   const followers = engagement?.followers || [];
-  console.log("engagement - followers ", engagement, followers)
   // 2. Loop through followers and send notifications individually
   for (const followerId of followers) {
     const userSocket = connectedUsers.get(followerId.toString());
 
-
-    console.log({ followerId })
     // Count unread notifications for this user
     const unreadCount = await Notification.countDocuments({
       receiverId: followerId,
@@ -954,7 +893,6 @@ export const emitSearchNotificationToBusiness = async ({
 
   // Notify the specific user
   if (userMsg && userSocket) {
-    console.log();
     io.to(userSocket.socketID).emit(`notification`, {
       // userId,
       // message: userMsg,
@@ -1240,7 +1178,6 @@ export const emitNotificationAllBusinessUsersFromCouponOffer = async ({
   // 1. Find business users (change 'organizer' to the appropriate role, if necessary)
   const businessUserList = await User.find({ role: 'organizer' }).select('_id'); // Adjust role as needed
 
-  console.log("businessUserList===>>> ", businessUserList)
 
   // 2. Loop through business users
   for (const businessUser of businessUserList) {
@@ -1314,7 +1251,6 @@ export const emitOnlineUser = async (userId: string) => {
           fId.toString()
         );
 
-        console.log(`Emitting to ${friendId}:`, visibleFriendUserIds);
 
         io.to(friendSocket.socketID).emit('active-users', {
           success: true,
@@ -1364,7 +1300,6 @@ export const emitReminderNotificationToBusinessUser = async ({
 
   // Notify the specific user
   if (userMsg && userSocket) {
-    console.log();
     io.to(userSocket.socketID).emit(`notification`, {
       // userId,
       // message: userMsg,
@@ -1416,7 +1351,6 @@ export const emitNotificationforGotCredits = async ({
 
   // Notify the specific user
   if (userMsg && userSocket) {
-    console.log();
     io.to(userSocket.socketID).emit(`notification`, {
       // userId,
       // message: userMsg,
@@ -1475,7 +1409,6 @@ export const notifyUserCreditAdded = async ({
 
   // Notify the specific user
   if (userMsg && userSocket) {
-    console.log();
     io.to(userSocket.socketID).emit(`notification`, {
       // userId,
       // message: userMsg,
@@ -1502,5 +1435,4 @@ export const notifyUserCreditAdded = async ({
   
   sendNotificationByFcmToken(receiverId, msg)
 
-  console.log({ result });
 };

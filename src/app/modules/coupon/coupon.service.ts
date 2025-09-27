@@ -9,7 +9,7 @@ const createCoupon = async (payload: ICoupon): Promise<ICouponDocument> => {
   // Get admin data (you can modify this to fetch admin data from context if needed)
   const adminData = getAdminData();
 
-  console.log("admin data =>>>> ",{adminData})
+
 
   // Define the user message for the coupon notification, including the coupon code (payload.name)
   const userMsg = {
@@ -18,7 +18,7 @@ const createCoupon = async (payload: ICoupon): Promise<ICouponDocument> => {
     image: config.coupon_offer_img
   };
 
-  console.log({userMsg})
+
   // 1. Create the coupon without waiting for the notification process
   const newCoupon = await Coupon.create(payload);
 

@@ -17,7 +17,6 @@ import { generateOptAndExpireTime } from '../otp/otp.utils';
 import Otp from '../otp/otp.model';
 // Login
 const login = async ( payload: TLogin, req: Request) => {
-  console.log('payload', payload);
   const user = await User.isUserActive(payload?.email);
   
   
@@ -132,7 +131,6 @@ const googleLogin = async (payload: { email: string, name: string, profileImage:
     return generateAndReturnTokens(user);
   }
 
-  console.log("google login payload ->>", payload)
 
 try {
     // If user does not exist, create a new one
@@ -192,7 +190,6 @@ const forgotPasswordByEmail = async (email: string) => {
 
   const { isExist, isExpireOtp } = await otpServices.checkOtpByEmail(email);
 
-  console.log({isExist, isExpireOtp})
   const { otp, expiredAt } = generateOptAndExpireTime("5");
 
   if (isExist && !isExpireOtp) {
@@ -275,7 +272,6 @@ const forgotPasswordOtpMatch = async ({
   otp,
   token,
 }: OTPVerifyAndCreateUserProps) => {
-  console.log({ otp, token });
   if (!token) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Token not found');
   }
@@ -333,7 +329,6 @@ const resetPassword = async ({
   newPassword: string;
   confirmPassword: string;
 }) => {
-  console.log(newPassword, confirmPassword);
   if (newPassword !== confirmPassword) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Password does not match');
   }
@@ -383,7 +378,6 @@ const changePassword = async ({
   newPassword: string;
   oldPassword: string;
 }) => {
-  console.log({ userId, newPassword, oldPassword });
   const user = await User.IsUserExistById(userId);
 
   if (!user) {

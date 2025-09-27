@@ -48,7 +48,6 @@ const createEvent = catchAsync(async (req: Request, res: Response) => {
         req.body.promotions = uploadedFiles.promotionImage;
       }
 
-      console.log("req body ==>>> ", req.body)
     } catch (error: any) {
       console.error('Error processing files:', error.message);
       return sendResponse(res, {
@@ -62,7 +61,7 @@ const createEvent = catchAsync(async (req: Request, res: Response) => {
 
   const result = await eventService.createEvent(req.body);
 
-  console.log("event result =>>> ", result)
+
   sendResponse(res, {
     statusCode: 201,
     success: true,

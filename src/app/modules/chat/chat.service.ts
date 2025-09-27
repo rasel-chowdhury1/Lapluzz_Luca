@@ -12,72 +12,6 @@ import { ensureFriendship } from './chat.utils';
 const toObjectId = (id: string): mongoose.Types.ObjectId =>
   new mongoose.Types.ObjectId(id);
 
-// const addNewChat = async (
-//   // file: Express.Multer.File,
-//   userId: string,
-//   data: IChat,
-// ) => {
-//   // Check if the creator exists
-//   const isCreatorExist = await User.findOne({ _id: data?.createdBy });
-
-//   if (!isCreatorExist) {
-//     throw new Error('Creator not found');
-//   }
-
-//   // Check if another user in the chat exist
-//   const anotherUser = await User.findOne({ _id: data?.users[0] });
-
-//   if (!anotherUser) {
-//     throw new Error('Another user not found');
-//   }
-
-//   // **Check for existing individual chat (not a group chat)**
-//   if (!data?.isGroupChat) {
-//     const existingChat = await Chat.findOne({
-//       users: { $all: data.users, $size: 2 }, // Ensure both users exist in the chat
-//       isGroupChat: false, // Must be an individual chat
-//     }).populate({
-//       path: 'users',
-//       select: 'sureName name email profileImage', // Select only what you need
-//     });
-
-//     console.log('=========existing chat ====>>>>> ', existingChat);
-
-//     if (existingChat) {
-//       // Exclude current user from response
-//       const filteredUsers = existingChat.users.filter(
-//         (user: any) => user._id.toString() !== userId.toString()
-//       );
-
-//       return {
-//         ...existingChat.toObject(),
-//         users: filteredUsers,
-//       };
-//     }
-//   }
-
-//   await ensureFriendship(isCreatorExist._id, anotherUser._id);
-//   // Create the chat in the database
-//   const result = await Chat.create(data);
-
-//   if (!result) return;
-//     // Populate users like existingChat
-//   const populatedResult = await Chat.findById(result._id).populate({
-//     path: 'users',
-//     select: 'sureName name email profileImage',
-//   });
-
-//     // Exclude current user from response
-//   const filteredUsers = populatedResult?.users.filter(
-//     (user: any) => user._id.toString() !== userId.toString()
-//   );
-
-//   return {
-//     ...populatedResult?.toObject(),
-//     users: filteredUsers,
-//   };
-// };
-
 
 
 const addNewChat = async (userId: string, chatData: IChat) => {
@@ -128,11 +62,6 @@ const addNewChat = async (userId: string, chatData: IChat) => {
     }
 
 
-  console.log({
-    ...chatData,
-    createdBy: userId, // Set the createdBy field to the current userId
-    ...(chatData.contextId && { chatType: 'custom' }),
-  })
 
        // Create the new chat in the database
   const newChat = new Chat({
@@ -144,7 +73,7 @@ const addNewChat = async (userId: string, chatData: IChat) => {
   // Save the chat to the database
   const savedChat = await newChat.save();
 
-  console.log("new chat ->>> ", savedChat)
+
 
   // Populate the users for the newly created chat
   const populatedResult = await Chat.findById(savedChat._id).populate({
@@ -172,7 +101,6 @@ const dealCloseByChatById = async (userId: string, chatId: string, profileImage:
       throw new AppError(httpStatus.NOT_FOUND, 'Chat not found');
     }
 
-    console.log("chaekc ->>> ",isExistChat.contextOwner, userId)
     // 2. Check if the current user is the contextOwner
     if (isExistChat.contextOwner && isExistChat.contextOwner.toString() !== userId) {
     throw new AppError(httpStatus.FORBIDDEN, 'You are not authorized to close this chat');
@@ -307,53 +235,7 @@ const getMyChatList = async (userId: string, query: any) => {
   return data;
 };
 
-// =========== Get my chat list end ===========
 
-// Function to get the list of friends (connected users) for a specific user
-// const getOnlineConnectionUsersOfSpecificUser = async (userId: string) => {
-//   // Query the Friendship collection to find a record for the specific user (userId)
-//   const userList = await Friendship.findOne({ userId: userId }).populate(
-//     'friendship',
-//     'fullName profileImage',
-//   ); // Populate the 'friendship' field with 'fullName' and 'profileImage'
-
-//   // If no friends found, return an empty array
-//   if (!userList || !userList.friendship) {
-//     return [];
-//   }
-
-//   // Filter the friends list to only include those who are currently connected
-//   const onlineConnectedFriends = userList.friendship.filter((friend) => {
-//     return connectedUsers.has((friend as any)._id.toString()); // Check if the friend is in the connectedUsers map
-//   });
-
-//   console.log('connected user ->>>> ', onlineConnectedFriends);
-
-//   return onlineConnectedFriends || [];
-// };
-
-// Function to get the list of friends (connected users) for a specific user
-// const getConnectionUsersOfSpecificUser = async (userId: string, query: any) => {
-//   // Query the Friendship collection to find a record for the specific user (userId)
-//   const userList = await Friendship.findOne({ userId: userId }).populate(
-//     'friendship',
-//     'fullName profileImage',
-//   ); // Populate the 'friendship' field with 'fullName' and 'profileImage'
-
-//   if (!userList || !userList.friendship) return [];
-
-//   // Step 2: Normalize query string
-//   const searchTerm = query?.trim().toLowerCase();
-
-//   // Step 3: Filter if search term exists, otherwise return all friends
-//   const filteredFriends = searchTerm
-//     ? userList.friendship.filter((friend: any) =>
-//         friend.fullName.toLowerCase().includes(searchTerm),
-//       )
-//     : userList.friendship; // If query is empty, return all
-
-//   return filteredFriends;
-// };
 
 const getChatById = async (chatId: string) => {
   const result = await Chat.findById(chatId);
@@ -395,12 +277,7 @@ const leaveUserFromSpecific = async (payload: any) => {
   // // Remove the user from the chat
   chat.users = chat.users.filter((user) => user.toString() !== userId);
 
-  // // If the user is an admin in a group chat, remove them from groupAdmins
-  // if (chat.isGroupChat) {
-  //   (chat as any).groupAdmins = (chat as any).groupAdmins.filter(
-  //     (admin: any) => admin.toString() !== userId,
-  //   );
-  // }
+
   // // Save the updated chat
   await chat.save();
 
@@ -415,201 +292,12 @@ const leaveUserFromSpecific = async (payload: any) => {
   return 'User has left the chat successfully';
 };
 
-// const updateUnreadCounts = async (
-//   chatId: string,
-//   userId: string,
-//   unreadCount: number,
-// ): Promise<TChat | null> => {
-//   return await Chat.findByIdAndUpdate(
-//     chatId,
-//     { [`unreadCountes.${userId}`]: unreadCount },
-//     { new: true },
-//   );
-// };
 
-// const updateChatById = async (
-//   chatId: string,
-//   // file: Express.Multer.File,
-//   data: TChat,
-// ): Promise<TChat | null> => {
-//   const isChatExist = await Chat.findById(chatId);
-//   if (!isChatExist) {
-//     throw new Error('Chat not found');
-//   }
-//   // if (data?.isGroupChat === true) {
-//   //   if (file) {
-//   //     const ImageUrl = file.path.replace('public\\', '');
-//   //     data.groupProfilePicture = ImageUrl;
-//   //   }
-//   // }
-
-//   const result = await Chat.findByIdAndUpdate(chatId, data, {
-//     new: true,
-//   });
-//   return result;
-// };
-
-// //Block a user in a chat
-// const blockUser = async (
-//   chatId: string,
-//   userId: string,
-//   blockUserId: string,
-// ): Promise<TChat | null> => {
-//   const chat = await Chat.findById(chatId);
-
-//   console.log({ chat });
-//   if (!chat) {
-//     throw new Error('Chat not found');
-//   }
-
-//   if (!chat.users.includes(toObjectId(userId))) {
-//     throw new Error('User is not part of this chat');
-//   }
-
-//   if (!chat.users.includes(toObjectId(blockUserId))) {
-//     throw new Error('User is not part of this chat');
-//   }
-
-//   console.log(
-//     '====== blocked User id chat is exist ==== === ',
-//     chat.blockedUsers.includes(toObjectId(blockUserId)),
-//   );
-//   console.log('====== blocked User id  ==== === ', blockUserId);
-//   console.log(
-//     '====== blocked User id chat is exist ==== === ',
-//     chat.blockedUsers.includes(toObjectId(blockUserId)),
-//   );
-//   // Add user to blocked list
-//   if (chat.blockedUsers.includes(toObjectId(blockUserId))) {
-//     throw new Error('User is already blocked.');
-//   }
-
-//   // console.log({ chat });
-
-//   // chat.blockedUsers.push(blockUserId);
-//   // console.log(
-//   //   '==== before if check deleted === ',
-//   //   chat.deletedFor.includes(userId),
-//   // );
-//   // if (!chat.deletedFor.includes(userId)) {
-//   //   console.log(
-//   //     '==== after check deleted === ',
-//   //     chat.deletedFor.includes(userId),
-//   //   );
-//   //   chat.deletedFor.push(userId);
-//   // }
-
-//   // console.log(
-//   //   '====befor if check deleted === ',
-//   //   chat.deletedFor.includes(userId),
-//   // );
-//   // if (!chat.deletedFor.includes(blockUserId)) {
-//   //   console.log(
-//   //     '==== after check block === ',
-//   //     chat.deletedFor.includes(blockUserId),
-//   //   );
-//   //   chat.deletedFor.push(blockUserId);
-//   // }
-
-//   // ✅ Delete messages associated with this chatId
-//   await Message.deleteMany({ chat: chatId });
-
-//   await BlockUser.findOneAndUpdate(
-//     { user_id: userId },
-//     { $addToSet: { blocked_users: blockUserId } },
-//     { new: true, upsert: true },
-//   );
-
-//   return await Chat.findByIdAndDelete(chatId);
-
-//   // await chat.save();
-//   // return chat;
-// };
-
-// // Unblock a user in a chat
-// const unblockUser = async (
-//   chatId: string,
-//   userId: string,
-//   blockUserId: string,
-// ) => {
-//   const chat = await Chat.findById(chatId);
-//   console.log('===== chat data =====>>>> ', chat);
-//   console.log('====response ===', { chatId, userId, blockUserId });
-//   if (!chat) {
-//     throw new Error('Chat not found');
-//   }
-
-//   if (!chat.users.includes(toObjectId(userId))) {
-//     throw new Error('User is not part of this chat');
-//   }
-
-//   if (!chat.users.includes(toObjectId(blockUserId))) {
-//     throw new Error('User is not part of this chat');
-//   }
-
-//   if (!chat.users.includes(toObjectId(blockUserId))) {
-//     throw new Error('User is not part of this chat');
-//   }
-
-//   // Remove user from blocked list
-//   chat.blockedUsers = chat.blockedUsers.filter(
-//     (id) => id.toString() !== blockUserId,
-//   );
-
-//   chat.deletedFor = [];
-
-//   await chat.save();
-//   return chat;
-// };
-
-// // Delete a chat for a specific user (soft delete)
-// const deleteChatForUser = async (
-//   chatId: string,
-//   userId: string,
-// ): Promise<TChat | null> => {
-//   const chat = await Chat.findById(chatId);
-//   if (!chat) {
-//     throw new Error('Chat not found');
-//   }
-
-//   if (!chat.users.includes(toObjectId(userId))) {
-//     throw new Error('User is not part of this chat');
-//   }
-
-//   // Add user to deletedFor list
-//   if (!chat.deletedFor.includes(toObjectId(userId))) {
-//     chat.deletedFor.push(toObjectId(userId));
-//   }
-
-//   // If all users delete the chat, remove it permanently
-//   if (chat.deletedFor.length === chat.users.length) {
-//     await Chat.findByIdAndDelete(chatId);
-//     return null;
-//   }
-
-//   await chat.save();
-//   return chat;
-// };
-
-// const deleteChat = async (id: string): Promise<TChat | null> => {
-//   return await Chat.findByIdAndDelete(id);
-// };
 
 export const ChatService = {
   addNewChat,
   dealCloseByChatById,
   getMyChatList,
-  // getConnectionUsersOfSpecificUser,
-  // getOnlineConnectionUsersOfSpecificUser,
-  // getUserChats,
   getChatById,
   leaveUserFromSpecific,
-  // getUserChats,
-  // getChatById,
-  // updateUnreadCounts,
-  // deleteChat,
-  // updateChatById,
-  // blockUser,
-  // unblockUser,
-  // deleteChatForUser,
 };

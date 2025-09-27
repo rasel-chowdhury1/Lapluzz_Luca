@@ -102,7 +102,7 @@ const addItemToChecklist = catchAsync(async (req: Request, res: Response) => {
 const updateItemStatus = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user;
 
-  console.log("update item status body =>>> ",req.body)
+
 
   const { checkListId, itemId, isChecked } = req.body;
 

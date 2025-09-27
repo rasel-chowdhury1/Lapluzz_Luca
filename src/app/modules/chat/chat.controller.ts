@@ -10,7 +10,7 @@ import Event from '../event/event.model';
 const addNewChat = catchAsync(async (req: Request, res: Response) => {
   const { userId, fullName,profileImage,role } = req.user;
 
-  console.log("add new chat =>>> ", req.body)
+
   const { users = [], chatImage, chatName, isGroupChat = false, contextType, contextId } = req.body;
 
   // Ensure the current userId is included in the `users` array if not already present
@@ -82,7 +82,7 @@ const addNewChat = catchAsync(async (req: Request, res: Response) => {
     isGroupChat, // Group chat status
   };
 
-  console.log('chat data ====>>>> ', { chatData });
+
 
   // Call the service to add the new chat
   const result = await ChatService.addNewChat(userId, chatData);
@@ -142,7 +142,7 @@ const create = catchAsync(async (req: Request, res: Response) => {
     job: Job,
   };
 
-  console.log("testing ->>> ", req.body)
+
   if (contextType) {
     const contextModel = contextValidationMap[contextType];
     const context = await contextModel.findById(contextId);
@@ -169,7 +169,7 @@ const create = catchAsync(async (req: Request, res: Response) => {
     isGroupChat, // Group chat status
   };
 
-  console.log('chat data ====>>>> ', { chatData });
+
 
   // Call the service to add the new chat
   const result = await ChatService.addNewChat(userId, chatData);
@@ -183,22 +183,6 @@ const create = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-
-
-
-
-
-// const getUserChats = catchAsync(async (req: Request, res: Response) => {
-//   const {userId} = req.user;
-//   const chats = await ChatService.getUserChats(userId);
-
-//     console.log("==== chats list =====>>>>>>> ", chats)
-//     res.status(200).json({
-//       success: true,
-//       message: 'Chats retrieved successfully!',
-//       data: chats,
-//     });
-// });
 
 
 
@@ -271,14 +255,14 @@ const leaveUserFromSpecificChatController = catchAsync(
     const { chatId } = req.params;
     const { userId, fullName } = req.user;
 
-    console.log('req user = > ', req.user);
+ 
     const payload = {
       chatId,
       userId,
       fullName,
     };
 
-    console.log('payload ---->>> ', payload);
+  
 
     const result = await ChatService.leaveUserFromSpecific(payload);
     sendResponse(res, {

@@ -3,7 +3,6 @@ import Checklist from './checklist.model';
 // Service to create checklist
 const createChecklist = async (userId: string, payload : {checklistName: string, image: string}) => {
 
-    console.log("payload of check list =>>> ", userId, payload)
   const newChecklist = await Checklist.create({
     userId,
     checklistName: payload.checklistName, // Pass checklistName directly

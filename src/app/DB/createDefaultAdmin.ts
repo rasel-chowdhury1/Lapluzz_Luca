@@ -18,7 +18,6 @@ const createDefaultAdmin = async () => {
   //when database is connected, we will check is there any user who is super admin
   const existingAdmin = await User.findOne({ role: USER_ROLE.ADMIN });
 
-  // console.log("existing Admin ->> ", existingAdmin)
 
   if (!existingAdmin) {
     const result = await User.create(AdminUser);
