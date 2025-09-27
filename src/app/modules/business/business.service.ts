@@ -319,6 +319,7 @@ const getExclusiveBusinessByLocation = async (
 ) => {
   query['isActive'] = true;
   query['isDeleted'] = false;
+  query['isSubscription'] = true;
   query['subscriptionType'] = 'exclusive'; // Only get businesses with 'exclusive' subscription type
 
   console.log(query)
@@ -352,21 +353,7 @@ const getExclusiveBusinessByLocation = async (
     {
       $sort: { distance: 1 }, // Sort by distance, ascending (nearest businesses first)
     },
-    //  {
-    //   $lookup: {
-    //     from: 'categories',
-    //     localField: 'providerType',
-    //     foreignField: '_id',
-    //     as: 'providerType',
-    //   },
-    // },
-    // { $unwind: { path: '$providerType', preserveNullAndEmptyArrays: true } },
-    // // Filter only those with "planner" in providerType.name
-    // {
-    //   $match: {
-    //     'providerType.name': { $regex: 'planner', $options: 'i' },
-    //   },
-    // },
+     
     {
       $project: {
         name: 1,
@@ -396,6 +383,12 @@ const getExclusiveBusinessByLocation = async (
         preserveNullAndEmptyArrays: true, // If no providerType exists, keep the business object
       },
     },
+    // ✅ new filter by providerType.name (case-insensitive, matches “planner”)
+  {
+    $match: {
+      'providerType.name': { $regex: 'planner', $options: 'i' },
+    },
+  },
     {
       $project: {
         name: 1,
