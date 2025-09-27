@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.event.lucca",
+      "sha256_cert_fingerprints": [
+        "E5:01:D5:F0:FD:A6:80:08:6C:1A:98:75:F3:9E:4F:30:98:05:7D:7C:D8:8B:1E:0E:DA:09:37:AE:32:1C:45:99"
+      ]
+    }
+  }
+]
