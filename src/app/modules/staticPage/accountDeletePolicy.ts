@@ -7,82 +7,92 @@ export const getStaticAccountDeletePolicy = (_req: Request, res: Response) => {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Delete Account - Memorial Moments</title>
+  <title>Delete Account - PianoFesta</title>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 40px;
       padding: 0;
-      background-color: #ffffff;
+      background-color: #faf7ff;
       color: #333;
       line-height: 1.6;
-      text-align: center; /* Center text globally */
+      text-align: center;
     }
     h1 {
-      color: #e91e63;
+      color: #6A0DAD;
       margin-bottom: 10px;
     }
     h2 {
-      color: #e91e63;
+      color: #6A0DAD;
       margin-top: 40px;
+      font-size: 1.3rem;
     }
-    ol {
-      padding-left: 20px;
-      text-align: left; /* Keep lists aligned left if needed */
-      display: inline-block;
+    p {
+      font-size: 1rem;
+      margin-bottom: 16px;
     }
     .step {
-      margin-bottom: 30px;
+      margin-bottom: 40px;
       text-align: left;
+      display: inline-block;
+      max-width: 400px;
+      width: 100%;
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(106, 13, 173, 0.1);
+      padding: 20px;
     }
     .illustration {
       display: block;
       margin: 10px auto;
-      max-width: 300px; /* Limit width */
+      max-width: 260px;
       height: auto;
-      max-height: 200px; /* Make image smaller */
       border: 1px solid #ddd;
       border-radius: 8px;
       padding: 4px;
+      background-color: #fafafa;
+    }
+    a {
+      color: #6A0DAD;
+      text-decoration: none;
     }
     footer {
       margin-top: 60px;
       font-size: 0.9rem;
-      color: #888;
+      color: #777;
     }
   </style>
 </head>
 <body>
-  <h1>Steps to Delete Your Account</h1>
-  <p>
-    Follow these steps to permanently delete your account from the pianofesta app.
-  </p>
-
+  <h1>How to Delete Your Account</h1>
+  <p>Follow these steps to permanently delete your account from the PianoFesta app.</p>
 
   <div class="step">
-    <h2>Step 1: Tap on Delete</h2>
-    <img src="/uploads/static/stepOne.png" alt="Delete Account Step 2 Illustration" class="illustration">
+    <h2>Step 1: Tap on “Delete Account”</h2>
+    <p>Go to your profile settings and select the <strong>“Delete Account”</strong> option.</p>
+    <img src="/uploads/static/firstStepLuca.png" alt="Step 1: Tap Delete Account" class="illustration" />
   </div>
 
   <div class="step">
-    <h2>Step 2: Provide Your Password</h2>
-    <p>A pop-up will appear; enter your password in the password field.</p>
-    <img src="/uploads/static/stepTwo.png" alt="Delete Account Step 3 Illustration" class="illustration">
+    <h2>Step 2: Enter Your Password</h2>
+    <p>A confirmation pop-up will appear. Enter your password to verify your identity.</p>
+    <img src="/uploads/static/secondStepLuca.png" alt="Step 2: Enter Password" class="illustration" />
   </div>
 
   <div class="step">
-    <h2>Step 3: Press the Delete Button</h2>
-    <img src="/uploads/static/stepThree.png" alt="Delete Account Step 4 Illustration" class="illustration">
+    <h2>Step 3: Confirm Deletion</h2>
+    <p>After entering your password, press the <strong>“Delete”</strong> button to continue.</p>
+    <img src="/uploads/static/thirdStepLuca.png" alt="Step 3: Confirm Deletion" class="illustration" />
   </div>
 
   <div class="step">
-    <h2>Step 4: Account Deleted Successfully</h2>
-    <p>Your account will be permanently deleted, and you will no longer have access to it.</p>
-    <img src="/uploads/static/stepThree.png" alt="Delete Account Step 5 Illustration" class="illustration">
+    <h2>Step 4: Account Deleted</h2>
+    <p>Your PianoFesta account will be permanently deleted, and all associated data will be removed.</p>
+    <img src="/uploads/static/stepFour.png" alt="Step 4: Account Deleted" class="illustration" />
   </div>
 
   <footer>
-    © 2025 WinWhen App. All rights reserved.
+    © 2025 <strong style="color:#6A0DAD;">PianoFesta</strong>. All rights reserved.
   </footer>
 </body>
 </html>
