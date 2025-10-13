@@ -26,7 +26,6 @@ export const getPrivacyPolicy = (_req: Request, res: Response) => {
 </head>
 <body>
   <h1>Privacy Policy</h1>
-  <p><strong>Effective Date:</strong> October 2025</p>
   <p>This Privacy Policy describes how <strong>PianoFesta</strong> ("we", "us", or "our") collects, uses, and protects your information when you use our mobile application ("App").</p>
 
   <h2>1. Information We Collect</h2>
