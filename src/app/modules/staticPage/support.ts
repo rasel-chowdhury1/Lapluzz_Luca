@@ -6,7 +6,7 @@ export const getStaticSupport = (_req: Request, res: Response) => {
   <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Support Contact Us - WinWhen</title>
+    <title>Support Contact Us - PianoFesta</title>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -17,11 +17,11 @@ export const getStaticSupport = (_req: Request, res: Response) => {
         color: #333;
       }
       h1 {
-        color: #e91e63;
+        color: #6A0DAD;
         text-align: center;
       }
       h2 {
-        color: #e91e63;
+        color: #6A0DAD;
         margin-top: 30px;
       }
       ul {
@@ -42,20 +42,27 @@ export const getStaticSupport = (_req: Request, res: Response) => {
   </head>
   <body>
     <div style="display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: #f6f6fa;">
-        <div style="background-color: #fff; padding: 24px 32px; border-radius: 8px; box-shadow: 0px 2px 12px rgba(0,0,0,0.1); text-align: left; max-width: 400px;">
-            <h3 style="margin-bottom: 16px; font-weight: 600; font-family: sans-serif;">Support Contact</h3>
-            
-            <p style="margin: 4px 0;"><strong>Email:</strong> 
-            <a href="mailto:winwhenapps@gmail.com" style="color: #e91e63; text-decoration: none;">winwhenapps@gmail.com</a>
-            </p>
+      <div style="background-color: #fff; padding: 24px 32px; border-radius: 8px; box-shadow: 0px 2px 12px rgba(0,0,0,0.1); text-align: left; max-width: 400px;">
+        <h3 style="margin-bottom: 16px; font-weight: 600; font-family: sans-serif;">Support Contact</h3>
+        
+        <p style="margin: 4px 0;">
+          <strong>Email:</strong>
+          <a href="mailto:info@pianofesta.it" style="color: #6A0DAD; text-decoration: none;">info@pianofesta.it</a>
+        </p>
 
-            <p style="margin: 4px 0;"><strong>Phone:</strong> 
-            <a href="tel:4406668966" style="color: #e91e63; text-decoration: none;">440-666-8966</a>
-            </p>
+        <p style="margin: 4px 0;">
+          <strong>Phone:</strong>
+          <a href="tel:+393277913497" style="color: #6A0DAD; text-decoration: none;">+39 327 7913497</a>
+        </p>
 
-        </div>
-        </div>
-    <footer>© 2025 WinWhen. All rights reserved.</footer>
+        <p style="margin: 4px 0;">
+          <strong>Address:</strong><br />
+          Via delle Magnolie 5, 00062 Bracciano (RM), Italy
+        </p>
+      </div>
+    </div>
+
+    <footer>© 2025 PianoFesta. All rights reserved.</footer>
   </body>
   </html>
   `;

@@ -55,7 +55,7 @@ export const getStaticAccountDeletePolicy = (_req: Request, res: Response) => {
 <body>
   <h1>Steps to Delete Your Account</h1>
   <p>
-    Follow these steps to permanently delete your account from the Winwhen app.
+    Follow these steps to permanently delete your account from the pianofesta app.
   </p>
 
 
