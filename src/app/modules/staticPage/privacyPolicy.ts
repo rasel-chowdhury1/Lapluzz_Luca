@@ -3,18 +3,19 @@ import { Request, Response } from "express";
 export const getStaticPrivacyPolicy = (_req: Request, res: Response) => {
   const html = `
   <!DOCTYPE html>
-  <html lang="en">
+  <html lang="it">
   <head>
     <meta charset="UTF-8" />
     <title>Privacy Policy - PianoFesta</title>
     <style>
       body {
-        font-family: Arial, sans-serif;
-        line-height: 1.6;
-        max-width: 800px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.7;
+        max-width: 900px;
         margin: 40px auto;
         padding: 0 20px;
         color: #333;
+        background-color: #faf7ff;
       }
       h1 {
         color: #6A0DAD;
@@ -23,6 +24,7 @@ export const getStaticPrivacyPolicy = (_req: Request, res: Response) => {
       h2 {
         color: #6A0DAD;
         margin-top: 30px;
+        font-size: 1.3rem;
       }
       ul {
         margin-top: 5px;
@@ -31,6 +33,9 @@ export const getStaticPrivacyPolicy = (_req: Request, res: Response) => {
       }
       strong {
         color: #000;
+      }
+      p {
+        margin-bottom: 12px;
       }
       footer {
         margin-top: 50px;
@@ -41,69 +46,80 @@ export const getStaticPrivacyPolicy = (_req: Request, res: Response) => {
     </style>
   </head>
   <body>
-    <h1>Privacy Policy</h1>
-    <p><strong>Effective Date:</strong> October 2025</p>
-    <p>This Privacy Policy describes how <strong>PianoFesta</strong> ("we", "us", or "our") collects, uses, and protects your information when you use our mobile application ("App").</p>
+    <h1>Privacy Policy di PianoFesta</h1>
+    <p><strong>Ultimo aggiornamento:</strong> 8 settembre 2025</p>
 
-    <h2>1. Information We Collect</h2>
+    <h2>1. Titolare del Trattamento</h2>
+    <p>Il titolare del trattamento è <strong>Luca La Porta</strong>, con sede in [inserire indirizzo], titolare della piattaforma PianoFesta.</p>
+    <p><strong>Email di contatto per privacy:</strong> <a href="mailto:info@pianofesta.it" style="color:#6A0DAD;">info@pianofesta.it</a></p>
+
+    <h2>2. Dati raccolti</h2>
+    <p><strong>Utenti regolari:</strong></p>
+    <p>Nome, cognome, nickname, email, telefono, data di nascita, sesso, password, referral (ove presente), accettazione Termini & Condizioni, contenuti generati (post, sondaggi, recensioni, messaggi in chat, curriculum inviati), nonché eventuali immagini o file multimediali caricati volontariamente.</p>
+
+    <p><strong>Utenti business:</strong></p>
+    <p>Nome, cognome, nickname, email, telefono, password, referral, accettazione Termini & Condizioni, dati aziendali (ragione sociale, P.IVA, descrizioni, immagini).</p>
+
+    <p><strong>Dati evento:</strong></p>
+    <p>Per gli eventi creati o seguiti, la piattaforma può raccogliere nome, data, luogo, descrizione, partecipanti e immagini associate, necessari al corretto funzionamento delle funzioni di organizzazione, promozione e partecipazione.</p>
+
+    <p><strong>Dati tecnici:</strong> indirizzo IP, dispositivo, log di accesso, cronologia ricerche (Search History).</p>
+
+    <p><strong>Dati di posizione (geolocalizzazione):</strong></p>
+    <p>Previo consenso esplicito dell’utente, l’app può raccogliere la posizione del dispositivo (approssimativa o precisa) al fine di mostrare eventi, fornitori e luoghi nelle vicinanze. La geolocalizzazione è facoltativa e può essere attivata o disattivata in qualsiasi momento dalle impostazioni del dispositivo o dell’app.</p>
+
+    <h2>3. Finalità del trattamento</h2>
     <ul>
-      <li><strong>Profile Information:</strong> When you create or update your profile, we collect your name, email address, profile photo (if provided), and any other information you choose to share.</li>
-      <li><strong>Event Information:</strong> We collect details about events you create, follow, or organize, such as event name, type, date, time, location, and participants.</li>
-      <li><strong>Photo & Media Content:</strong> If you choose to upload photos for events or inspirations, we collect and store these images. This feature is optional, and you control what you share.</li>
-      <li><strong>Messages / Chat Data:</strong> We collect messages and content you send or receive through the app’s direct chat and community features.</li>
-      <li><strong>Financial Information:</strong> When you make payments via Stripe, we may collect payment-related information necessary to process transactions. We do not store credit card details; all payment processing is handled securely by Stripe.</li>
-      <li><strong>Location Data:</strong> If you enable location services, we may collect and use your device location to show nearby vendors and event locations. You can disable location access anytime through your device settings.</li>
-      <li><strong>Device & Log Data:</strong> We automatically collect technical information about your device, including device type, operating system, IP address, crash logs, and diagnostic data to improve app performance and security.</li>
+      <li>Registrazione e gestione degli account;</li>
+      <li>Pubblicazione e gestione di listing (business, eventi, job) e interazioni correlate;</li>
+      <li>Accesso a Community e sezione Ispirazioni;</li>
+      <li>Gestione di recensioni, chat, follow e salvataggi;</li>
+      <li>Invio di comunicazioni promozionali e newsletter;</li>
+      <li>Analisi statistiche, profilazione e miglioramento dei servizi;</li>
+      <li>Adempimenti fiscali e legali;</li>
+      <li>Gestione delle notifiche: inviare comunicazioni interne tramite la piattaforma da parte dei listing business seguiti dall’utente. L’utente riceverà tali notifiche solo se sceglie volontariamente di seguire il listing (funzione “follow”), potendo in qualsiasi momento annullare il follow e interrompere la ricezione delle notifiche.</li>
     </ul>
 
-    <h2>2. How We Use Your Information</h2>
+    <p><strong>Uso dei dati e tutela:</strong> I dati vengono utilizzati esclusivamente per fornire funzionalità della piattaforma, migliorare l’esperienza utente, consentire la comunicazione tra utenti e fornitori, e adempiere agli obblighi di legge. PianoFesta non vende, affitta o cede dati personali a terzi per scopi commerciali.</p>
+
+    <h2>4. Base giuridica</h2>
     <ul>
-      <li>Provide, maintain, and improve the PianoFesta App</li>
-      <li>Enable you to find, manage, and communicate with vendors and planners</li>
-      <li>Send notifications about events, bookings, or updates</li>
-      <li>Allow users to upload and view event-related photos</li>
-      <li>Personalize your experience and provide recommendations</li>
-      <li>Facilitate social engagement (comments, chats, and shared content)</li>
-      <li>Enforce our Terms of Use and protect user safety</li>
-      <li>Comply with legal obligations</li>
+      <li>Consenso dell’utente;</li>
+      <li>Esecuzione del contratto (uso della piattaforma);</li>
+      <li>Obblighi legali (fatturazione, conservazione dati fiscali);</li>
+      <li>Legittimo interesse (miglioramento servizi, prevenzione abusi).</li>
     </ul>
 
-    <h2>3. Data Sharing and Disclosure</h2>
+    <h2>5. Terze parti</h2>
+    <p>I dati possono essere condivisi con:</p>
     <ul>
-      <li>With users you are connected to within the app (e.g., vendors or planners)</li>
-      <li>With service providers who assist in operating the app (e.g., Firebase, Stripe, cloud hosting, analytics)</li>
-      <li>If required by law or legal process</li>
-      <li>In the event of a merger, acquisition, or sale of assets (you will be notified)</li>
+      <li>Google (Gmail, Analytics);</li>
+      <li>WooCommerce / Stripe / Klarna / PayPal (pagamenti);</li>
+      <li>Amazon AWS (hosting immagini e contenuti);</li>
+      <li>Brevo (email marketing e newsletter);</li>
+      <li>Firebase (autenticazione, notifiche push e analytics app);</li>
+      <li>Altri fornitori esterni di servizi tecnologici, se necessari al funzionamento futuro della piattaforma.</li>
+    </ul>
+    <p>Tutti i fornitori terzi operano in conformità al GDPR e ai regolamenti vigenti in materia di protezione dei dati.</p>
+
+    <h2>6. Conservazione</h2>
+    <ul>
+      <li><strong>Dati personali:</strong> fino alla cancellazione dell’account, e comunque per 10 anni successivi alla cancellazione.</li>
+      <li><strong>Dati fiscali:</strong> 10 anni.</li>
+      <li><strong>Log tecnici:</strong> per un periodo ragionevole, non superiore a 12 mesi salvo esigenze di sicurezza.</li>
     </ul>
 
-    <h2>4. Data Security</h2>
-    <p>We use reasonable administrative, technical, and physical safeguards to protect your information. However, no system is completely secure, and we cannot guarantee absolute security.</p>
+    <h2>7. Diritti dell’utente</h2>
+    <p>Gli utenti possono esercitare i diritti di accesso, rettifica, cancellazione, limitazione, opposizione e portabilità dei propri dati scrivendo a <a href="mailto:privacy@pianofesta.it" style="color:#6A0DAD;">privacy@pianofesta.it</a>.</p>
+    <p>È inoltre possibile richiedere la cancellazione definitiva dell’account, la revoca del consenso alla geolocalizzazione o la disattivazione delle notifiche push in qualsiasi momento.</p>
 
-    <h2>5. Data Retention</h2>
-    <p>We retain your information only as long as necessary to fulfill the purposes described in this Privacy Policy, unless a longer retention period is required by law.</p>
+    <h2>8. Minori</h2>
+    <p>La registrazione è consentita a utenti di qualsiasi età, ma per i minori di 18 anni si raccomanda la supervisione di un genitore o tutore. PianoFesta non è responsabile di un utilizzo improprio della piattaforma da parte di minori privi di supervisione.</p>
 
-    <h2>6. Children’s Privacy</h2>
-    <p>PianoFesta is not intended for children under 13. We do not knowingly collect personal information from children. If we learn that such data has been collected, we will delete it promptly.</p>
+    <h2>9. Aggiornamenti della Privacy Policy</h2>
+    <p>La presente informativa può essere soggetta a modifiche. Eventuali aggiornamenti saranno pubblicati su questa pagina e avranno efficacia dal momento della pubblicazione. Si raccomanda di consultare periodicamente questa sezione per restare informati su eventuali modifiche.</p>
 
-    <h2>7. Your Choices</h2>
-    <ul>
-      <li>Editing or deleting your profile</li>
-      <li>Adjusting notification preferences</li>
-      <li>Disabling location services</li>
-      <li>Deleting uploaded photos</li>
-      <li>Requesting deletion of your account and associated data</li>
-    </ul>
-    <p>To request account deletion, contact us at <strong>info@pianofesta.it</strong>.</p>
-
-    <h2>8. Contact Us</h2>
-    <p>If you have questions or concerns about this Privacy Policy or your data, you may contact us at:</p>
-    <p>
-      <strong>Email:</strong> info@pianofesta.it<br />
-      <strong>Phone:</strong> +39 327 7913497<br />
-      <strong>Address:</strong> Via delle Magnolie 5, 00062 Bracciano (RM), Italy
-    </p>
-
-    <footer>© 2025 PianoFesta. All rights reserved.</footer>
+    <footer>© 2025 <strong style="color:#6A0DAD;">PianoFesta</strong>. Tutti i diritti riservati.</footer>
   </body>
   </html>
   `;
