@@ -169,7 +169,8 @@ cron.schedule("0 2 * * *", async () => {
     }).session(session);
 
     if (expiredSubs.length === 0) {
-      console.log("No expired subscriptions to process.");
+      
+      ("No expired subscriptions to process.");
       return;
     }
 

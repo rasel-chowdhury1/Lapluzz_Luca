@@ -1,5 +1,7 @@
 import TicketSupport from './ticketSupport.model';
 import { ITicketSupport } from './ticketSupport.interface';
+import { sendEmail } from '../../utils/mailSender';
+import config from '../../config';
 
 const createTicket = async (payload: { 
   fullName: string; 
@@ -10,14 +12,40 @@ const createTicket = async (payload: {
   description: string; 
 }) => {
   const { userId, typeOfIssue, description, fullName, email, phone } = payload;
-   // Save ticket in DB
-  const ticket = await TicketSupport.create({
-    userId,
-    issue: typeOfIssue,
-    description,
-  });
-  
-  return ticket;
+
+  try {
+    // Save ticket
+    const ticket = await TicketSupport.create({
+      userId,
+      typeOfIssue,
+      description,
+    });
+
+    // ADMIN EMAIL
+    const adminEmail = config.nodemailer_host_email || "pianofesta.official@gmail.com"; // put admin email in config/env file
+
+    // Email content
+    const subject = `New Support Ticket from ${fullName}`;
+    const html = `
+      <div>
+        <h2>New Support Ticket</h2>
+        <p><strong>Name:</strong> ${fullName}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Phone:</strong> ${phone}</p>
+        <p><strong>Issue Type:</strong> ${typeOfIssue}</p>
+        <p><strong>Description:</strong><br>${description}</p>
+      </div>
+    `;
+
+    // Send email to admin
+    await sendEmail(adminEmail, subject, html);
+
+    return ticket;
+
+  } catch (error) {
+    console.log("Ticket create error:", error);
+    throw error;
+  }
 };
 
 const getAllTickets = async () => {

@@ -12,6 +12,7 @@ router
     auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
     createTicket
     )
+    
     .get(
         '/my-tickets',
         auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),

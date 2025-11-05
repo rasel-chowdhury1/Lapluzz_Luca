@@ -8,6 +8,8 @@ export const createTicket = catchAsync(async (req: Request, res: Response) => {
   const { userId,fullName,email,phone } = req.user; // assuming req.user is populated by auth middleware
   const { typeOfIssue, description } = req.body;
 
+  console.log(req.body);
+
   const result = await TicketSupportService.createTicket({ fullName, email, phone,userId, typeOfIssue, description });
   
   sendResponse(res, {
