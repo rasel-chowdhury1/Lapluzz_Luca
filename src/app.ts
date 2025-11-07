@@ -17,6 +17,8 @@ import { logErrorHandler, logHttpRequests } from './app/utils/logger';
 const app: Application = express();
 
 
+app.set("trust proxy", 1);
+
 // 👮 Rate Limiter Middleware (apply to all requests)
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes

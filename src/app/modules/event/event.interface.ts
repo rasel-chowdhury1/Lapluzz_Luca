@@ -14,6 +14,16 @@ export interface IEventSubscription {
   expireDate: Date;
 }
 
+export interface RatingInfo {
+  averageRating: number;
+  totalReviews: number;
+}
+export interface EngagementInfo {
+  totalLikes: number;
+  totalComments: number;
+  isLiked: boolean;
+}
+
 
 export interface IGallery {
   url: string;

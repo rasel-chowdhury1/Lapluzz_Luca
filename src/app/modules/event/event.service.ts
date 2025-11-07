@@ -328,11 +328,11 @@ const getEventsByLocation = async (
 
   // Aggregate Subscription and Unsubscription Events
   const aggregateQuerySubscription = geoNearQuery.length 
-    ? Event.aggregate(geoNearQuery[0]) 
+    ? Event.aggregate(geoNearQuery[0] as any) 
     : Event.find({ isSubscription: true });
 
   const aggregateQueryUnsubscription = geoNearQuery.length 
-    ? Event.aggregate(geoNearQuery[1]) 
+    ? Event.aggregate(geoNearQuery[1] as any) 
     : Event.find({ isSubscription: false });
 
   // Fetch Subscription and Unsubscription Events Data
@@ -399,7 +399,7 @@ const getEventsByLocation = async (
     eventId: { $in: eventIds },
   }).select("eventId likes comments");
 
-  const engagementMap = engagementStats.reduce((acc, stat) => {
+  const engagementMap = engagementStats.reduce((acc: any, stat) => {
     const id = stat.eventId.toString();
     const totalCommentsWithReplies = stat.comments.reduce(
       (acc, comment) => {
