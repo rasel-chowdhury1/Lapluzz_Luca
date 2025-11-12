@@ -11,6 +11,10 @@ const UseCreditsSchema = new Schema<IUseCredits>(
       required: true,
     },
 
+    businessOwner: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
     businessId: {
       type: Schema.Types.ObjectId,
       ref: 'Business',
@@ -22,6 +26,12 @@ const UseCreditsSchema = new Schema<IUseCredits>(
     usedCredits: { type: Number, required: true, min: 0 },
     text: { type: String, default: '' },
     image: { type: String, default: '' },
+    // ✅ NEW
+    status: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending',
+    },
   },
   { timestamps: true }
 );

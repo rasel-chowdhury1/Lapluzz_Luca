@@ -14,6 +14,30 @@ router
         parseData(),
         useCreditsController.createUseCredits
      )
+
+     .patch(
+      "/accept/:id",
+      auth(USER_ROLE.ORGANIZER),
+      useCreditsController.acceptCreditsRequest
+     )
+
+     .patch(
+      "/reject/:id",
+      auth(USER_ROLE.ORGANIZER),
+      useCreditsController.rejectCreditsRequest
+     )
+
+     .get(
+      "/pending-requests-of-user",
+      auth(USER_ROLE.USER),
+      useCreditsController.getPendingCreditsRequestsOfUser
+     )
+
+     .get(
+      "/pending-requests-of-business",
+      auth(USER_ROLE.ORGANIZER),
+      useCreditsController.getPendingCreditsRequestsOfBusiness
+     )
     
 
 export const useCreditsRoutes = router;

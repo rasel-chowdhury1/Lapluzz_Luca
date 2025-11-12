@@ -37,7 +37,7 @@ const createUseCredits = catchAsync(async (req: Request, res: Response) => {
     type,
     businessId,
     usedCredits,
-    text: "",
+    text: text || '',
     image,
   });
 
@@ -48,6 +48,66 @@ const createUseCredits = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+
+const acceptCreditsRequest = catchAsync (async (req: Request, res: Response) => {
+  
+  const {id} = req.params;
+
+  const result = await UseCreditsService.acceptCreditsRequest(id);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Use credits request accepted successfully',
+    data: result,
+  })
+})
+
+const rejectCreditsRequest = catchAsync (async (req: Request, res: Response) => {
+  
+  const {id} = req.params;
+
+  const result = await UseCreditsService.rejectCreditsRequest(id);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Use credits request canceled successfully',
+    data: result,
+  })
+})
+
+
+const getPendingCreditsRequestsOfBusiness = catchAsync(async (req: Request, res: Response) => {
+  
+  const {userId} = req.user;
+
+  const result = await UseCreditsService.getPendingCreditsRequestsOfBusiness(userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Pending credits requests of business fetched successfully',
+    data: result,
+  })
+
+})
+
+const getPendingCreditsRequestsOfUser = catchAsync(async (req: Request, res: Response) => {
+  
+  const {userId} = req.user;
+
+  const result = await UseCreditsService.getPendingCreditsRequestsOfUser(userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Pending credits requests of user fetched successfully',
+    data: result,
+  })
+
+})
+
 
 const getUserUseCredits = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user;
@@ -76,5 +136,9 @@ const getAllUseCredits = catchAsync(async (req: Request, res: Response) => {
 export const useCreditsController = {
     createUseCredits,
     getUserUseCredits,
-    getAllUseCredits
+    getAllUseCredits,
+    getPendingCreditsRequestsOfUser,
+    getPendingCreditsRequestsOfBusiness,
+    acceptCreditsRequest,
+    rejectCreditsRequest
 }

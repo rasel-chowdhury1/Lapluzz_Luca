@@ -1380,7 +1380,112 @@ export const emitNotificationforGotCredits = async ({
 
 };
 
+export const emitNotificationforPendingCredits = async ({
+  userId,
+  receiverId,
+  message
+}: {
+  userId: string;
+  receiverId: string;
+  message: {
+    name: string;
+    text: string;
+    image?: string;
+    notificationFor: string;
+  };
+}): Promise<void> => {
 
+  if (!io) {
+    throw new Error('Socket.IO is not initialized');
+  }
+
+  // Get receiver socket
+  const userSocket = connectedUsers.get(receiverId.toString());
+
+  // Count unread notifications
+  const unreadCount = await Notification.countDocuments({
+    receiverId,
+    isRead: false,
+  });
+
+  // Emit socket notification if user online
+  if (message && userSocket) {
+    io.to(userSocket.socketID).emit('notification', {
+      statusCode: 200,
+      success: true,
+      unreadCount: unreadCount >= 0 ? unreadCount + 1 : 1,
+    });
+  }
+
+  // Prepare notification data
+  const newNotification = {
+    userId,
+    receiverId,
+    message: message,
+    type: "pendingCreditRequest", // ✅ custom type
+    isRead: false,
+    timestamp: new Date(),
+  };
+
+  // Save to DB
+  await Notification.create(newNotification);
+
+  // Mobile push message
+  sendReminderNotification(receiverId, message.name, message.text);
+};
+
+
+export const emitNotificationforRejectCredits = async ({
+  userId,
+  receiverId,
+  message,
+}: {
+  userId: string; // sender (business owner)
+  receiverId: string; // receiver (user who requested)
+  message: {
+    name: string;
+    text: string;
+    image?: string;
+  };
+}): Promise<void> => {
+
+  if (!io) {
+    throw new Error("Socket.IO is not initialized");
+  }
+
+  // Get receiver socket
+  const userSocket = connectedUsers.get(receiverId.toString());
+
+  // Count unread notifications
+  const unreadCount = await Notification.countDocuments({
+    receiverId,
+    isRead: false
+  });
+
+  // Emit socket notification if user is online
+  if (message && userSocket) {
+    io.to(userSocket.socketID).emit("notification", {
+      statusCode: 200,
+      success: true,
+      unreadCount: unreadCount >= 0 ? unreadCount + 1 : 1
+    });
+  }
+
+  // Save notification in database
+  const newNotification = {
+    userId, // sender
+    receiverId,
+    message,
+    type: "rejectedCreditRequest", // custom type
+    isRead: false,
+    timestamp: new Date()
+  };
+
+  await Notification.create(newNotification);
+
+  // Optional: send mobile push
+  sendReminderNotification(receiverId, message.name, message.text);
+};
 
 
 export const notifyUserCreditAdded = async ({
