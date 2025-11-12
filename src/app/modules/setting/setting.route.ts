@@ -47,4 +47,5 @@ settingsRoutes
 )
     .get("/aboutUs", settingsController.getAboutUs)
     // Route to create or update the privacy policy
+    
     .put("/", settingsController.updateSettingsByKey);

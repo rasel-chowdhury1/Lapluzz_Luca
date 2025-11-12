@@ -37,6 +37,8 @@ app.use(express.urlencoded({ extended: true }));
 //parsers
 app.use(express.json());
 app.use(cookieParser());
+
+
 app.use(
   cors({
     origin: true,
@@ -45,6 +47,8 @@ app.use(
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   }),
 );
+
+
 
 // Remove duplicate static middleware
 // app.use(app.static('public'));

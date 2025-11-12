@@ -8,7 +8,7 @@ import { businessSettingsService } from "../businessSetting/businessSetting.serv
 // Get the privacy policy
 const getPrivacyPolicy = async (req: Request, res: Response) => {
 
-    const { role } = req.user;
+    const { role } = req?.user || "anonymous";
     console.log({role})
     try {
         let policy;
@@ -52,6 +52,7 @@ const getAnyonePrivacyPolicy = async (req: Request, res: Response) => {
             data: policy || null,
         });
 };
+
 const getBusinessPrivacyPolicy  = async (req: Request, res: Response) => {
 
 
@@ -92,7 +93,8 @@ const getTermConditions = async (req: Request, res: Response) => {
 
 // Get the term conditions
 const getCookiePolicy = async (req: Request, res: Response) => {
-    const {role} = req.user;
+    const { role } = req?.user || "anonymous";
+
     try {
         let policy;
         if(role === USER_ROLE.USER|| role === USER_ROLE.ADMIN){
@@ -101,7 +103,9 @@ const getCookiePolicy = async (req: Request, res: Response) => {
         else if(role === USER_ROLE.ORGANIZER){
           policy = await businessSettingsService.getSettingsByKey({key: "cookie_policy"});
         }
-        
+        else{
+          policy = await settingsService.getSettingsByKey({key: "cookie_policy"}) ;
+        }
 
         sendResponse(res, {
             statusCode: httpStatus.OK,
