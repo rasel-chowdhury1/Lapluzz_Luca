@@ -172,6 +172,35 @@ const getAllBusinessByLocation = catchAsync(async (req: Request, res: Response) 
   });
 });
 
+const getAllBusinessByLocationGuest = catchAsync(async (req: Request, res: Response) => {
+
+  // Extract latitude and longitude from the query parameters or body
+  const { latitude, longitude, ...rest } = req.query;
+
+  // Ensure latitude and longitude are valid numbers
+  if (!latitude || !longitude) {
+    return sendResponse(res, {
+      statusCode: 400,
+      success: false,
+      message: 'Latitude and longitude are required',
+      data: ""
+    });
+  }
+
+  // Call the service with the userId, query, and user location (latitude, longitude)
+  const result = await businessService.getAllBusinessByLocationGuest(rest, {
+    latitude: parseFloat(latitude as string),
+    longitude: parseFloat(longitude as string),
+  });
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'All business location of guard fetched successfully',
+    data: result,
+  });
+});
+
 
 const getExclusiveBusinessByLocation = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user;
@@ -202,6 +231,9 @@ const getExclusiveBusinessByLocation = catchAsync(async (req: Request, res: Resp
     data: result,
   });
 });
+
+
+
 
 const getAllBusiness = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user;
@@ -587,5 +619,6 @@ export const businessController = {
   getAllBusinessByLocation,
   getAllCategoryAndBusinessName,
   getAllBusinessesNameList,
-  getExclusiveBusinessByLocation
+  getExclusiveBusinessByLocation,
+  getAllBusinessByLocationGuest,
 };

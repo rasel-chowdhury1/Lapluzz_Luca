@@ -457,6 +457,164 @@ const getEventsByLocation = async (
 };
 
 
+const getEventsByLocationGuest = async (
+  query: Record<string, any>,
+  userLocation?: { latitude: number; longitude: number }
+) => {
+  query["isDeleted"] = false;
+
+  const page = parseInt(query.page) || 1;
+  const limit = parseInt(query.limit) || 10;
+  const skip = (page - 1) * limit;
+
+  let data: any[] = [];
+  let meta: any = {};
+
+  // Helper function to build geo query
+  const getGeoNearQuery = (isSubscription: boolean) => ({
+    $geoNear: {
+      near: { type: "Point", coordinates: [query.longitude, query.latitude] },
+      distanceField: "distance",
+      spherical: true,
+      query: {
+        isSubscription,
+        isDeleted: false,
+        isActive: true,
+      },
+    },
+  });
+
+  const geoNearQuery = userLocation
+    ? [getGeoNearQuery(true), getGeoNearQuery(false)]
+    : [];
+
+  // Aggregate Subscription & Unsubscription Events
+  const aggregateQuerySubscription = geoNearQuery.length
+    ? Event.aggregate(geoNearQuery[0] as any)
+    : Event.find({ isSubscription: true });
+
+  const aggregateQueryUnsubscription = geoNearQuery.length
+    ? Event.aggregate(geoNearQuery[1] as any)
+    : Event.find({ isSubscription: false });
+
+  const [subscriptionData, unsubscriptionData] = await Promise.all([
+    aggregateQuerySubscription.skip(skip).limit(limit),
+    aggregateQueryUnsubscription.skip(skip).limit(limit),
+  ]);
+
+  // Merge + remove duplicates
+  const combinedData = [...subscriptionData, ...unsubscriptionData];
+  const eventMap = new Map();
+  combinedData.forEach((event) => {
+    eventMap.set(event._id.toString(), event);
+  });
+
+  data = Array.from(eventMap.values());
+
+  // Count totals
+  const totalSubscription = await Event.countDocuments({
+    isSubscription: true,
+    isDeleted: false,
+    isActive: true,
+  });
+
+  const totalUnsubscription = await Event.countDocuments({
+    isSubscription: false,
+    isDeleted: false,
+    isActive: true,
+  });
+
+  meta = {
+    page,
+    limit,
+    total: totalSubscription + totalUnsubscription,
+    totalPage: Math.ceil((totalSubscription + totalUnsubscription) / limit),
+  };
+
+  if (!data.length) return { data, meta };
+
+  const eventIds = data.map((event) => event._id);
+
+  // ⭐ Ratings
+  const ratings = await EventReview.aggregate([
+    { $match: { eventId: { $in: eventIds } } },
+    {
+      $group: {
+        _id: "$eventId",
+        averageRating: { $avg: "$rating" },
+        totalReviews: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const ratingMap = ratings.reduce((acc, r) => {
+    acc[r._id.toString()] = {
+      averageRating: parseFloat(r.averageRating.toFixed(1)),
+      totalReviews: r.totalReviews,
+    };
+    return acc;
+  }, {});
+
+  // ⭐ Engagement
+  const engagementStats = await EventEngagementStats.find({
+    eventId: { $in: eventIds },
+  }).select("eventId likes comments");
+
+  const engagementMap = engagementStats.reduce((acc: any, stat) => {
+    const id = stat.eventId.toString();
+
+    const totalCommentsWithReplies = stat.comments.reduce((c, cm) => {
+      c += 1;
+      if (( cm as any).replies?.length) c += ( cm as any).replies.length;
+      return c;
+    }, 0);
+
+    acc[id] = {
+      totalLikes: stat.likes?.length || 0,
+      totalComments: totalCommentsWithReplies,
+      isLiked: false, // ⭐ guest
+    };
+
+    return acc;
+  }, {});
+
+  // ⭐ Guest NEVER has wishlist
+  const isWishlisted = false;
+
+  // 🔀 Merge all info (same output)
+  data = data.map((event) => {
+    const id = event._id.toString();
+
+    const ratingInfo = ratingMap[id] || { averageRating: 0, totalReviews: 0 };
+    const engagementInfo = engagementMap[id] || {
+      totalLikes: 0,
+      totalComments: 0,
+      isLiked: false,
+    };
+
+    return {
+      ...event,
+      ...ratingInfo,
+      ...engagementInfo,
+      isWishlisted: false, // guest
+    };
+  });
+
+  // Sorting (same)
+  const subscriptionOrder = ["diamond", "emerald", "ruby", "none"];
+  data = data.sort((a, b) => {
+    const posA = subscriptionOrder.indexOf(a.subscriptionType ?? "none");
+    const posB = subscriptionOrder.indexOf(b.subscriptionType ?? "none");
+
+    if (posA !== posB) return posA - posB;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+
+  return { data, meta };
+};
+
+
+
 
 const getSubscrptionEvent = async (userId: string, query: Record<string, any>) => {
   query['isDeleted'] = false;
@@ -1844,5 +2002,6 @@ export const eventService = {
   getEventsByLocation,
   getUnsubscriptionEventByLocation,
   getSubscrptionEventByLocation,
-  searchEventsByLocation
+  searchEventsByLocation,
+  getEventsByLocationGuest
 };

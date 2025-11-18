@@ -201,6 +201,33 @@ const getEventsByLocation = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+
+const getEventsByLocationGuest = catchAsync(async (req: Request, res: Response) => {
+  // Extract latitude and longitude from the query parameters or body
+  const { latitude, longitude, ...rest } = req.query;
+
+  // Ensure latitude and longitude are valid numbers
+  if (!latitude || !longitude) {
+    return sendResponse(res, {
+      statusCode: 400,
+      success: false,
+      message: 'Latitude and longitude are required',
+      data: ""
+    });
+  }
+  const result = await eventService.getEventsByLocationGuest(rest, {
+    latitude: parseFloat(latitude as string),
+    longitude: parseFloat(longitude as string),
+  });
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'All  events fetched successfully',
+    data: result,
+  });
+});
+
 const getSubscrptionEventByLocation = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user;
 
@@ -430,5 +457,6 @@ export const eventController = {
   getAllCategoryAndEventName,
   getEventsByLocation,
   getSubscrptionEventByLocation,
-  getSearchEventsByLocation
+  getSearchEventsByLocation,
+  getEventsByLocationGuest
 };

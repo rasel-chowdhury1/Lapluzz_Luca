@@ -309,6 +309,194 @@ const getAllBusinessByLocation = async (
   return { data, meta };
 };
 
+const getAllBusinessByLocationGuest = async (
+  query: Record<string, any>,
+  userLocation: { latitude: number; longitude: number },
+  maxDistance: number = 50000
+) => {
+  query["isActive"] = true;
+  query["isDeleted"] = false;
+
+  const { latitude, longitude } = userLocation;
+
+  const aggregateQuery = Business.aggregate([
+    {
+      $geoNear: {
+        near: {
+          type: "Point",
+          coordinates: [longitude, latitude],
+        },
+        distanceField: "distance",
+        maxDistance,
+        spherical: true,
+      },
+    },
+    {
+      $match: {
+        microCatogory: query.microCatogory,
+        isActive: true,
+        isDeleted: false,
+      },
+    },
+    { $sort: { distance: 1 } },
+    {
+      $project: {
+        name: 1,
+        coverImage: 1,
+        address: 1,
+        priceRange: 1,
+        maxGuest: 1,
+        subscriptionType: 1,
+        subBlueVerifiedBadge: 1,
+        createdAt: 1,
+        providerType: 1,
+        location: 1,
+        distance: 1,
+      },
+    },
+    {
+      $lookup: {
+        from: "categories",
+        localField: "providerType",
+        foreignField: "_id",
+        as: "providerType",
+      },
+    },
+    {
+      $unwind: {
+        path: "$providerType",
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $project: {
+        name: 1,
+        coverImage: 1,
+        address: 1,
+        priceRange: 1,
+        maxGuest: 1,
+        subscriptionType: 1,
+        subBlueVerifiedBadge: 1,
+        createdAt: 1,
+        location: 1,
+        distance: 1,
+        providerType: { _id: 1, name: 1 },
+      },
+    },
+  ]);
+
+  // Pagination
+  const page = parseInt(query.page) || 1;
+  const limit = parseInt(query.limit) || 10;
+  const skip = (page - 1) * limit;
+
+  const dataPaginated = aggregateQuery.skip(skip).limit(limit);
+  let data = await dataPaginated;
+
+  const total = await Business.countDocuments({
+    isActive: true,
+    isDeleted: false,
+  });
+
+  const meta = {
+    page,
+    limit,
+    total,
+    totalPage: Math.ceil(total / limit),
+  };
+
+  if (!data || data.length === 0) {
+    return {
+      data: [],
+      meta,
+      message: "No businesses found near your location.",
+    };
+  }
+
+  const businessIds = data.map((b) => b._id);
+
+  // ⭐ Rating aggregation
+  const ratings = await BusinessReview.aggregate([
+    { $match: { businessId: { $in: businessIds } } },
+    {
+      $group: {
+        _id: "$businessId",
+        averageRating: { $avg: "$rating" },
+        totalReviews: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const ratingMap: Record<string, any> = {};
+  ratings.forEach((r) => {
+    ratingMap[r._id.toString()] = {
+      averageRating: parseFloat(r.averageRating.toFixed(1)),
+      totalReviews: r.totalReviews,
+    };
+  });
+
+  // ⭐ Engagement stats — guest mode (no userId)
+  const engagementStats = await BusinessEngagementStats.find({
+    businessId: { $in: businessIds },
+  }).select("businessId likes comments followers");
+
+  const engagementMap: Record<string, any> = {};
+
+  engagementStats.forEach((stat) => {
+    const id = stat.businessId.toString();
+
+    const totalComments = stat.comments.reduce((acc, comment) => {
+      acc++;
+      if (comment.replies?.length) acc += comment.replies.length;
+      return acc;
+    }, 0);
+
+    engagementMap[id] = {
+      totalLikes: stat.likes.length || 0,
+      totalComments,
+      isLiked: false, // guest mode
+      isFollowed: false, // guest mode
+    };
+  });
+
+  // ⭐ Merge output
+  data = data.map((biz) => {
+    const id = biz._id.toString();
+
+    return {
+      ...biz,
+      ...ratingMap[id],
+      ...engagementMap[id],
+      blueVerifiedBadge: biz.subBlueVerifiedBadge,
+      isWishlisted: false, // guest mode
+    };
+  });
+
+  // 🔽 Subscription priority sorting + shuffle
+  const subscriptionOrder = ["exclusive", "elite", "prime", "none"];
+
+  const grouped = subscriptionOrder.reduce((acc, type) => {
+    acc[type] = data.filter((biz) => biz.subscriptionType === type);
+    return acc;
+  }, {} as Record<string, any[]>);
+
+  const shuffle = (arr: any[]) => {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  };
+
+  const finalList = subscriptionOrder
+    .map((type) => shuffle(grouped[type]))
+    .flat();
+
+  return {
+    data: finalList,
+    meta,
+  };
+};
 
 
 const getExclusiveBusinessByLocation = async (
@@ -533,6 +721,8 @@ const getExclusiveBusinessByLocation = async (
 
   return { data, meta };
 };
+
+
 
 
 
@@ -2345,5 +2535,6 @@ export const businessService = {
   searchEntities,
   getAllCategoryAndBusinessName,
   getAllBusinessesNameList,
-  getExclusiveBusinessByLocation
+  getExclusiveBusinessByLocation,
+  getAllBusinessByLocationGuest,
 };
