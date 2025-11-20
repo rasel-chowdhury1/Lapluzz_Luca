@@ -351,6 +351,28 @@ const getUseCreditsByUser = async (userId: string) => {
     .sort({ createdAt: -1 });
 };
 
+const getMyCredits = async (userId: string, role: string) => {
+  let filter: any = {
+    status: { $in: ["approved", "rejected"] } // ✅ only approved + rejected
+  };
+
+  if (role === "user") {
+    filter.userId = userId;
+    filter.type = "discount";
+  } 
+  else if (role === "business") {
+    filter.businessOwner = userId;
+    filter.type = "discount"; 
+  }
+
+  const credits = await UseCredits.find(filter)
+    .sort({ createdAt: -1 })
+    .populate("userId", "name email profileImage")
+    .populate("businessId", "name logo coverImage");
+
+  return credits;
+};
+
 export const UseCreditsService = {
   createUseCredits,
   getAllUseCredits,
@@ -358,5 +380,6 @@ export const UseCreditsService = {
   acceptCreditsRequest,
   rejectCreditsRequest,
   getPendingCreditsRequestsOfUser,
-  getPendingCreditsRequestsOfBusiness
+  getPendingCreditsRequestsOfBusiness,
+  getMyCredits
 };

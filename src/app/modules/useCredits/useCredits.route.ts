@@ -38,6 +38,12 @@ router
       auth(USER_ROLE.ORGANIZER),
       useCreditsController.getPendingCreditsRequestsOfBusiness
      )
+
+     .get(
+      "/my",
+      auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
+      useCreditsController.getMyCreditsHistory
+     )
     
 
 export const useCreditsRoutes = router;

@@ -133,6 +133,20 @@ const getAllUseCredits = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+
+const getMyCreditsHistory = catchAsync(async (req, res) => {
+  const { userId, role } = req.user;
+
+  const result = await UseCreditsService.getMyCredits(userId, role);
+
+  return sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "My credits retrieved successfully",
+    data: result,
+  });
+});
+
 export const useCreditsController = {
     createUseCredits,
     getUserUseCredits,
@@ -140,5 +154,6 @@ export const useCreditsController = {
     getPendingCreditsRequestsOfUser,
     getPendingCreditsRequestsOfBusiness,
     acceptCreditsRequest,
-    rejectCreditsRequest
+    rejectCreditsRequest,
+    getMyCreditsHistory
 }

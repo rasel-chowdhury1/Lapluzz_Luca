@@ -268,6 +268,7 @@ export const initSocketIO = async (server: HttpServer): Promise<void> => {
                 images: payload.images,
                 createdAt: messageTime
               })
+              
               io.to(userSocketIds).emit(`message_received`, {
                 success: true,
                 sender: payload.sender,
