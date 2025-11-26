@@ -15,10 +15,19 @@ const reportSchema = new Schema<IReport>(
     pollId: {
       type: Schema.Types.ObjectId, ref: 'PollCommunity'
     },
+    businessId: {
+      type: Schema.Types.ObjectId, ref: 'Business'
+    },
+    eventId: {
+      type: Schema.Types.ObjectId, ref: 'Event'
+    },
+    jobId: {
+      type: Schema.Types.ObjectId, ref: 'Job'
+    },
 
     type: {
       type: String,
-      enum: ['Inspiration', 'PostCommunity', 'PollCommunity'],
+      enum: ['Inspiration', 'PostCommunity', 'PollCommunity', "Business", "Event", "Job"],
       required: true
     },
 

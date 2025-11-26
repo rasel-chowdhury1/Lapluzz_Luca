@@ -42,7 +42,10 @@ const getAllReports = async (query: any) => {
     .populate('userId', 'name email profileImage')
     .populate('inspirationId', 'title coverImage')
     .populate('postId', 'title image')
-    .populate('pollId', 'title');
+    .populate('pollId', 'title')
+    .populate("businessId", "name logo coverImage")
+    .populate("eventId", "name description coverImage")
+    .populate("jobId", "title coverImage");
 
   const reportQuery = new QueryBuilder(baseQuery, query)
     .search(['reason']) // searchable fields
@@ -65,7 +68,10 @@ const getReportById = async (id: string) => {
     .populate('userId', 'name email profileImage')
     .populate('inspirationId', 'title coverImage')
     .populate('postId', 'title image')
-    .populate('pollId', 'title');
+    .populate('pollId', 'title')
+    .populate("businessId", "name logo coverImage")
+    .populate("eventId", "name description coverImage")
+    .populate("jobId", "title coverImage");
 
   if (!report) throw new AppError(httpStatus.NOT_FOUND, 'Report not found');
   return report;

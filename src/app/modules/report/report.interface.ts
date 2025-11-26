@@ -12,6 +12,9 @@ export interface IReport {
   inspirationId?: ObjectId;
   postId?: ObjectId;
   pollId?: ObjectId;
+  businessId?: ObjectId;
+  eventId?: ObjectId;
+  jobId?: ObjectId;
   isCompleted: boolean;
   isNotified: boolean;
   isDeleted: boolean;
