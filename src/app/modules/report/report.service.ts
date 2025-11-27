@@ -6,7 +6,7 @@ import QueryBuilder from '../../builder/QueryBuilder';
 
 const createReport = async (payload: {
   userId: string;
-  type: 'Inspiration' | 'PostCommunity' | 'PollCommunity';
+  type: 'Inspiration' | 'PostCommunity' | 'PollCommunity' | "Business" | "Event" | "Job";
   targetId: string;
   reason: string;
 }) => {
@@ -21,6 +21,10 @@ const createReport = async (payload: {
   if (type === 'Inspiration') data.inspirationId = targetId;
   if (type === 'PostCommunity') data.postId = targetId;
   if (type === 'PollCommunity') data.pollId = targetId;
+  if (type === 'Business') data.businessId = targetId;
+  if (type === 'Business') data.businessId = targetId;
+  if (type === 'Event') data.eventId = targetId;
+  if (type === 'Job') data.jobId = targetId;
 
   return await Report.create(data);
 };

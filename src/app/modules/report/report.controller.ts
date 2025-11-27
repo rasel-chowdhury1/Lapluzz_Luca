@@ -21,6 +21,8 @@ const createReport = catchAsync(async (req: Request, res: Response) => {
 const getAllReports = catchAsync(async (req: Request, res: Response) => {
   const result = await reportService.getAllReports(req.query);
 
+
+  console.log("report =>> ",result)
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
