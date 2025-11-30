@@ -29,7 +29,7 @@ const UseCreditsSchema = new Schema<IUseCredits>(
     // ✅ NEW
     status: {
       type: String,
-      enum: ['pending', 'approved', 'rejected'],
+      enum: ['pending', 'accepted', 'approved', 'rejected'],
       default: 'pending',
     },
   },

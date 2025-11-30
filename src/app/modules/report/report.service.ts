@@ -22,7 +22,6 @@ const createReport = async (payload: {
   if (type === 'PostCommunity') data.postId = targetId;
   if (type === 'PollCommunity') data.pollId = targetId;
   if (type === 'Business') data.businessId = targetId;
-  if (type === 'Business') data.businessId = targetId;
   if (type === 'Event') data.eventId = targetId;
   if (type === 'Job') data.jobId = targetId;
 

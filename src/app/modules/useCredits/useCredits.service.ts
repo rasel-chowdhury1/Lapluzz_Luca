@@ -238,7 +238,7 @@ const acceptCreditsRequest = async (creditsRequestId: string) => {
     // ✅ Update request status
     await UseCredits.findByIdAndUpdate(
       creditsRequestId,
-      { status: "accepted" },
+      { status: "approved" },
       { session }
     );
 
@@ -353,16 +353,16 @@ const getUseCreditsByUser = async (userId: string) => {
 
 const getMyCredits = async (userId: string, role: string) => {
   let filter: any = {
-    status: { $in: ["approved", "rejected"] } // ✅ only approved + rejected
+    status: { $in: ["accepted","approved", "rejected"] } // ✅ only approved + rejected
   };
 
+  
+
   if (role === "user") {
-    filter.userId = userId;
-    filter.type = "discount";
+    filter.userId = new mongoose.Types.ObjectId(userId);;
   } 
   else if (role === "business") {
     filter.businessOwner = userId;
-    filter.type = "discount"; 
   }
 
   const credits = await UseCredits.find(filter)
