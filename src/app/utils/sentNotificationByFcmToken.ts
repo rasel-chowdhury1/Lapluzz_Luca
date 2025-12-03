@@ -36,7 +36,7 @@ export const sendNotificationByFcmToken = async (receiverId: any, textMessage: s
     // Construct the notification message
     const message: Message = {
       notification: {
-        title: titleName || "Pianofesta Support", // Set title dynamically with user's name or default to "Admin"
+        title: titleName || "Supporto Pianofesta", //Pianofesta Support // Set title dynamically with user's name or default to "Admin"
         body: textMessage, // Set the body of the notification
       },
       token: fcmToken, // Use the user's FCM token to send the message

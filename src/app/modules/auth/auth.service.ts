@@ -21,11 +21,11 @@ const login = async ( payload: TLogin, req: Request) => {
   
   
   if (!user) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'User not found');
+    throw new AppError(httpStatus.BAD_REQUEST, 'Utente non trovato'); // User not found
   }
 
   if (!(await User.isPasswordMatched(payload.password, user.password))) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'Password does not match');
+    throw new AppError(httpStatus.BAD_REQUEST, 'La password non corrisponde'); // Password does not match
   }
 
   const jwtPayload: {
@@ -100,9 +100,9 @@ const googleLogin = async (payload: { email: string, name: string, profileImage:
 
   if (user) {
     // Validate user status and permissions
-    if (user.loginWth !== Login_With.google) throw new AppError(httpStatus.FORBIDDEN, `This account is not registered with Google login. Try logging in with ${user.loginWth}`);
-    if (user.isDeleted) throw new AppError(httpStatus.FORBIDDEN, 'This user is deleted');
-    if (user.isBlocked) throw new AppError(httpStatus.FORBIDDEN, 'User account is blocked');
+    if (user.loginWth !== Login_With.google) throw new AppError(httpStatus.FORBIDDEN, `Questo account non è registrato con il login Google. Prova ad accedere con ${user.loginWth}`); // This account is not registered with Google login
+    if (user.isDeleted) throw new AppError(httpStatus.FORBIDDEN, 'Questo utente è stato eliminato'); // This user is deleted
+    if (user.isBlocked) throw new AppError(httpStatus.FORBIDDEN, "L'account utente è bloccato"); // User account is blocked
 
      const ip =
       req.headers['x-forwarded-for']?.toString().split(',')[0] ||
@@ -185,7 +185,7 @@ const forgotPasswordByEmail = async (email: string) => {
   const user: TUser | null = await User.isUserActive(email);
 
   if (!user) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'User not found');
+    throw new AppError(httpStatus.BAD_REQUEST, 'Utente non trovato'); // User not found
   }
 
   const { isExist, isExpireOtp } = await otpServices.checkOtpByEmail(email);
@@ -193,7 +193,7 @@ const forgotPasswordByEmail = async (email: string) => {
   const { otp, expiredAt } = generateOptAndExpireTime("5");
 
   if (isExist && !isExpireOtp) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'otp-exist. Check your email.');
+    throw new AppError(httpStatus.BAD_REQUEST, 'OTP esistente. Controlla la tua email.'); // otp-exist. Check your email.
   } else if (isExist && isExpireOtp) {
     const otpUpdateData = {
       otp,
@@ -230,7 +230,7 @@ const forgotPasswordByEmail = async (email: string) => {
   process.nextTick(async () => {
     await otpSendEmail({
       sentTo: email,
-      subject: 'Your one time otp for forget password',
+      subject: 'Il tuo OTP monouso per il recupero della password', // Your one time otp for forget password
       name: '',
       otp,
       expiredAt: expiredAt,
@@ -302,7 +302,7 @@ const forgotPasswordOtpMatch = async ({
   const user: TUser | null = await User.isUserActive(email);
 
   if (!user) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'User not found');
+    throw new AppError(httpStatus.BAD_REQUEST, 'Utente non trovato'); // User not found
   }
 
   const jwtPayload = {
@@ -330,7 +330,7 @@ const resetPassword = async ({
   confirmPassword: string;
 }) => {
   if (newPassword !== confirmPassword) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'Password does not match');
+    throw new AppError(httpStatus.BAD_REQUEST, 'La password non corrisponde'); // Password does not match
   }
 
   if (!token) {
@@ -351,7 +351,7 @@ const resetPassword = async ({
   const user: TUser | null = await User.isUserActive(email);
 
   if (!user) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'User not found');
+    throw new AppError(httpStatus.BAD_REQUEST, 'Utente non trovato'); // User not found
   }
 
   const hashedPassword = await bcrypt.hash(
@@ -381,11 +381,11 @@ const changePassword = async ({
   const user = await User.IsUserExistById(userId);
 
   if (!user) {
-    throw new AppError(httpStatus.NOT_FOUND, 'User not found');
+    throw new AppError(httpStatus.NOT_FOUND, 'Utente non trovato'); // User not found
   }
 
   if (!(await User.isPasswordMatched(oldPassword, user.password))) {
-    throw new AppError(httpStatus.FORBIDDEN, 'Old password does not match');
+    throw new AppError(httpStatus.FORBIDDEN, 'La vecchia password non corrisponde'); // Old Password does not match
   }
 
   const hashedPassword = await bcrypt.hash(
@@ -426,7 +426,7 @@ const refreshToken = async (token: string) => {
   const activeUser = await User.isUserActive(email);
 
   if (!activeUser) {
-    throw new AppError(httpStatus.NOT_FOUND, 'User not found');
+    throw new AppError(httpStatus.NOT_FOUND, 'Utente non trovato'); // User not found
   }
 
   const jwtPayload: {

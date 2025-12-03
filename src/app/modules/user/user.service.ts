@@ -267,17 +267,17 @@ try {
     }
 
       const referrerMsg = {
-        name: `🎉 Congrats ${referrer.name || 'User'}!`,
+        name: `🎉 Congratulazioni ${referrer.name || 'Utente'}!`, // 🎉 Congrats ${referrer.name || 'User'}!
         image: adminData?.profileImage ?? '',
-        text: `Hi ${referrer.name}, you earned +${REWARD} credits because ${user.name || 'a user'} used your referral code! ${
-          newCount % 3 === 0 ? 'Bonus +2 credits for every 3 referrals!' : ''
-        }`,
+        text: `Ciao ${referrer.name}, hai guadagnato +${REWARD} crediti perché ${user.name || 'un utente'} ha utilizzato il tuo codice di referral! ${
+newCount % 3 === 0 ? 'Bonus +2 crediti per ogni 3 referral!' : ''
+}`, // Hi ${referrer.name}, you earned +${REWARD} credits because ${user.name || 'a user'} has used your referral code! ${newCount % 3 === 0 ? 'Bonus +2 credits for every 3 referrals!' : ''}
       };
 
       const userMsg = {
-        name: `🎉 Welcome, ${user.name || 'User'}!`,
+        name: `🎉 Benvenuto, ${user.name || 'Utente'}!`, // 🎉 Welcome, ${user.name || 'User'}!
         image: adminData?.profileImage ?? '',
-        text: `Hi ${user.name}, you earned +${REWARD} credits for using the referral code of ${referrer.name || 'a user'}! Start exploring Pianofesta!`,
+        text: `Ciao ${user.name}, hai guadagnato +${REWARD} crediti utilizzando il codice referral di ${referrer.name || 'un utente'}! Inizia a esplorare Pianofesta!`, // Hi ${user.name}, you earned +${REWARD} credits using ${referrer.name || 'a user'}'s referral code! Start exploring Pianofesta!
       };
 
       // Fire-and-forget using setImmediate
@@ -352,8 +352,8 @@ try {
   process.nextTick(async () => {
     await welcomeEmail({
       sentTo: email,
-      subject: '🎉 Welcome to Pianofesta!',
-      name: name || "Customer",
+      subject: '🎉 Benvenuto su Pianofesta!', // 🎉 Welcome to Pianofesta!
+      name: name || "Cliente", // Customer
     });
   });
 

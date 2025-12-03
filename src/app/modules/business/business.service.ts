@@ -81,6 +81,9 @@ const getAllBusinessByLocation = async (
   userLocation: { latitude: number, longitude: number },
   maxDistance: number = 50000
 ) => {
+
+  console.log("Query ->>> ", query);
+  
   query['isActive'] = true;
   query['isDeleted'] = false;
 

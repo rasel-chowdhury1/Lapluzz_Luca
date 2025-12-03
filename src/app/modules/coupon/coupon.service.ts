@@ -13,8 +13,8 @@ const createCoupon = async (payload: ICoupon): Promise<ICouponDocument> => {
 
   // Define the user message for the coupon notification, including the coupon code (payload.name)
   const userMsg = {
-    text: `A new coupon offer with code ${payload.name} is available! Claim your discount now and boost your sales. Don't miss out on this opportunity to save and grow!`,
-    name: "Coupon Offer",
+    text: `È disponibile una nuova offerta coupon con il codice ${payload.name}! Richiedi subito il tuo sconto e aumenta le tue vendite. Non perdere questa opportunità per risparmiare e crescere!`, //A new coupon offer with code ${payload.name} is available! Claim your discount now and boost your sales. Don't miss out on this opportunity to save and grow!
+    name: "Offerta Coupon", // Coupon Offer
     image: config.coupon_offer_img
   };
 

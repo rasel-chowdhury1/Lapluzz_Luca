@@ -119,7 +119,7 @@ const dealCloseByChatById = async (userId: string, chatId: string, profileImage:
     // 5. Prepare the notification message
     const userMsg = {
       image: profileImage,
-      text: `✅ Deal closed! You can now leave feedback for ${isExistChat.chatName}`,
+      text: `✅ Affare concluso! Ora puoi lasciare un feedback per ${isExistChat.chatName}`, // Deal closed! You can now leave feedback for
       name: isExistChat.chatName,
       types: isExistChat.contextType,
       notificationFor: contextId, // Represents the action or event type
@@ -137,7 +137,7 @@ const dealCloseByChatById = async (userId: string, chatId: string, profileImage:
     // 7. Return success message
     return {
       success: true,
-      message: 'Chat successfully closed and notification sent to the receiver.',
+      message: 'Chat chiusa con successo e notifica inviata al destinatario.', //Chat successfully closed and notification sent to the receiver.
     };
   } catch (error) {
     // Handle unexpected errors

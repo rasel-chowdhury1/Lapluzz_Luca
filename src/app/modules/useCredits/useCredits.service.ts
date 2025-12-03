@@ -158,8 +158,8 @@ const createUseCredits = async (payload: {
 
     // ✅ Prepare notification payload
     const userMsg: any = {};
-    userMsg.name = "Credits Approval Request";
-    userMsg.text = `${userData.name} requested to use ${usedCredits} credits for your business "${businessData?.name}". Please review and approve.`;
+    userMsg.name = "Richiesta di Approvazione Crediti"; // Credits Approval Request
+    userMsg.text = `${userData.name} ha richiesto di utilizzare ${usedCredits} crediti per la tua attività "${businessData?.name}". Per favore, verifica e approva.`; // `${userData.name} requested to use ${usedCredits} credits for your business "${businessData?.name}". Please review and approve.`
     userMsg.image = config.credits_recived_img; // pending icon/image
     userMsg.notificationFor = credits[0]._id; // store request id for reference
 
@@ -247,8 +247,8 @@ const acceptCreditsRequest = async (creditsRequestId: string) => {
 
     // ✅ Notification
     const userMsg: any = {};
-    userMsg.name = "Credits Request Approved";
-    userMsg.text = `Your request to use ${usedCredits} credits has been approved.`;
+    userMsg.name = "Richiesta di Crediti Approvata"; // Credits Request Approved
+    userMsg.text = `La tua richiesta di utilizzare ${usedCredits} crediti è stata approvata.`; //Your request to use ${usedCredits} credits has been approved.
     userMsg.image = config.credits_recived_img;
 
     emitNotificationforGotCredits({
@@ -257,7 +257,7 @@ const acceptCreditsRequest = async (creditsRequestId: string) => {
       userMsg
     });
 
-    return { success: true, message: "Credits request approved successfully" };
+    return { success: true, message: "Richiesta di crediti approvata con successo" }; // Request approved successfully
 
   } catch (error) {
     await session.abortTransaction();
@@ -301,8 +301,8 @@ const rejectCreditsRequest = async (creditsRequestId: string) => {
 
     // Notification payload
     const userMsg: any = {};
-    userMsg.name = "Credits Request Rejected";
-    userMsg.text = `Your request to use credits at "${request.businessId?.name}" was rejected.`;
+    userMsg.name = "Richiesta di Crediti Rifiutata"; // Credits Request Rejected
+    userMsg.text = `La tua richiesta di utilizzare crediti presso "${request.businessId?.name}" è stata rifiutata.`; // Your request to use credits at "${request.businessId?.name}" has been rejected.
     userMsg.image = config.credits_recived_img;
 
     // ✅ Emit rejection notification
@@ -312,7 +312,7 @@ const rejectCreditsRequest = async (creditsRequestId: string) => {
       message: userMsg,
     });
 
-    return { success: true, message: "Credits request rejected successfully" };
+    return { success: true, message: "Richiesta di crediti rifiutata con successo" };
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
