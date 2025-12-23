@@ -1,3 +1,4 @@
+import mongoose, { mongo } from "mongoose";
 import QueryBuilder from "../../builder/QueryBuilder";
 import { IInspiration } from "./inspiration.interface";
 import { Inspiration } from "./inspiration.model";
@@ -11,9 +12,9 @@ const createInspiration = async (payload: IInspiration) => {
 };
 
 
-const getAllInspirations = async (query: Record<string, any>) => {
+const getAllInspirations = async (userId: string, query: Record<string, any>) => {
   const inspirationQuery = new QueryBuilder(
-    Inspiration.find({ isBlocked: false, isDeleted: false })
+    Inspiration.find({ isBlocked: false, isDeleted: false, blockedUsers: { $ne: new mongoose.Types.ObjectId(userId) } })
                .populate('author', 'name profileImage role')
                .populate('category', 'name description'),
     query
@@ -59,7 +60,7 @@ const getMyInspirations = async (userId: string, query: Record<string, any>) => 
 
 
 
-const getAllInspirationsGroupedByCategory = async () => {
+const getAllInspirationsGroupedByCategory = async (userId: string) => {
   const data = await Inspiration.aggregate([
     // Step 1: Lookup category info
     {
@@ -90,6 +91,7 @@ const getAllInspirationsGroupedByCategory = async () => {
     // Step 3: Match only the desired categories
     {
       $match: {
+        blockedUsers: { $ne: new mongoose.Types.ObjectId(userId) },
         'categoryInfo.name': {
           $in: [
             'Getting Started Ideas',
@@ -233,6 +235,7 @@ const getAllInspirationsgroupBySubcategory = async () => {
 
 
 const getSpecificCategoryInspiration = async (
+  userId: string,
   categoryId: string,
   query: Record<string, any>
 ) => {
@@ -242,7 +245,7 @@ const getSpecificCategoryInspiration = async (
   };
 
   const inspirationQuery = new QueryBuilder(
-    Inspiration.find({ category: categoryId })
+    Inspiration.find({ category: categoryId, blockedUsers: { $ne: new mongoose.Types.ObjectId(userId) } })
                   .populate('author', 'name profileImage role')
                   .populate('category', 'name description'),
     filterQuery
@@ -304,6 +307,8 @@ const updateInspiration = async (id: string, updateData: Partial<IInspiration> &
 const deleteInspiration = async (id: string) => {
   return await Inspiration.findByIdAndDelete(id);
 };
+
+
 
 export const InspirationService = {
   createInspiration,

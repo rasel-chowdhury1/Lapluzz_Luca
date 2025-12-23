@@ -15,4 +15,5 @@ export interface IInspiration {
   isDeleted: boolean;
   createdAt?: Date;
   updatedAt?: Date;
+  blockedUsers?: Types.ObjectId[] | []
 }

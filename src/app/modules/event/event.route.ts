@@ -42,6 +42,12 @@ router.post(
   eventController.activateEventById
 )
 
+.patch(
+  "/block/:eventId",
+  auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
+  eventController.blockEvent
+)
+
 .delete(
     '/:id', 
     eventController.deleteEvent

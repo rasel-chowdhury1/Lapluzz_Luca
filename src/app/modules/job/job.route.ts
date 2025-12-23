@@ -38,6 +38,12 @@ router.post(
     jobController.activateJobById
   )
 
+  .patch(
+    "/block/:jobId",
+    auth(USER_ROLE.USER, USER_ROLE.ORGANIZER),
+    jobController.blockJob
+  )
+
   .get(
       '/', 
       auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN),

@@ -19,6 +19,13 @@ router
             parseData(),
             postCommunityController.createPost
         )
+
+    .patch(
+        "/block/:postCommunityId",
+        auth(USER_ROLE.ADMIN, USER_ROLE.USER, USER_ROLE.ORGANIZER),
+        postCommunityController.blockPostCommunity
+    )
+
     .patch(
             '/:id', 
             auth(USER_ROLE.USER, USER_ROLE.ORGANIZER), 
@@ -29,6 +36,7 @@ router
             parseData(),
             postCommunityController.updatePostCommunityById
         )
+
     .get(
         '/',
         postCommunityController.getAllPosts
@@ -61,6 +69,7 @@ router
         auth(USER_ROLE.USER, USER_ROLE.ORGANIZER),
         postCommunityController.getMostCommentedPosts
     )
+    
     .get(
         '/:id',
         auth(USER_ROLE.USER, USER_ROLE.ORGANIZER),

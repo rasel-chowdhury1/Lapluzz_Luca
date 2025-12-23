@@ -166,6 +166,10 @@ const EventSchema = new Schema<IEvent>(
         type: Boolean, 
         default: false 
     },
+    blockedUsers: {
+      type: [Schema.Types.ObjectId],
+      default: []
+    }
   },
   { 
     timestamps: true 

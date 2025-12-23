@@ -108,6 +108,22 @@ const deletePoll = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+
+const blockPostCommunity = catchAsync(async (req: Request, res: Response) => {
+  const { pollCommunityId } = req.params;
+  const { userId } = req.user;
+
+  const result = await pollCommunityService.blockUserForPollCommunity(pollCommunityId, userId);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "User blocked successfully for this pollCommunityId",
+    data: result,
+  });
+
+});
+
 export const pollCommunityController = {
   createPoll,
   updatePoll,
@@ -116,5 +132,6 @@ export const pollCommunityController = {
   vote,
   deletePoll,
   getLatestPolls,
-  getMyLatestPolls
+  getMyLatestPolls,
+  blockPostCommunity
 };

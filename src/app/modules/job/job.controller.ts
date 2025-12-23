@@ -261,6 +261,22 @@ const getLatestJobs = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+
+const blockJob = catchAsync(async (req: Request, res: Response) => {
+  const { jobId } = req.params;
+  const { userId } = req.user;
+
+  const result = await jobService.blockUserForJob(jobId, userId);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "User blocked successfully for this job",
+    data: result,
+  });
+
+});
+
 export const jobController = {
   createJob,
   getAllJobs,
@@ -276,5 +292,6 @@ export const jobController = {
   getAllJobList,
   activateJobById,
   getCalculateCompetitionScore,
-  getAllCategoryAndJobtName
+  getAllCategoryAndJobtName,
+  blockJob
 };

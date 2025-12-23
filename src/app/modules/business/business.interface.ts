@@ -109,6 +109,7 @@ export interface IBusiness {
   subscriptionEndTime?: Date;
   isActive: boolean;
   isDeleted: boolean;
+  blockedUsers?: ObjectId[];
   deleteGallery?: []
 }
 

@@ -49,6 +49,12 @@ router.post(
     businessController.activateBusinessById
   )
 
+  .patch(
+    "/block/:businessId",
+    auth(USER_ROLE.USER, USER_ROLE.ORGANIZER),
+    businessController.blockedBusinessByUserId
+  )
+
   .delete(
     '/:id',
     auth(USER_ROLE.ORGANIZER, USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),

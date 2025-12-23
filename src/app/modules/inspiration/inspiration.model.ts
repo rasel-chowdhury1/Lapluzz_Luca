@@ -23,7 +23,11 @@ const inspirationSchema = new Schema<IInspiration>(
     coverImage: { type: String, required: true },
     imageGallery: { type: [String], default: [] },
     isBlocked: {type: Boolean, default: false},
-    isDeleted: {type: Boolean, default: false}
+    isDeleted: {type: Boolean, default: false},
+    blockedUsers: {
+      type: [Schema.Types.ObjectId],
+      default: []
+    }
   },
   { timestamps: true }
 );

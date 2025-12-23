@@ -199,6 +199,10 @@ const businessSchema = new Schema<IBusiness>(
         type: Boolean, 
         default: false 
     },
+    blockedUsers: {
+      type: [Schema.Types.ObjectId],
+      default: []
+    }
   },
   {
     timestamps: true,

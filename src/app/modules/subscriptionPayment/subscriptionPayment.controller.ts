@@ -560,12 +560,19 @@ const buySubscriptionByCredits = catchAsync(async (req: Request, res: Response) 
       return; // Stop the notification process if admin data is not available
     }
 
+    // const userMsg = {
+    //   name: `🎉 Congratulations, ${user.name || 'User'}! Your Subscription Purchase is Successful`,
+    //   image: (adminData.profileImage ?? "") as string,
+    //   text: `Hi ${user?.name}, you’ve successfully purchased your ${subscriptionForType} subscription using ${finalAmount} credits with Pianofesta! 
+    // To start boosting it, go to your sponsorship list and activate your subscription when ready. 🌟`,
+    // };
+
     const userMsg = {
-      name: `🎉 Congratulations, ${user.name || 'User'}! Your Subscription Purchase is Successful`,
-      image: (adminData.profileImage ?? "") as string,
-      text: `Hi ${user?.name}, you’ve successfully purchased your ${subscriptionForType} subscription using ${finalAmount} credits with Pianofesta! 
-    To start boosting it, go to your sponsorship list and activate your subscription when ready. 🌟`,
-    };
+  name: `🎉 Congratulazioni, ${user.name || 'User'}! Il tuo acquisto dell'abbonamento è andato a buon fine`,
+  image: (adminData.profileImage ?? "") as string,
+  text: `Ciao ${user?.name}, hai acquistato con successo il tuo abbonamento ${subscriptionForType} utilizzando ${finalAmount} crediti su Pianofesta!
+    Per iniziare a promuoverlo, vai alla tua lista degli sponsor e attiva l'abbonamento quando sei pronto. 🌟`,
+};
 
     // Send notification to the user (using Socket.IO and save it to the database)
     await emitNotificationOfSuccessfullyPamentSubcription({
@@ -725,10 +732,17 @@ const handleWooPaymentWebhook = catchAsync(async (req: Request, res: Response) =
       return;
     }
 
+// const userMsg = {
+//   name: `🎉 Congratulations, ${user.name || 'User'}! Your Subscription Purchase is Successful`,
+//   image: (adminData.profileImage ?? "") as string,
+//   text: `Hi ${user?.name}, you’ve successfully purchased your ${updated.subscriptionForType} with Pianofesta! To start boosting it, go to your sponsorship list and activate your subscription when ready. 🌟`,
+// };
+
 const userMsg = {
-  name: `🎉 Congratulations, ${user.name || 'User'}! Your Subscription Purchase is Successful`,
+  name: `🎉 Congratulazioni, ${user.name || 'User'}! Il tuo acquisto dell'abbonamento è andato a buon fine`,
   image: (adminData.profileImage ?? "") as string,
-  text: `Hi ${user?.name}, you’ve successfully purchased your ${updated.subscriptionForType} with Pianofesta! To start boosting it, go to your sponsorship list and activate your subscription when ready. 🌟`,
+  text: `Ciao ${user?.name}, hai acquistato con successo il tuo ${updated.subscriptionForType} su Pianofesta! 
+Per iniziare a promuoverlo, vai alla tua lista degli sponsor e attiva l'abbonamento quando sei pronto. 🌟`,
 };
 
     // Send notification to the user (using Socket.IO and save it to the database)

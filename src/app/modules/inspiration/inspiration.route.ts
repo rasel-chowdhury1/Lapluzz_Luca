@@ -22,6 +22,7 @@ router.post(
   
   .get(
     '/',
+    auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),
     inspirationController.getAllInspirations
   )
   .get(
@@ -34,16 +35,19 @@ router.post(
   // ✅ New Route: Grouped by category
   .get(
     '/group-by/category',
+    auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),
     inspirationController.getAllInspirationsGroupedByCategory
   )
 
   .get(
     "/group-by/subcategory",
+    auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),
     inspirationController.getAllInspirationsgroupBySubcategory
   )
 
   .get(
       '/category/:categoryId', 
+      auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),
       inspirationController.getSpecificCategoryInspiration
   )
 

@@ -1,7 +1,7 @@
 import PollCommunity from './pollCommunity.model';
 import httpStatus from 'http-status';
 import AppError from '../../error/AppError';
-import mongoose from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import { userValidation } from '../user/user.validation';
 
 const createPoll = async (payload: any) => {
@@ -300,6 +300,34 @@ const deletePoll = async (id: string) => {
   return poll;
 };
 
+
+const blockUserForPollCommunity = async (
+  pollCommunityId: string,
+  userId: string
+) => {
+  if (!Types.ObjectId.isValid(pollCommunityId)) {
+    throw new Error("Invalid pollCommunityId");
+  }
+
+  if (!Types.ObjectId.isValid(userId)) {
+    throw new Error("Invalid userId");
+  }
+
+  const updatedJob = await PollCommunity.findByIdAndUpdate(
+    pollCommunityId,
+    {
+      $addToSet: { blockedUsers: userId }, // 👈 no duplicate userIds
+    },
+    { new: true }
+  );
+
+  if (!updatedJob) {
+    throw new Error("PollCommunity not found");
+  }
+
+  return updatedJob;
+};
+
 export const pollCommunityService = {
   createPoll,
   updatePoll,
@@ -308,5 +336,6 @@ export const pollCommunityService = {
   votePollOption,
   deletePoll,
   getLatestPolls,
-  getMyLatestPolls
+  getMyLatestPolls,
+  blockUserForPollCommunity
 };

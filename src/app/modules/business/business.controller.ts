@@ -170,6 +170,7 @@ const getAllBusinessByLocation = catchAsync(async (req: Request, res: Response) 
     message: 'All business location fetched successfully',
     data: result,
   });
+  
 });
 
 const getAllBusinessByLocationGuest = catchAsync(async (req: Request, res: Response) => {
@@ -592,6 +593,20 @@ const getAllBusinessQueryNameList = catchAsync(async (req: Request, res: Respons
   });
 });
 
+const blockedBusinessByUserId = catchAsync(async (req: Request, res: Response) => {
+  const { businessId } = req.params;
+  const { userId } = req.user;
+
+  const result = await businessService.blockedBusinessByUserId(businessId, userId);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "User blocked successfully for this business",
+    data: result,
+  });
+});
+
 export const businessController = {
   createBusiness,
   getAllBusiness,
@@ -621,4 +636,5 @@ export const businessController = {
   getAllBusinessesNameList,
   getExclusiveBusinessByLocation,
   getAllBusinessByLocationGuest,
+  blockedBusinessByUserId
 };

@@ -73,6 +73,7 @@ export interface IEvent {
   subscriptionEndTime?: Date;
   isActive: boolean;
   isDeleted: boolean;
+  blockedUsers?: ObjectId[];
 }
 
 export type IEventModel = Model<IEvent, Record<string, unknown>>;

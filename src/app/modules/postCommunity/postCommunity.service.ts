@@ -1,7 +1,7 @@
 import PostCommunity from './postCommunity.model';
 import httpStatus from 'http-status';
 import AppError from '../../error/AppError';
-import mongoose from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import { UpdatePostCommunityPayload } from './postCommunity.interface';
 
 const createPost = async (payload: any) => {
@@ -662,9 +662,10 @@ const getLatestPosts = async (userId: string, limit: number = 10) => {
   const posts = await PostCommunity.aggregate([
     {
       $match: {
-        isDeleted: false, 
-        creator: { $ne: new mongoose.Types.ObjectId(userId)} // Exclude my own posts
-      }
+      isDeleted: false, 
+      creator: { $ne: new mongoose.Types.ObjectId(userId)}, // Exclude my own posts
+      blockedUsers: { $ne: new mongoose.Types.ObjectId(userId) } 
+    }
     },
     { $sort: { createdAt: -1 } },
     { $limit: limit },
@@ -849,6 +850,7 @@ const getSpecificCategoryOrRegionPosts = async (
   const matchStage: any = {
     isDeleted: false,
     creator: { $ne: new mongoose.Types.ObjectId(userId) },
+    blockedUsers: { $ne: new mongoose.Types.ObjectId(userId) } 
   };
 
   if (filters?.category) {
@@ -959,7 +961,8 @@ const getMostViewedPosts = async (userId: string, limit: number = 10) => {
     {
       $match: {
         isDeleted: false, 
-        creator: { $ne: new mongoose.Types.ObjectId(userId) }
+        creator: { $ne: new mongoose.Types.ObjectId(userId) },
+        blockedUsers: { $ne: new mongoose.Types.ObjectId(userId) } 
       }
     },
 
@@ -1046,7 +1049,8 @@ const getMostCommentedPosts = async (userId: string, limit: number = 10) => {
     {
       $match: {
         isDeleted: false, 
-        creator: { $ne: new mongoose.Types.ObjectId(userId)}
+        creator: { $ne: new mongoose.Types.ObjectId(userId)},
+        blockedUsers: { $ne: new mongoose.Types.ObjectId(userId) } 
       }
     },
 
@@ -1131,6 +1135,35 @@ const getMostCommentedPosts = async (userId: string, limit: number = 10) => {
 
 
 
+const blockUserForPostCommunity = async (
+  postCommunityId: string,
+  userId: string
+) => {
+  if (!Types.ObjectId.isValid(postCommunityId)) {
+    throw new Error("Invalid eventId");
+  }
+
+  if (!Types.ObjectId.isValid(userId)) {
+    throw new Error("Invalid userId");
+  }
+
+  const updatedPostCommunity = await PostCommunity.findByIdAndUpdate(
+    postCommunityId,
+    {
+      $addToSet: { blockedUsers: userId }, // 👈 no duplicate userIds
+    },
+    { new: true }
+  );
+
+  if (!updatedPostCommunity) {
+    throw new Error("PostCommunity not found");
+  }
+
+  return updatedPostCommunity;
+};
+
+
+
 export const postCommunityService = {
   createPost,
   updatePostCommunityById,
@@ -1141,5 +1174,6 @@ export const postCommunityService = {
   getMostViewedPosts,
   getMostCommentedPosts,
   getSpecificCategoryOrRegionPosts,
-  deletePostCommunityById
+  deletePostCommunityById,
+  blockUserForPostCommunity
 };

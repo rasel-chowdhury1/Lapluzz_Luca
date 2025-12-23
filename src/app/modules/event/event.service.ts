@@ -299,7 +299,7 @@ const getEventsByLocation = async (
   userLocation?: { latitude: number; longitude: number }
 ) => {
   query['isDeleted'] = false;
-
+  
   const page = parseInt(query.page) || 1;
   const limit = parseInt(query.limit) || 10;
   const skip = (page - 1) * limit;
@@ -307,16 +307,21 @@ const getEventsByLocation = async (
   let data: any[] = [];
   let meta: any = {};
 
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+
+
+
   // Helper function to get aggregate query
   const getGeoNearQuery = (isSubscription: boolean) => ({
     $geoNear: {
-      near: { type: 'Point', coordinates: [query.longitude, query.latitude] },
+      near: { type: 'Point', coordinates: [(userLocation as any).longitude, (userLocation as any).latitude] },
       distanceField: 'distance',
       spherical: true,
       query: {
         isSubscription,
         isDeleted: false,
         isActive: true,
+        blockedUsers: { $nin: [userObjectId] },
       },
     },
   });
@@ -326,14 +331,18 @@ const getEventsByLocation = async (
     getGeoNearQuery(false), // Unsubscription events
   ] : [];
 
+  console.log({geoNearQuery})
+  console.log(JSON.stringify(geoNearQuery, null, 2));
+
+
   // Aggregate Subscription and Unsubscription Events
   const aggregateQuerySubscription = geoNearQuery.length 
     ? Event.aggregate(geoNearQuery[0] as any) 
-    : Event.find({ isSubscription: true });
+    : Event.find({ isSubscription: true, isActive: true, isDeleted: false, blockedUsers: { $nin: [userObjectId] } });
 
   const aggregateQueryUnsubscription = geoNearQuery.length 
     ? Event.aggregate(geoNearQuery[1] as any) 
-    : Event.find({ isSubscription: false });
+    : Event.find({ isSubscription: false, isActive: true, isDeleted: false, blockedUsers: { $nin: [userObjectId] } });
 
   // Fetch Subscription and Unsubscription Events Data
   const [subscriptionData, unsubscriptionData] = await Promise.all([
@@ -355,13 +364,17 @@ const getEventsByLocation = async (
     isSubscription: true,
     isDeleted: false,
     isActive: true,
+    blockedUsers: { $nin: [userObjectId] }
   });
 
   const totalUnsubscription = await Event.countDocuments({
     isSubscription: false,
     isDeleted: false,
     isActive: true,
+    blockedUsers: { $nin: [userObjectId] }
   });
+
+  console.log({ totalSubscription, totalUnsubscription });
 
   meta = {
     page,
@@ -619,7 +632,7 @@ const getEventsByLocationGuest = async (
 const getSubscrptionEvent = async (userId: string, query: Record<string, any>) => {
   query['isDeleted'] = false;
 
-  const baseQuery = Event.find({ isSubscription: true });
+  const baseQuery = Event.find({ isSubscription: true,  isActive: true, isDeleted: false, blockedUsers: { $ne: new mongoose.Types.ObjectId(userId) } });
 
   const eventModel = new QueryBuilder(baseQuery, query)
     .search(['name', 'email', 'phoneNumber', 'address', 'priceRange'])
@@ -772,6 +785,7 @@ const getSubscrptionEventByLocation = async (
             isSubscription: true,
             isDeleted: false,
             isActive: true,
+            blockedUsers: { $ne: new mongoose.Types.ObjectId(userId) },
             // author: { $ne: new mongoose.Types.ObjectId(userId) },
           },
         },
@@ -929,6 +943,7 @@ const getUnsubscriptionEventByLocation = async (
             isSubscription: false, 
             isDeleted: false, 
             isActive: true, 
+            blockedUsers: { $ne: new mongoose.Types.ObjectId(userId) },
             // author: { $ne: new mongoose.Types.ObjectId(userId) } 
           },
         },
@@ -1041,7 +1056,7 @@ const getUnsubscriptionEventByLocation = async (
 const getUnsubscriptionEvent = async (userId: string, query: Record<string, any>) => {
   query['isDeleted'] = false;
 
-  const eventModel = new QueryBuilder(Event.find({isActive: true, isDeleted: false}), query)
+  const eventModel = new QueryBuilder(Event.find({isActive: true, isDeleted: false, blockedUsers: { $ne: new mongoose.Types.ObjectId(userId) }}), query)
     .search(['name', 'email', 'phoneNumber', 'address'])
     .filter()
     .paginate()
@@ -1333,6 +1348,7 @@ const searchEventsByLocation = async (
         query: {
           isDeleted: false,
           isActive: true,
+          blockedUsers: { $ne: new mongoose.Types.ObjectId(userId) },
           ...(searchTerm && {
             $or: [
               { name: { $regex: searchTerm, $options: "i" } },
@@ -1982,6 +1998,34 @@ const deleteEvent = async (id: string) => {
   return result;
 };
 
+
+const blockEvent = async (
+  eventId: string,
+  userId: string
+) => {
+  if (!Types.ObjectId.isValid(eventId)) {
+    throw new Error("Invalid eventId");
+  }
+
+  if (!Types.ObjectId.isValid(userId)) {
+    throw new Error("Invalid userId");
+  }
+
+  const updatedEvent = await Event.findByIdAndUpdate(
+    eventId,
+    {
+      $addToSet: { blockedUsers: userId }, // 👈 no duplicate userIds
+    },
+    { new: true }
+  );
+
+  if (!updatedEvent) {
+    throw new Error("Event not found");
+  }
+
+  return updatedEvent;
+};
+
 export const eventService = {
   createEvent,
   getAllEvents,
@@ -2003,5 +2047,6 @@ export const eventService = {
   getUnsubscriptionEventByLocation,
   getSubscrptionEventByLocation,
   searchEventsByLocation,
-  getEventsByLocationGuest
+  getEventsByLocationGuest,
+  blockEvent
 };

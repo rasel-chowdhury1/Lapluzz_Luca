@@ -42,6 +42,11 @@ router
         auth(USER_ROLE.USER, USER_ROLE.ORGANIZER),
         pollCommunityController.vote
     )
+    .patch(
+        "/block/:pollCommunityId",
+        auth(USER_ROLE.USER, USER_ROLE.ORGANIZER),
+        pollCommunityController.blockPostCommunity
+    )
     .delete(
         '/:id',
         auth(USER_ROLE.USER), pollCommunityController.deletePoll

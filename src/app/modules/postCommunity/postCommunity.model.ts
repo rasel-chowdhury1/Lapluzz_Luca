@@ -10,7 +10,11 @@ const PostCommunitySchema = new Schema<IPostCommunity>(
     description: { type: String, required: true },
     image: { type: String, default: '' },
     gallery: { type: [String], default: null },
-    isDeleted: {type: Boolean, default: false}
+    isDeleted: {type: Boolean, default: false},
+    blockedUsers: {
+      type: [Schema.Types.ObjectId],
+      default: []
+    }
   },
   { timestamps: true }
 );

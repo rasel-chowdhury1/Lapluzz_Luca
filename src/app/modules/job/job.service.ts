@@ -163,7 +163,7 @@ const getSubscriptionJobs = async (userId: string, query: Record<string, any>) =
   query['isDeleted'] = false;
   query['isActive'] = true;
 
-  const baseQuery = Job.find({  isSubscription: true});
+  const baseQuery = Job.find({  isSubscription: true, blockedUsers: { $ne: new mongoose.Types.ObjectId(userId) } });
 
   const jobModel = new QueryBuilder(baseQuery, query)
     .search(['title', 'email', 'phoneNumber', 'category', 'address'])
@@ -219,6 +219,7 @@ const getUnsubscriptionJobs = async (userId: string, query: Record<string, any>)
   const baseQuery = Job.find({
     // author: { $ne: userId },
     isSubscription: false,
+    blockedUsers: { $ne: new mongoose.Types.ObjectId(userId) } 
   });
 
   const jobModel = new QueryBuilder(baseQuery, query)
@@ -650,7 +651,8 @@ const getLatestJobs = async (userId: string, limit: number = 10) => {
       $match: {
         // author: { $ne: new mongoose.Types.ObjectId(userId) },
         isDeleted: false,
-        isActive: true
+        isActive: true,
+        blockedUsers: { $ne: new mongoose.Types.ObjectId(userId) },
       }
     },
     { $sort: { createdAt: -1 } },
@@ -825,6 +827,33 @@ const calculateCompetitionScoreForJob = async (job: any): Promise<number> => {
   return Math.min(100, Math.max(0, parseFloat(baseScore.toFixed(2))));
 };
 
+const blockUserForJob = async (
+  jobId: string,
+  userId: string
+) => {
+  if (!Types.ObjectId.isValid(jobId)) {
+    throw new Error("Invalid eventId");
+  }
+
+  if (!Types.ObjectId.isValid(userId)) {
+    throw new Error("Invalid userId");
+  }
+
+  const updatedJob = await Job.findByIdAndUpdate(
+    jobId,
+    {
+      $addToSet: { blockedUsers: userId }, // 👈 no duplicate userIds
+    },
+    { new: true }
+  );
+
+  if (!updatedJob) {
+    throw new Error("Job not found");
+  }
+
+  return updatedJob;
+};
+
 export const jobService = {
   createJob,
   getAllJobs,
@@ -840,5 +869,6 @@ export const jobService = {
   getAllJobsList,
   activateJobById,
   calculateCompetitionScoreForJob,
-  getAllCategoryAndJobName
+  getAllCategoryAndJobName,
+  blockUserForJob
 };

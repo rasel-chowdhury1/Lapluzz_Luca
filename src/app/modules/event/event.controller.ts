@@ -437,6 +437,22 @@ const deleteEvent = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const blockEvent = catchAsync(async (req: Request, res: Response) => {
+  const { eventId } = req.params;
+  const { userId } = req.user;
+
+  const result = await eventService.blockEvent(eventId, userId);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "User blocked successfully for this event",
+    data: result,
+  });
+});
+
+
+
 export const eventController = {
   createEvent,
   getAllEvents,
@@ -458,5 +474,6 @@ export const eventController = {
   getEventsByLocation,
   getSubscrptionEventByLocation,
   getSearchEventsByLocation,
-  getEventsByLocationGuest
+  getEventsByLocationGuest,
+  blockEvent
 };

@@ -262,6 +262,23 @@ const getMostCommentedPosts = catchAsync(async (req: Request, res: Response) => 
   });
 });
 
+
+
+const blockPostCommunity = catchAsync(async (req: Request, res: Response) => {
+  const { postCommunityId } = req.params;
+  const { userId } = req.user;
+
+  const result = await postCommunityService.blockUserForPostCommunity(postCommunityId, userId);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "User blocked successfully for this post community",
+    data: result,
+  });
+
+});
+
 export const postCommunityController = {
   createPost,
   updatePostCommunityById,
@@ -272,5 +289,6 @@ export const postCommunityController = {
   getMostViewedPosts,
   getMostCommentedPosts,
   getSpecificCategoryOrRegionPosts,
-  deletePostCommunityById
+  deletePostCommunityById,
+  blockPostCommunity
 };

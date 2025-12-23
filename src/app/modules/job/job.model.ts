@@ -137,6 +137,10 @@ const JobSchema = new Schema<IJob>(
       default: false
     },
 
+    blockedUsers: {
+      type: [Schema.Types.ObjectId],
+      default: []
+    }
   },
   {
     timestamps: true,

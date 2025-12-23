@@ -79,10 +79,9 @@ const getAllBusinessByLocation = async (
   userId: string,
   query: Record<string, any>,
   userLocation: { latitude: number, longitude: number },
-  maxDistance: number = 50000
+  maxDistance: number = 500000
 ) => {
 
-  console.log("Query ->>> ", query);
   
   query['isActive'] = true;
   query['isDeleted'] = false;
@@ -111,6 +110,7 @@ const getAllBusinessByLocation = async (
         microCatogory: query.microCatogory,
         isActive: true,
         isDeleted: false,
+        blockedUsers: { $ne: new mongoose.Types.ObjectId(userId) },
       },
     },
     {
@@ -508,16 +508,16 @@ const getExclusiveBusinessByLocation = async (
   userLocation: { latitude: number, longitude: number },
   maxDistance: number = 50000
 ) => {
+  
   query['isActive'] = true;
   query['isDeleted'] = false;
   query['isSubscription'] = true;
   query['subscriptionType'] = 'exclusive'; // Only get businesses with 'exclusive' subscription type
+  query['blockedUsers'] = { $ne: new mongoose.Types.ObjectId(userId) };
 
 
 
   const { latitude, longitude } = userLocation;
-
-
 
   // Aggregate query to include $geoNear for geospatial sorting by distance
   const aggregateQuery = Business.aggregate([
@@ -605,6 +605,8 @@ const getExclusiveBusinessByLocation = async (
   // Paginate the results from the aggregation
   const paginatedData = aggregateQuery.skip(skip).limit(limit);
 
+
+
   let data = await paginatedData;
   const total = await Business.countDocuments({
     author: { $ne: new mongoose.Types.ObjectId(userId) },
@@ -613,6 +615,7 @@ const getExclusiveBusinessByLocation = async (
     subscriptionType: 'exclusive', // Only count 'exclusive' businesses
   });
 
+  console.log({total})
   // Calculate total pages
   const totalPage = Math.ceil(total / limit);
 
@@ -1918,6 +1921,8 @@ const searchBusinessesByLocation = async (userId: string, filters: searchFilters
         maxDistance: 50000, // 50 km in meters
         query: {
           isDeleted: false,
+          isActive: true,
+          blockedUsers: { $ne: new mongoose.Types.ObjectId(userId) },
           $or: [
             { name: { $regex: searchTerm, $options: "i" } },
             { description: { $regex: searchTerm, $options: "i" } },
@@ -2061,7 +2066,7 @@ const wizardSearchBusinesses = async (userId:string, filters: WizardFilters) => 
     town
   } = filters;
 
-  const query: any = { isDeleted: false };
+  const query: any = { isDeleted: false, blockedUsers: { $ne: new mongoose.Types.ObjectId(userId) } };
 
   // 1. Category Filter
   if (categoryName.length) {
@@ -2260,7 +2265,7 @@ const filterSearchBusinesses = async (
     town
   } = filters;
 
-  const query: any = { isDeleted: false };
+  const query: any = { isDeleted: false, isActive: true, blockedUsers: { $ne: new mongoose.Types.ObjectId(userId) } };
 
   // 1. Category Filter
   if (categoryName.length) {
@@ -2510,6 +2515,34 @@ const calculateCompetitionScore = async (
 };
 
 
+const blockedBusinessByUserId = async (
+  businessId: string,
+  userId: string
+) => {
+  if (!Types.ObjectId.isValid(businessId)) {
+    throw new Error("Invalid businessId");
+  }
+
+  if (!Types.ObjectId.isValid(userId)) {
+    throw new Error("Invalid userId");
+  }
+
+  const updatedBusiness = await Business.findByIdAndUpdate(
+    businessId,
+    {
+      $addToSet: { blockedUsers: userId }, // 👈 no duplicate userIds
+    },
+    { new: true }
+  );
+
+  if (!updatedBusiness) {
+    throw new Error("Business not found");
+  }
+
+  return updatedBusiness;
+};
+
+
 export const businessService = {
   createBusiness,
   getSubscrptionBusiness,
@@ -2540,4 +2573,5 @@ export const businessService = {
   getAllBusinessesNameList,
   getExclusiveBusinessByLocation,
   getAllBusinessByLocationGuest,
+  blockedBusinessByUserId
 };

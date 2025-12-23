@@ -41,6 +41,7 @@ export interface IJob {
   subscriptionEndTime?: Date;
   isActive: boolean;
   isDeleted: boolean;
+  blockedUsers?: ObjectId[];
 }
 
 export type IJobModel = Model<IJob, Record<string, unknown>>;

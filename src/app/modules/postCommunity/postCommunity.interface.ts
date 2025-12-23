@@ -9,6 +9,7 @@ export interface IPostCommunity {
   image: string;
   gallery?: string[] | null;
   isDeleted: boolean;
+  blockedUsers?: ObjectId[] | []
 }
 
 

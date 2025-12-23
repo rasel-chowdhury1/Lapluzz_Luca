@@ -211,11 +211,18 @@ const activateSubscription = async (userId: string, mySubId: string) => {
           return;
         }
     
-          const userMsg = {
-        name: `✅ Your ${mySubscription.subscriptionForType} Subscription is Now Active!`,
-        image: (adminData.profileImage ?? "") as string,
-        text: `Hi ${user?.name}, your ${mySubscription.subscriptionType?.toUpperCase()} subscription has been activated! You can now enjoy all the benefits and start boosting your ${mySubscription.subscriptionForType} with Pianofesta. Let’s grow together! 🚀`,
-      };
+      //     const userMsg = {
+      //   name: `✅ Your ${mySubscription.subscriptionForType} Subscription is Now Active!`,
+      //   image: (adminData.profileImage ?? "") as string,
+      //   text: `Hi ${user?.name}, your ${mySubscription.subscriptionType?.toUpperCase()} subscription has been activated! You can now enjoy all the benefits and start boosting your ${mySubscription.subscriptionForType} with Pianofesta. Let’s grow together! 🚀`,
+      // };
+
+      const userMsg = {
+  name: `✅ Il tuo abbonamento ${mySubscription.subscriptionForType} è ora attivo!`,
+  image: (adminData.profileImage ?? "") as string,
+  text: `Ciao ${user?.name}, il tuo abbonamento ${mySubscription.subscriptionType?.toUpperCase()} è stato attivato! 
+Ora puoi godere di tutti i vantaggi e iniziare a promuovere il tuo ${mySubscription.subscriptionForType} con Pianofesta. Cresciamo insieme! 🚀`,
+};
 
     
         // Send notification to the user (using Socket.IO and save it to the database)
