@@ -28,7 +28,7 @@ jobs:
           script: |
             export PATH=$PATH:/usr/bin:/usr/local/bin:/root/.local/share/fnm/node-versions/v24.12.0/installation/bin
 
-            cd /application/Lapluzz_Luca || exit 1
+            cd /applications/Lapluzz_Luca || exit 1
 
             git fetch --all
             git reset --hard origin/main
