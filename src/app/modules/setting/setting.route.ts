@@ -33,7 +33,7 @@ settingsRoutes
     .get(
      "/business/termAndConditions", 
     //  auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN),
-     settingsController.getBusinessPrivacyPolicy
+     settingsController.getBusinessTermConditions
 )
     .get(
       "/termAndConditions", 

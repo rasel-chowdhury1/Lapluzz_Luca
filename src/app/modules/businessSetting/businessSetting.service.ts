@@ -11,6 +11,8 @@ const getSettingsByKey = async (payload: {key: 'privacy_policy' | "term_conditio
 
 // Create or update the privacy policy
 const updateSettingsByKey = async (key: string, content: string): Promise<ISettings> => {
+
+    console.log(key, content)
     let policy = await BusinessSettings.findOne({key});
     if (!policy) {
         policy = new BusinessSettings({key, content });
