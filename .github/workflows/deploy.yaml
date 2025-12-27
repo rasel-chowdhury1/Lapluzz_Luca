@@ -1,46 +1,48 @@
-# name: Deploy Backend to VPS
+name: Deploy Backend to VPS
 
-# on:
-#   push:
-#     branches:
-#       - main
+on:
+  push:
+    branches:
+      - main
 
-# jobs:
-#   deploy:
-#     runs-on: ubuntu-latest
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
 
-#     steps:
-#       - name: Checkout repository
-#         uses: actions/checkout@v3
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-#       - name: Setup SSH and validate secrets
-#         uses: webfactory/ssh-agent@v0.7.0
-#         with:
-#           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Setup SSH and validate secrets
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-#       - name: Deploy to VPS
-#         uses: appleboy/ssh-action@v1.0.3
-#         with:
-#           host: ${{ secrets.DROPLET_IP }}
-#           username: root
-#           key: ${{ secrets.SSH_PRIVATE_KEY }}
-#           port: ${{ secrets.SSH_PORT || 22 }}
-#           script: |
-#             export PATH=$PATH:/usr/bin:/usr/local/bin:/root/.local/share/fnm/node-versions/v24.12.0/installation/bin
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DROPLET_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script: |
+            export PATH=$PATH:/usr/bin:/usr/local/bin:/root/.local/share/fnm/node-versions/v24.12.0/installation/bin
 
-#             cd /applications/Lapluzz_Luca || exit 1
+            cd /applications/Lapluzz_Luca || exit 1
 
-#             git fetch --all
-#             git reset --hard origin/main
+            git fetch --all
+            git reset --hard origin/main
 
-#             npm install
+            npm install
 
-#             if pm2 describe server > /dev/null 2>&1; then
-#                 pm2 restart server
-#             else
-#                 pm2 start npm --name "server" -- run dev
-#             fi
+            npm run build
 
-#             pm2 save
+            if pm2 describe server > /dev/null 2>&1; then
+                pm2 restart server
+            else
+                pm2 start npm --name "server" -- run dev
+            fi
 
-#             echo "✅ Deployment finished!"
+            pm2 save
+
+            echo "✅ Deployment finished!"
