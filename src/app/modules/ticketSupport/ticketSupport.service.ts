@@ -25,7 +25,7 @@ const createTicket = async (payload: {
     const adminEmail = config.nodemailer_host_email || "pianofesta.official@gmail.com"; // put admin email in config/env file
 
     // Email content
-    const subject = `New Support Ticket from ${fullName}`;
+    const subject = `Nuovo ticket di assistenza da ${fullName}`; // Nuovo ticket di assistenza da ${fullName}
     const html = `
       <div>
         <h2>New Support Ticket</h2>

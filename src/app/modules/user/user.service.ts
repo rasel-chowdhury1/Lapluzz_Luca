@@ -99,7 +99,7 @@ const createUserToken = async (payload: TUserCreate) => {
   process.nextTick(async () => {
     await otpSendEmail({
       sentTo: email,
-      subject: 'Your one time otp for email  verification',
+      subject: "Il tuo codice OTP monouso per la verifica dell’email ", // Your one time otp for email  verification
       name: name || "Customer",
       otp,
       expiredAt: expiredAt,

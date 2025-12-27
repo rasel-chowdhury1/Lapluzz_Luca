@@ -129,7 +129,7 @@ const resendOtpEmail = async ({ token }: { token: string }) => {
   process.nextTick(async () => {
     await otpSendEmail({
       sentTo: email,
-      subject: 'Re-send your one time otp for email  verification',
+      subject: 'Reinvia il tuo codice OTP monouso per la verifica dell’email.', //Re-send your one time otp for email  verification
       name: '',
       otp,
       expiredAt: expiredAt,
