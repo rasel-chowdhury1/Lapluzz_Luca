@@ -11,7 +11,7 @@ import { createToken, verifyToken } from '../../utils/tokenManage';
 import Event from '../event/event.model';
 import Job from '../job/job.model';
 import SubscriptionPayment from '../subscriptionPayment/subscriptionPayment.model';
-import { DeleteAccountPayload, TUser, TUserCreate } from './user.interface';
+import { DeleteAccountPayload, TUser, TUserCreate, TUserUpdatePayload } from './user.interface';
 import { User } from './user.models';
 import mongoose, { Types } from 'mongoose';
 import Business from '../business/business.model';
@@ -449,12 +449,19 @@ const completedBusiness = async (id: string, payload: Partial<TUser>) => {
   return user;
 };
 
-const updateUser = async (id: string, payload: Partial<TUser>) => {
-  const { role, email, isBlocked, isDeleted, password, ...rest } = payload;
+const updateUser = async (id: string, payload: TUserUpdatePayload) => {
+  const { role, email, isBlocked, isDeleted, password, dateOfBirth, ...rest } = payload
 
-  console.log('rest data', rest)
+  const updateData: Partial<TUser> = { ...rest };
 
-  const user = await User.findByIdAndUpdate(id, rest, { new: true });
+  if (dateOfBirth === 'null' || dateOfBirth === null || dateOfBirth === undefined) {
+    updateData.dateOfBirth = null;
+  } else {
+    updateData.dateOfBirth = new Date(dateOfBirth);
+  }
+
+
+  const user = await User.findByIdAndUpdate(id, updateData, { new: true });
 
   if (!user) {
     throw new AppError(httpStatus.BAD_REQUEST, 'User updating failed');

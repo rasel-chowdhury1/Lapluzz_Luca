@@ -133,15 +133,28 @@ const googleLogin = async (payload: { email: string, name: string, profileImage:
 
 
 try {
+
+  const fullName = payload?.name?.trim() || "";
+
+  const nameParts = fullName.split(" ").filter(Boolean);
+
+  const firstName = nameParts[0] || "";
+  const lastName =
+    nameParts.length > 1 ? nameParts.slice(1).join(" ") : "";
+
+
     // If user does not exist, create a new one
   user = await User.create({
-    fullName: payload?.name || "",
+    sureName: firstName,
+    lastName,
+    name: payload?.name || "",
     email: payload.email,
     password: "testing123",
     profileImage: payload?.profileImage || "",
     role: payload.role || USER_ROLE.USER,
     loginWth: Login_With.google,
   });
+
 } catch (error) {
   console.log({error});
   return;

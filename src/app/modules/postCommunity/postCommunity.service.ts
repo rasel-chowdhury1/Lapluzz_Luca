@@ -573,7 +573,6 @@ const getPostById = async (id: string, userId: string) => {
 // ✅ Get posts created by a specific user, with total likes/comments
 const getMyPosts = async (userId: string) => {
 
-  console.log("Post community ", {userId})
   const posts = await PostCommunity.aggregate([
     { $match: { creator: new mongoose.Types.ObjectId(userId),isDeleted: false } },
     {

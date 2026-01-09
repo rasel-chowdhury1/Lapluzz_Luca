@@ -1,5 +1,8 @@
 import { Model, ObjectId } from 'mongoose';
 
+export type TUserUpdatePayload = Partial<Omit<TUser, 'dateOfBirth'>> & {
+  dateOfBirth?: string | Date | null;
+};
 
 export interface TUserCreate {
   sureName?: string;

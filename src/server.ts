@@ -127,9 +127,9 @@ cron.schedule("0 0 * * *", async () => {
 
       // Prepare the notification
       const userMsg = {
-        name: "🚀 Create Your Business Listing",
+        name: "🚀 Crea la tua inserzione aziendale", // Create Your Business Listing
         image: adminData.profileImage ?? "",
-        text: `Hi ${user.name}, you haven’t created your first business yet. Start today and grow with Pianofesta! 🌟`,
+        text: `Ciao ${user.name}, non hai ancora creato la tua prima attività. Inizia oggi e cresci con Pianofesta! 🌟`, // Hi ${user.name}, you haven’t created your first business yet. Start today and grow with Pianofesta! 
       };
 
       // Emit notification (async operation)
