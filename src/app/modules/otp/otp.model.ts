@@ -14,7 +14,7 @@ const otpSchema: Schema = new Schema<TOtp>(
         },
         purpose: {
             type: String,
-            enum: ["email-verification", "reset-password", "forget-password"],
+            enum: ["email-verification", "reset-password", "forget-password", "delete-account"],
             default: "email-verification",
         },
         otp: {

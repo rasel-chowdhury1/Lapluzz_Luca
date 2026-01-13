@@ -31,9 +31,10 @@ export const sendEmail = async (to: string, subject: string, html: string) => {
     console.log('send mail error:', error);
     
   }
+  
   console.log('mail sended stopped');
 
-  
+
 };
 
 

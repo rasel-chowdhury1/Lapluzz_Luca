@@ -23,6 +23,7 @@ import { generateOptAndExpireTime } from '../otp/otp.utils';
 import { TPurposeType } from '../otp/otp.interface';
 import AppError from '../../error/AppError';
 import Otp from '../otp/otp.model';
+import { Login_With } from './user.constants';
 
 export type IFilter = {
   searchTerm?: string;
@@ -102,6 +103,7 @@ const createUserToken = async (payload: TUserCreate) => {
       subject: "Il tuo codice OTP monouso per la verifica dell’email ", // Your one time otp for email  verification
       name: name || "Customer",
       otp,
+      purpose: "login",
       expiredAt: expiredAt,
       expireTime: config.otp_expire_time as string || "2"
     });
@@ -617,6 +619,7 @@ const getBusinessUserList = async () => {
         userId: user._id,
         customId: user.customId,
         name: user.name || 'Unknown',
+        lastName: user.lastName || 'Unknown',
         sureName: user.sureName || 'Unknown',
         email: user.email || "Unknown",
         activeSponsorship,
@@ -813,6 +816,65 @@ const deleteMyAccount = async (id: string, payload: DeleteAccountPayload) => {
 
   // Use deleteMany to remove OTPs sent to the deleted user's email
   const otpDeleted = await Otp.findOneAndDelete({ sentTo: deletedUser.email });
+
+  return null;
+};
+
+
+
+const deleteGoogleAccountWithOtp = async (userId: string, payload: 
+  {
+    otp: string;
+  }
+) => {
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  if (user.isDeleted) {
+    throw new AppError(httpStatus.FORBIDDEN, 'This user is already deleted');
+  }
+
+  if (user.loginWth !== Login_With.google) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'OTP deletion is only for Google accounts');
+  }
+
+  // Verify OTP
+  const otpDoc = await Otp.findOne({
+    sentTo: user.email,
+    purpose: 'delete-account',
+    status: 'pending',
+  });
+
+  if (!otpDoc) {
+    throw new AppError(httpStatus.NOT_FOUND, 'No OTP found. Please request a new one.');
+  }
+
+  const now = new Date();
+
+  if (otpDoc.expiredAt < now) {
+    // OTP expired → delete it
+    await Otp.deleteOne({ _id: otpDoc._id });
+    throw new AppError(httpStatus.BAD_REQUEST, 'OTP has expired. Please request a new one.');
+  }
+
+  if (otpDoc.otp !== payload.otp) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Invalid OTP.');
+  }
+
+  // ✅ Delete OTP after successful verification
+  await Otp.deleteOne({ _id: otpDoc._id });
+
+  // Delete user
+  const deletedUser = await User.findByIdAndDelete(userId);
+  if (!deletedUser) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'User deletion failed');
+  }
+
+  // Delete any remaining OTPs for safety
+  await Otp.deleteMany({ sentTo: deletedUser.email });
 
   return null;
 };
@@ -1055,5 +1117,6 @@ export const userService = {
   getMyTotalCredits,
   deleteSuperAdmin,
   updateFcmTokenByUserId,
-  addCreditsByAdmin
+  addCreditsByAdmin,
+  deleteGoogleAccountWithOtp
 };

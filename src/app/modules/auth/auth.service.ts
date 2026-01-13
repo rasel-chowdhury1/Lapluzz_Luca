@@ -246,6 +246,7 @@ const forgotPasswordByEmail = async (email: string) => {
       subject: 'Il tuo OTP monouso per il recupero della password', // Your one time otp for forget password
       name: '',
       otp,
+      purpose: "forget_password",
       expiredAt: expiredAt,
       expireTime: "5"
     });

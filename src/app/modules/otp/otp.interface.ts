@@ -2,7 +2,8 @@ export type TReceiverType = 'email' | 'phone';
 export type TPurposeType =
   | 'email-verification'
   | 'forget-password'
-  | 'reset-password';
+  | 'reset-password'
+  | 'delete-account';
 export type TStatus = 'pending' | 'verified' | 'expired';
 
 export interface CreateOtpParams {

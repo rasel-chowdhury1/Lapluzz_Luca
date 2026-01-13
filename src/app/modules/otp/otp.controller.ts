@@ -19,6 +19,22 @@ const resendOtp = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const sendDeleteAccountOtpForGoogle = catchAsync(
+  async (req, res) => {
+    const {userId} = req.user;
+
+    await otpServices.sendDeleteAccountOtpForGoogle(userId);
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'OTP inviato alla tua email',
+      data: null,
+    });
+  },
+);
+
 export const otpControllers = {
   resendOtp,
+  sendDeleteAccountOtpForGoogle
 };

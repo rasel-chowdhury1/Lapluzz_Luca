@@ -1,10 +1,25 @@
 import { sendEmail } from "./mailSender";
 
+type OtpPurpose = 'login' | 'delete_account' | 'forget_password' | '';
+
+const getOtpMessage = (purpose: OtpPurpose) => {
+  switch (purpose) {
+    case 'login':
+      return 'Usa questo OTP per completare il processo di accesso. Non condividere questo codice con nessuno.';
+    case 'delete_account':
+      return 'Usa questo OTP per confermare l’eliminazione del tuo account. Non condividere questo codice con nessuno.';
+    case 'forget_password':
+      return 'Usa questo OTP per reimpostare la tua password. Non condividere questo codice con nessuno.';
+    default:
+      return 'Usa questo OTP per verificare la tua richiesta. Non condividere questo codice con nessuno.';
+  }
+};
 
 
 interface OtpSendEmailParams {
   sentTo: string;
   subject: string;
+  purpose: OtpPurpose;
   name: string;
   otp: string | number;
   expiredAt: string;
@@ -23,11 +38,12 @@ const otpSendEmail = async ({
   subject,
   name,
   otp,
+  purpose,
   expiredAt,
   expireTime,
 }: OtpSendEmailParams): Promise<void> => {
 
-
+const otpMessage = getOtpMessage(purpose);
 
   // Send the email
   await sendEmail(
@@ -41,7 +57,9 @@ const otpSendEmail = async ({
   <div style="background-color: #6A0DAD; color: white; font-size: 24px; font-weight: bold; padding: 15px; text-align: center; border-radius: 8px; margin: 20px 0; width: fit-content; margin-left: auto; margin-right: auto;">
     ${otp}
   </div>
-  <p style="font-size: 16px; color: #333; line-height: 1.5;">Usa questo OTP per completare il processo di accesso. Non condividere questo codice con nessuno.</p>
+  <p style="font-size: 16px; color: #333;">
+    ${otpMessage}
+  </p>
   <p style="font-size: 14px; color: #666; line-height: 2.5; text-align: center;">Nota: Questo OTP è valido fino a  <strong style="color: #FF6347;">${expireTime}</strong> minuti.</p>
   <p style="font-size: 14px; color: #666; line-height: 2.5;">Se non hai richiesto questo OTP, ignora questa email o contatta il nostro team di supporto.</p>
   <div style="margin-top: 30px; font-size: 14px; color: #333; text-align: center;">

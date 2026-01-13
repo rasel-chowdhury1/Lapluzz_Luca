@@ -305,7 +305,25 @@ const deletedUser = catchAsync(async (req: Request, res: Response) => {
 });
 
 const deleteMyAccount = catchAsync(async (req: Request, res: Response) => {
-  const result = await userService.deleteMyAccount(req.user?.userId, req.body);
+
+  const {otp, password} = req.body;
+  let result;
+  if(password){
+    result = await userService.deleteMyAccount(req.user?.userId, req.body);
+  }
+  else if(otp){
+    result = await userService.deleteGoogleAccountWithOtp(req.user?.userId, req.body);
+  }
+  else{
+    return sendResponse(res, {
+      statusCode: httpStatus.BAD_REQUEST,
+      success: false,
+      message: "otp or password is required",
+      data: null,
+    });
+  }
+
+  
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -313,6 +331,8 @@ const deleteMyAccount = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+
+
 
 const deleteSuperAdmin = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.params;
@@ -410,5 +430,6 @@ export const userController = {
   getAllUserQueryNameList,
   getMyTotalCredits,
   updatefcmToken,
-  addCreditsByAdmin
+  addCreditsByAdmin,
+
 };
