@@ -13,6 +13,7 @@ import { getAdminData } from './app/DB/adminStore';
 import MySubscription from './app/modules/mySubscription/mySubscription.model';
 import SubscriptionPayment from './app/modules/subscriptionPayment/subscriptionPayment.model';
 import { autoStopExpiredSubscriptions } from './app/utils/autoStopExpiredSubscriptions';
+import { USER_ROLE } from './app/modules/user/user.constants';
 
 // Create a new HTTP server
 const socketServer = createServer();
@@ -92,63 +93,159 @@ process.on('uncaughtException', (err) => {
 });
 
 
-// Cron job for sending reminder notifications to users without business listings
-cron.schedule("0 0 * * *", async () => {
-  const adminData = getAdminData();
+// Cron job for sending reminder notifications to users without business listings // Every day at midnight
+// cron.schedule("0 0 * * *", async () => {
+//   const adminData = getAdminData();
 
-  if (!adminData || !adminData._id) {
-    console.error("Admin data not found. Cannot send reminder notifications.");
-    return; // Stop the cron job if no admin data
-  }
+//   if (!adminData || !adminData._id) {
+//     console.error("Admin data not found. Cannot send reminder notifications.");
+//     return; // Stop the cron job if no admin data
+//   }
 
-  try {
-    // Convert adminData._id to ObjectId explicitly
-    const adminId = new mongoose.Types.ObjectId(adminData._id);
+//   try {
+//     // Convert adminData._id to ObjectId explicitly
+//     const adminId = new mongoose.Types.ObjectId(adminData._id);
 
-    // Fetch users without business listings
-    const usersWithoutListings = await User.find({
-      role: "organizer",
-      parentBusiness: null,
-      isDeleted: false,
-      isBlocked: false,
-    }).select('_id name'); // Only fetch the required fields (_id, name)
+//     // Fetch users without business listings
+//     const usersWithoutListings = await User.find({
+//       role: "organizer",
+//       parentBusiness: null,
+//       isDeleted: false,
+//       isBlocked: false,
+//     }).select('_id name'); // Only fetch the required fields (_id, name)
 
-    if (usersWithoutListings.length === 0) {
-      console.log("No users found without listings.");
-      return; // Exit if no users need notifications
+//     if (usersWithoutListings.length === 0) {
+//       console.log("No users found without listings.");
+//       return; // Exit if no users need notifications
+//     }
+
+//     // Prepare notifications in bulk using a map for better performance
+//     const notificationPromises = usersWithoutListings.map((user) => {
+//       if (!user._id) return; // Skip invalid users
+
+//       // Convert user._id to ObjectId explicitly
+//       const userId = new mongoose.Types.ObjectId(user._id);
+
+//       // Prepare the notification
+//       const userMsg = {
+//         name: "🚀 Crea la tua inserzione aziendale", // Create Your Business Listing
+//         image: adminData.profileImage ?? "",
+//         text: `Ciao ${user.name}, non hai ancora creato la tua prima attività. Inizia oggi e cresci con Pianofesta! 🌟`, // Hi ${user.name}, you haven’t created your first business yet. Start today and grow with Pianofesta! 
+//       };
+
+//       // Emit notification (async operation)
+//       return emitReminderNotificationToBusinessUser({
+//         userId: adminId,  // Using the ObjectId
+//         receiverId: userId, // Using the ObjectId
+//         userMsg,
+//       });
+//     });
+
+//     // Execute all notification promises in parallel
+//     await Promise.all(notificationPromises);
+
+//   } catch (err) {
+//     console.error("❌ Error in sending reminder notifications:", err);
+//   }
+// }, {
+//   timezone: "Europe/Rome", // Italy timezone
+// });
+
+const isProfileIncomplete = (user: any) =>
+  !user.name || !user.phone || !user.dateOfBirth;
+
+const isProfileComplete = (user: any) =>
+  user.name && user.phone && user.dateOfBirth;
+
+/* =========================
+   Cron job - runs every day at midnight Europe/Rome
+========================= */
+cron.schedule(
+  '0 0 * * *',
+  async () => {
+    try {
+      const adminData = getAdminData();
+      if (!adminData?._id) {
+        console.error('Admin data not found. Cannot send notifications.');
+        return;
+      }
+
+      const adminId = new mongoose.Types.ObjectId(adminData._id);
+
+      // 🔥 Single query for USER and ORGANIZER
+      const users = await User.find({
+        role: { $in: [USER_ROLE.USER, USER_ROLE.ORGANIZER] },
+        isDeleted: false,
+        isBlocked: false,
+      }).select('_id name phone dateOfBirth role parentBusiness');
+
+      if (!users.length) {
+        console.log('No users found for notifications.');
+        return;
+      }
+
+      const notifications: Promise<any>[] = [];
+
+      for (const user of users) {
+        const receiverId = new mongoose.Types.ObjectId(user._id);
+
+        /* =====================
+           USER → Complete Profile
+        ====================== */
+        if (user.role === USER_ROLE.USER && isProfileIncomplete(user)) {
+          notifications.push(
+            emitReminderNotificationToBusinessUser({
+              userId: adminId,
+              receiverId,
+              userMsg: {
+                name: '⚠️ Completa il tuo profilo',
+                image: adminData.profileImage ?? '',
+                text: `Ciao ${user.name || 'utente'}, completa il tuo profilo (nome, telefono e data di nascita) per sbloccare tutte le funzionalità 🌟`,
+              },
+            }),
+          );
+          continue; // skip to next user
+        }
+
+        /* =====================
+           ORGANIZER → Create Business Listing
+        ====================== */
+        if (
+          user.role === USER_ROLE.ORGANIZER &&
+          isProfileComplete(user) &&
+          !user.parentBusiness
+        ) {
+          notifications.push(
+            emitReminderNotificationToBusinessUser({
+              userId: adminId,
+              receiverId,
+              userMsg: {
+                name: '🚀 Crea la tua inserzione aziendale',
+                image: adminData.profileImage ?? '',
+                text: `Ciao ${user.name}, non hai ancora creato la tua attività. Crea la tua inserzione oggi e inizia a crescere con Pianofesta 🚀`,
+              },
+            }),
+          );
+        }
+      }
+
+      if (!notifications.length) {
+        console.log('No notifications to send today.');
+        return;
+      }
+
+      // Execute all notifications in parallel
+      await Promise.all(notifications);
+
+      console.log(`✅ Sent ${notifications.length} notifications successfully.`);
+    } catch (err) {
+      console.error('❌ Cron job failed:', err);
     }
-
-    // Prepare notifications in bulk using a map for better performance
-    const notificationPromises = usersWithoutListings.map((user) => {
-      if (!user._id) return; // Skip invalid users
-
-      // Convert user._id to ObjectId explicitly
-      const userId = new mongoose.Types.ObjectId(user._id);
-
-      // Prepare the notification
-      const userMsg = {
-        name: "🚀 Crea la tua inserzione aziendale", // Create Your Business Listing
-        image: adminData.profileImage ?? "",
-        text: `Ciao ${user.name}, non hai ancora creato la tua prima attività. Inizia oggi e cresci con Pianofesta! 🌟`, // Hi ${user.name}, you haven’t created your first business yet. Start today and grow with Pianofesta! 
-      };
-
-      // Emit notification (async operation)
-      return emitReminderNotificationToBusinessUser({
-        userId: adminId,  // Using the ObjectId
-        receiverId: userId, // Using the ObjectId
-        userMsg,
-      });
-    });
-
-    // Execute all notification promises in parallel
-    await Promise.all(notificationPromises);
-
-  } catch (err) {
-    console.error("❌ Error in sending reminder notifications:", err);
-  }
-}, {
-  timezone: "Europe/Rome", // Italy timezone
-});
+  },
+  {
+    timezone: 'Europe/Rome', // Italy timezone
+  },
+);
 
 // Cron job for processing expired subscriptions and issuing auto-refunds
 cron.schedule("0 2 * * *", async () => {
