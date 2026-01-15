@@ -6,6 +6,11 @@ import fs, { access } from 'fs';
 import httpStatus from 'http-status';
 import { storeFile } from '../../utils/fileHelper';
 import { uploadFileToS3 } from '../../utils/fileUploadS3';
+import mongoose from 'mongoose';
+import { User } from './user.models';
+import AppError from '../../error/AppError';
+import { getAdminData } from '../../DB/adminStore';
+import { emitNotificationOfCreditsEarned } from '../../../socketIo';
 
 const createUser = catchAsync(async (req: Request, res: Response) => {
   console.log("create user data =>>>> ",req.body);
@@ -240,14 +245,118 @@ const updateMyProfile = catchAsync(async (req: Request, res: Response) => {
 
   const {customId, ...rest} = req.body;
 
-  let result;
+      // Referral logic (transactional): +5 to referrer and +5 to claimant
+    if (customId) {
+      const session = await mongoose.startSession();
+      try {
+        await session.withTransaction(async () => {
+          const referrer = await User.findOne({ customId }).session(session);
+          if (!referrer) return; // invalid code; skip silently
+  
+          // block self-referral
+          if (referrer._id.toString() === req?.user?.userId.toString()) {
+            throw new AppError(httpStatus.BAD_REQUEST, 'You cannot refer yourself');
+          }
+  
+          // double-claim guard
+          const freshUser = await User.findById(req?.user?.userId).session(session);
+          if (!freshUser) throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, 'User not found after create');
+          if (freshUser.referredBy) return; // already referred; skip
+  
+          const REWARD = 5;
+  
+          // Count BEFORE push to compute “every 3rd referral +2”
+          const prevCount = Array.isArray(referrer.referralsUserList)
+            ? referrer.referralsUserList.length
+            : 0;
+  
+          // 5a) Update referrer
+          await User.updateOne(
+            { _id: referrer._id },
+            {
+              $addToSet: { referralsUserList: freshUser._id },
+              $inc: { totalCredits: REWARD, 'referralStats.earned': REWARD },
+            },
+            { session }
+          );
+  
+          const newCount = prevCount + 1;
+  
+          if (newCount % 3 === 0) {
+            await User.updateOne(
+              { _id: referrer._id },
+              { $inc: { totalCredits: 2 } },
+              { session }
+            );
+          }
+  
+          // 5b) Update claimant (the new user)
+          await User.updateOne(
+            { _id: freshUser._id },
+            {
+              $set: { referredBy: referrer._id },
+              $inc: { totalCredits: REWARD, 'referralStats.earned': REWARD },
+            },
+            { session }
+          );
+  
+  
+  
+          
+        // 🔔 Send notifications after credit updates
+        const adminData =  getAdminData(); // or your existing admin fetch logic
+  
+        
+      if (!adminData || !adminData._id) {
+        console.error("Admin data not found. Cannot send reminder notifications.");
+        return; // Stop the notification process if admin data is not available
+      }
+  
+        const referrerMsg = {
+          name: `🎉 Congratulazioni ${referrer.name || 'Utente'}!`, // 🎉 Congrats ${referrer.name || 'User'}!
+          image: adminData?.profileImage ?? '',
+          text: `Ciao ${referrer.name}, hai guadagnato +${REWARD} crediti perché ${freshUser.name || 'un utente'} ha utilizzato il tuo codice di referral! ${
+  newCount % 3 === 0 ? 'Bonus +2 crediti per ogni 3 referral!' : ''
+  }`, // Hi ${referrer.name}, you earned +${REWARD} credits because ${user.name || 'a user'} has used your referral code! ${newCount % 3 === 0 ? 'Bonus +2 credits for every 3 referrals!' : ''}
+        };
+  
+        const userMsg = {
+          name: `🎉 Benvenuto, ${freshUser.name || 'Utente'}!`, // 🎉 Welcome, ${user.name || 'User'}!
+          image: adminData?.profileImage ?? '',
+          text: `Ciao ${freshUser.name}, hai guadagnato +${REWARD} crediti utilizzando il codice referral di ${referrer.name || 'un utente'}! Inizia a esplorare Pianofesta!`, // Hi ${user.name}, you earned +${REWARD} credits using ${referrer.name || 'a user'}'s referral code! Start exploring Pianofesta!
+        };
+  
+        // Fire-and-forget using setImmediate
+        setImmediate(async () => {
+          try {
+            await emitNotificationOfCreditsEarned({
+              userId: new mongoose.Types.ObjectId(adminData._id),
+              receiverId: new mongoose.Types.ObjectId(referrer._id),
+              userMsg: referrerMsg,
+            });
+          } catch (err) {
+            console.error("Failed to send referrer notification:", err);
+          }
+  
+          try {
+            await emitNotificationOfCreditsEarned({
+              userId: new mongoose.Types.ObjectId(adminData._id),
+              receiverId: new mongoose.Types.ObjectId(freshUser._id),
+              userMsg: userMsg,
+            });
+          } catch (err) {
+            console.error("Failed to send user notification:", err);
+          }
+        });
+         
+        });
+  
+      } finally {
+        session.endSession();
+      }
+    }
 
-  if(customId === "" ){
-     result = await userService.updateUser(req?.user?.userId, rest);
-  }
-  else{
-     result = await userService.updateUser(req?.user?.userId, req.body);
-  }
+  let result = await userService.updateUser(req.user.userId, rest);
   
   
   
