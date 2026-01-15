@@ -237,9 +237,20 @@ const updateMyProfile = catchAsync(async (req: Request, res: Response) => {
   }
   // console.log('file', req?.file);
   // console.log('body data', req.body);
+
+  const {customId, ...rest} = req.body;
+
+  let result;
+
+  if(customId === "" ){
+     result = await userService.updateUser(req?.user?.userId, rest);
+  }
+  else{
+     result = await userService.updateUser(req?.user?.userId, req.body);
+  }
   
   
-  const result = await userService.updateUser(req?.user?.userId, req.body);
+  
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
