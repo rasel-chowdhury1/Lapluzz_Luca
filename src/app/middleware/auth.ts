@@ -37,7 +37,7 @@ const auth = (...userRoles: string[]) => {
     const isUserExist = await User.IsUserExistById(userId);
 
     if (!isUserExist) {
-      throw new AppError(httpStatus.NOT_FOUND, 'User not found');
+      throw new AppError(httpStatus.UNAUTHORIZED, 'User not found');
     }
 
     // 4️⃣ Role Not Authorized → 403 Forbidden
