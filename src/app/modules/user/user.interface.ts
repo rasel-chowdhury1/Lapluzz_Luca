@@ -9,6 +9,7 @@ export interface TUserCreate {
   lastName?: string;
   name?: string;
   email: string;
+  appleId?: string; // Apple unique user id
   customId: string;
   password: string;
   profileImage: string;

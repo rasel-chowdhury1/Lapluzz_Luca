@@ -191,6 +191,130 @@ try {
 };
 
 
+const appleLogin = async (
+  payload: {
+    appleId: string;
+    email?: string;
+    name?: string;
+    role?: string;
+  },
+  req: Request,
+) => {
+  // 1️⃣ Find user by appleId (PRIMARY KEY)
+  let user = await User.findOne({ appleId: payload.appleId });
+
+  // 2️⃣ If not found, try email (FIRST LOGIN ONLY)
+  if (!user && payload.email) {
+    user = await User.findOne({ email: payload.email });
+  }
+
+  // 3️⃣ Existing user
+  if (user) {
+    if (user.loginWth !== Login_With.apple) {
+      throw new AppError(
+        httpStatus.FORBIDDEN,
+        `Questo account non è registrato con Apple login`,
+      );
+    }
+
+    if (user.isDeleted) {
+      throw new AppError(httpStatus.FORBIDDEN, 'Questo utente è stato eliminato');
+    }
+
+    if (user.isBlocked) {
+      throw new AppError(
+        httpStatus.FORBIDDEN,
+        "L'account utente è bloccato",
+      );
+    }
+
+    // 🔗 Attach appleId if missing (important for old users)
+    if (!user.appleId) {
+      user.appleId = payload.appleId;
+      await user.save();
+    }
+
+    const ip =
+      req.headers['x-forwarded-for']?.toString().split(',')[0] ||
+      req.socket.remoteAddress ||
+      '';
+     
+    const userAgent = req.headers['user-agent'] || '';
+    //@ts-ignore
+    const parser = new UAParser(userAgent);
+    const result = parser.getResult();
+
+    const device = {
+      ip: ip,
+      browser: result.browser.name,
+      os: result.os.name,
+      device: result.device.model || 'Desktop',
+      lastLogin: new Date().toISOString(),
+    };
+
+    await User.findByIdAndUpdate(
+      user?._id,
+      { device },
+      { new: true, upsert: false },
+    );
+
+    return generateAndReturnTokens(user);
+  }
+
+  // 4️⃣ Create new Apple user (email optional)
+  try {
+    const fullName = payload?.name?.trim() || '';
+    const nameParts = fullName.split(' ').filter(Boolean);
+
+    const firstName = nameParts[0] || '';
+    const lastName =
+      nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+
+    user = await User.create({
+      appleId: payload.appleId,          // ✅ REQUIRED
+      email: payload.email || undefined, // ✅ OPTIONAL
+      sureName: firstName,
+      lastName,
+      name: payload?.name || '',
+      password: 'apple-login-temp-password',
+      profileImage: '',
+      role: payload?.role || USER_ROLE.USER,
+      loginWth: Login_With.apple,
+    });
+  } catch (error) {
+    console.log({ error });
+    throw new AppError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      'Apple login failed',
+    );
+  }
+
+  const ip =
+      req.headers['x-forwarded-for']?.toString().split(',')[0] ||
+      req.socket.remoteAddress ||
+      '';
+     
+    const userAgent = req.headers['user-agent'] || '';
+    //@ts-ignore
+    const parser = new UAParser(userAgent);
+    const result = parser.getResult();
+
+    const device = {
+      ip: ip,
+      browser: result.browser.name,
+      os: result.os.name,
+      device: result.device.model || 'Desktop',
+      lastLogin: new Date().toISOString(),
+    };
+
+    await User.findByIdAndUpdate(
+      user?._id,
+      { device },
+      { new: true, upsert: false },
+    );
+  return generateAndReturnTokens(user);
+};
+
 
 
 // forgot Password by email
@@ -471,6 +595,7 @@ const refreshToken = async (token: string) => {
 export const authServices = {
   login,
   googleLogin,
+  appleLogin,
   forgotPasswordOtpMatch,
   changePassword,
   forgotPasswordByEmail,

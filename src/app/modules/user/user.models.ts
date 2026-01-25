@@ -18,10 +18,21 @@ const userSchema = new Schema<TUser>(
       type: String, //surename
       default: '',
     },
+    // ✅ EMAIL (OPTIONAL for Apple login)
     email: {
       type: String,
-      required: true,
       unique: true,
+      sparse: true, // VERY IMPORTANT
+      required: false,
+      lowercase: true,
+      trim: true,
+    },
+    // ✅ APPLE UNIQUE ID
+    appleId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      index: true,
     },
     customId: {
       type: String,

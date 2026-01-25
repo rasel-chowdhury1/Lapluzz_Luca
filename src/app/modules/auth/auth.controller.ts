@@ -43,6 +43,18 @@ const googleLogin = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const appleLogin = catchAsync(async (req: Request, res: Response) => {
+
+  const result = await authServices.appleLogin(req.body, req);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Apple logged in successfully',
+    data: result,
+  });
+});
+
 
 
 // change password
@@ -136,6 +148,7 @@ const refreshToken = catchAsync(async (req: Request, res: Response) => {
 export const authControllers = {
   login,
   googleLogin,
+  appleLogin,
   changePassword,
   forgotPassword,
   forgotPasswordOtpMatch,

@@ -9,9 +9,17 @@ import { otpControllers } from '../otp/otp.controller';
 export const authRoutes = Router();
 
 authRoutes
-  .post('/login', authControllers.login)
+  .post(
+    '/login', 
+    authControllers.login
+  )
 
-  .post('/google-login', authControllers.googleLogin)
+  .post(
+    '/google-login', 
+    authControllers.googleLogin
+  )
+
+  .post('/apple-login', authControllers.appleLogin)
 
   .post(
     '/refresh-token',

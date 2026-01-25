@@ -21,17 +21,28 @@ export const generateLocation = (longitude: string, latitude: string) => {
     };
   
 }
-export const generateTokens = (userId: string, role: string, email?: string, fullName?: string, phone?: string, profileImage?: string) => {
-  const jwtPayload = { userId, role, fullName, email, phone, profileImage };
+
+type TTokenPayload = {
+  userId: string;
+  role: string;
+  loginWth: string;
+  appleId?: string;
+  email?: string;
+  fullName?: string;
+  phone?: string;
+  profileImage?: string;
+};
+
+export const generateTokens = (payload: TTokenPayload) => {
 
   const accessToken = createToken({
-    payload: jwtPayload,
+    payload,
     access_secret: config.jwt_access_secret as string,
     expity_time: config.jwt_access_expires_in as string,
   });
 
   const refreshToken = createToken({
-    payload: jwtPayload,
+    payload: payload,
     access_secret: config.jwt_refresh_secret as string,
     expity_time: config.jwt_refresh_expires_in as string,
   });
@@ -40,6 +51,17 @@ export const generateTokens = (userId: string, role: string, email?: string, ful
 };
 
 export const generateAndReturnTokens = (user: any) => {
-    const { accessToken, refreshToken } = generateTokens(user._id.toString(), user.role, user.email, user.fullName, user?.phone, user?.profileImage);
+  
+    const { accessToken, refreshToken } = generateTokens({
+    userId: user._id.toString(),
+    role: user.role,
+    loginWth: user.loginWth,
+    appleId: user.appleId,
+    email: user.email,
+    fullName: user.fullName,
+    phone: user.phone,
+    profileImage: user.profileImage
+  }
+);
     return { user, accessToken, refreshToken };
   };
