@@ -451,17 +451,43 @@ const completedBusiness = async (id: string, payload: Partial<TUser>) => {
   return user;
 };
 
-const updateUser = async (id: string, payload: TUserUpdatePayload) => {
-  const { role, email, isBlocked, isDeleted, password, dateOfBirth, ...rest } = payload
+// const updateUser = async (id: string, payload: TUserUpdatePayload) => {
+//   const { role, email, isBlocked, isDeleted, password, dateOfBirth, ...rest } = payload
 
-  const updateData: Partial<TUser> = { ...rest };
+//   const updateData: Partial<TUser> = { ...rest };
+
+//   if (dateOfBirth === 'null' || dateOfBirth === null || dateOfBirth === undefined) {
+//     updateData.dateOfBirth = null;
+//   } else {
+//     updateData.dateOfBirth = new Date(dateOfBirth);
+//   }
+
+
+//   const user = await User.findByIdAndUpdate(id, updateData, { new: true });
+
+//   if (!user) {
+//     throw new AppError(httpStatus.BAD_REQUEST, 'User updating failed');
+//   }
+
+//   return user;
+// };
+
+
+const updateUser = async (id: string, payload: TUserUpdatePayload) => {
+  const { role, email, isBlocked, isDeleted, password, dateOfBirth, ...rest } = payload;
+
+  // remove empty string fields
+  const updateData: Partial<TUser> = Object.fromEntries(
+    Object.entries(rest).filter(
+      ([_, value]) => value !== '' && value !== undefined
+    )
+  );
 
   if (dateOfBirth === 'null' || dateOfBirth === null || dateOfBirth === undefined) {
     updateData.dateOfBirth = null;
-  } else {
+  } else if (dateOfBirth) {
     updateData.dateOfBirth = new Date(dateOfBirth);
   }
-
 
   const user = await User.findByIdAndUpdate(id, updateData, { new: true });
 
