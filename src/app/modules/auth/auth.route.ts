@@ -19,13 +19,16 @@ authRoutes
     authControllers.googleLogin
   )
 
-  .post('/apple-login', authControllers.appleLogin)
+  .post(
+    '/apple-login', 
+    authControllers.appleLogin
+  )
 
   .post(
     '/refresh-token',
     validateRequest(authValidation.refreshTokenValidationSchema),
     authControllers.refreshToken,
-)
+  )
   
   .post(
     '/resent-otp',
@@ -56,6 +59,7 @@ authRoutes
     validateRequest(authValidation.otpMatchValidationSchema),
     authControllers.forgotPasswordOtpMatch,
   )
+  
   .patch(
     '/forgot-password-reset',
     validateRequest(authValidation.resetPasswordValidationSchema),

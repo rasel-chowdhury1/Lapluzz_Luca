@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import httpStatus from 'http-status';
 import config from '../../config';
-import { otpSendEmail } from '../../utils/emailNotifiacation';
+import { otpSendEmail, welcomeEmail } from '../../utils/emailNotifiacation';
 import { createToken, verifyToken } from '../../utils/tokenManage';
 import { TUser } from '../user/user.interface';
 import { User } from '../user/user.models';
@@ -35,13 +35,15 @@ const login = async ( payload: TLogin, req: Request) => {
     email: string;
     phone?: string;
     profileImage?: string;
+    loginWth?: string
   } = {
     fullName: user?.name,
     email: user.email,
     phone: user.phone,
     userId: user?._id?.toString() as string,
     role: user?.role,
-    profileImage: user?.profileImage
+    profileImage: user?.profileImage,
+    loginWth: user.loginWth
   };
 
 
@@ -153,6 +155,15 @@ try {
     profileImage: payload?.profileImage || "",
     role: payload.role || USER_ROLE.USER,
     loginWth: Login_With.google,
+  });
+
+  //send the welcome email (fire-and-forget)
+  process.nextTick(async () => {
+    await welcomeEmail({
+      sentTo: payload.email,
+      subject: '🎉 Benvenuto su Pianofesta!', // 🎉 Welcome to Pianofesta!
+      name: payload?.name || "Cliente", // Customer
+    });
   });
 
 } catch (error) {
@@ -281,6 +292,18 @@ const appleLogin = async (
       role: payload?.role || USER_ROLE.USER,
       loginWth: Login_With.apple,
     });
+
+    if(payload.email) {
+        //send the welcome email (fire-and-forget)
+        process.nextTick(async () => {
+          await welcomeEmail({
+            sentTo: payload.email as string,
+            subject: '🎉 Benvenuto su Pianofesta!', // 🎉 Welcome to Pianofesta!
+            name: payload?.name || "Cliente", // Customer
+          });
+        });
+    }
+
   } catch (error) {
     console.log({ error });
     throw new AppError(
