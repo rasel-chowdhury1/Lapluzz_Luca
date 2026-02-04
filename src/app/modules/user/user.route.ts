@@ -93,6 +93,7 @@ userRoutes
     ),
     userController.getAdminProfile,
   )
+  
   .get('/all-users', auth("admin"), userController.getAllUsersList)
 
   .get(

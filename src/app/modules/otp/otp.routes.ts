@@ -6,5 +6,5 @@ export const otpRoutes = Router();
 
 
   otpRoutes.patch('/resend-otp', otpControllers.resendOtp);
-  otpRoutes.post('/send-delete-account-otp', auth(USER_ROLE.USER, USER_ROLE.ORGANIZER), otpControllers.sendDeleteAccountOtpForGoogle);
+  otpRoutes.post('/send-delete-account-otp', auth(USER_ROLE.USER, USER_ROLE.ORGANIZER), otpControllers.sendDeleteAccountOtpForGoogleAndApple);
 

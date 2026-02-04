@@ -476,12 +476,23 @@ const completedBusiness = async (id: string, payload: Partial<TUser>) => {
 const updateUser = async (id: string, payload: TUserUpdatePayload) => {
   const { role, email, isBlocked, isDeleted, password, dateOfBirth, ...rest } = payload;
 
+  const isExist = await User.findById(id);
+
+  if (!isExist) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'User not found');
+  }
+
+
   // remove empty string fields
   const updateData: Partial<TUser> = Object.fromEntries(
     Object.entries(rest).filter(
       ([_, value]) => value !== '' && value !== undefined
     )
   );
+
+  if(email && isExist.loginWth === "apple"){
+    updateData.email = email;
+  }
 
   if (dateOfBirth === 'null' || dateOfBirth === null || dateOfBirth === undefined) {
     updateData.dateOfBirth = null;

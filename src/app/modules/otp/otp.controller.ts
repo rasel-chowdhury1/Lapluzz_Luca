@@ -19,11 +19,11 @@ const resendOtp = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const sendDeleteAccountOtpForGoogle = catchAsync(
+const sendDeleteAccountOtpForGoogleAndApple = catchAsync(
   async (req, res) => {
     const {userId} = req.user;
 
-    await otpServices.sendDeleteAccountOtpForGoogle(userId);
+    await otpServices.sendDeleteAccountOtpForGoogleAndApple(userId);
 
     sendResponse(res, {
       statusCode: httpStatus.OK,
@@ -36,5 +36,5 @@ const sendDeleteAccountOtpForGoogle = catchAsync(
 
 export const otpControllers = {
   resendOtp,
-  sendDeleteAccountOtpForGoogle
+  sendDeleteAccountOtpForGoogleAndApple
 };

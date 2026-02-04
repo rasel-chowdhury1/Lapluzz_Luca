@@ -146,19 +146,25 @@ const resendOtpEmail = async ({ token }: { token: string }) => {
 };
 
 
-const sendDeleteAccountOtpForGoogle = async (userId: string) => {
+const sendDeleteAccountOtpForGoogleAndApple = async (userId: string) => {
   const user = await User.findById(userId);
 
   if (!user) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found');
   }
 
-  // Only Google users
-  if (user.loginWth !== Login_With.google) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      'OTP is only required for Google accounts',
-    );
+    if (
+      user.loginWth !== Login_With.google &&
+      user.loginWth !== Login_With.apple
+    ) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'OTP is only required for Google or Apple accounts',
+      );
+    }
+
+  if(!user.email){
+    throw new AppError(httpStatus.BAD_REQUEST, 'User email not found');
   }
 
   const { isExist, isExpireOtp } = await otpServices.checkOtpByEmail(user.email, 'delete-account');
@@ -221,5 +227,5 @@ export const otpServices = {
   otpMatch,
   updateOtpByEmail,
   resendOtpEmail,
-  sendDeleteAccountOtpForGoogle
+  sendDeleteAccountOtpForGoogleAndApple
 };

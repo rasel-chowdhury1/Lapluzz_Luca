@@ -219,6 +219,7 @@ const appleLogin = async (
     user = await User.findOne({ email: payload.email });
   }
 
+
   // 3️⃣ Existing user
   if (user) {
     if (user.loginWth !== Login_With.apple) {
