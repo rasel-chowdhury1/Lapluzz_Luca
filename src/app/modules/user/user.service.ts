@@ -356,6 +356,7 @@ newCount % 3 === 0 ? 'Bonus +2 crediti per ogni 3 referral!' : ''
       sentTo: email,
       subject: '🎉 Benvenuto su Pianofesta!', // 🎉 Welcome to Pianofesta!
       name: name || "Cliente", // Customer
+      referralCode: customId || ""
     });
   });
 

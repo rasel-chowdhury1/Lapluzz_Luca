@@ -163,6 +163,7 @@ try {
       sentTo: payload.email,
       subject: '🎉 Benvenuto su Pianofesta!', // 🎉 Welcome to Pianofesta!
       name: payload?.name || "Cliente", // Customer
+      referralCode: user.customId
     });
   });
 
@@ -301,6 +302,7 @@ const appleLogin = async (
             sentTo: payload.email as string,
             subject: '🎉 Benvenuto su Pianofesta!', // 🎉 Welcome to Pianofesta!
             name: payload?.name || "Cliente", // Customer
+            referralCode: user?.customId || ''
           });
         });
     }

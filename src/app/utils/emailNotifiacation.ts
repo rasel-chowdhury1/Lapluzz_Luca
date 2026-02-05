@@ -31,6 +31,7 @@ interface WelcomeEmailParams {
   sentTo: string;
   subject: string;
   name: string;
+  referralCode: string;
 }
 
 const otpSendEmail = async ({
@@ -71,38 +72,96 @@ const otpMessage = getOtpMessage(purpose);
 
 
 
+// const welcomeEmail = async ({
+//   sentTo,
+//   subject,
+//   name,
+// }: WelcomeEmailParams): Promise<void> => {
+//   await sendEmail(
+//     sentTo,
+//     subject,
+//     `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px; background-color: #F9FAFB;">
+//   <h1 style="color: #333; font-size: 24px; font-weight: bold; text-align: center; margin-bottom: 10px;">🎉 Benvenuto su Pianofesta!</h1>
+//   <hr style="border: 0; border-top: 2px solid #4CAF50; margin: 20px 0;" />
+//   <p style="font-size: 16px; color: #333; line-height: 1.5;">Caro ${name},</p>
+//   <p style="font-size: 16px; color: #333; margin-top: 15px; line-height: 1.6;">
+//     Siamo entusiasti di averti a bordo! 🎊 <br/>
+//     La tua registrazione è stata <strong style="color:#4CAF50;">completata con successo</strong>.
+//   </p>
+//   <p style="font-size: 16px; color: #333; margin-top: 15px; line-height: 1.6;">
+//     Ora puoi accedere, esplorare le opportunità e sfruttare al massimo la nostra piattaforma.
+//   </p>
+//   <div style="margin: 25px 0; text-align: center;">
+//     <a href="https://pianofesta.it/login" 
+//       style="background-color: #4CAF50; color: white; text-decoration: none; padding: 12px 20px; border-radius: 6px; font-weight: bold; font-size: 16px; display: inline-block;">
+//       Inizia Ora
+//     </a>
+//   </div>
+//   <p style="font-size: 14px; color: #666; line-height: 1.8; text-align: center;">
+//     Se hai domande, non esitare a contattare il nostro team di supporto in qualsiasi momento.
+//   </p>
+//   <div style="margin-top: 30px; font-size: 14px; color: #333; text-align: center;">
+//     <p style="margin: 0;">Grazie per esserti unito a Pianofesta. Cresciamo insieme! 🚀</p>
+//   </div>
+// </div>`
+//   );
+// };
+
 const welcomeEmail = async ({
   sentTo,
   subject,
   name,
+  referralCode,
 }: WelcomeEmailParams): Promise<void> => {
   await sendEmail(
     sentTo,
     subject,
-    `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px; background-color: #F9FAFB;">
-  <h1 style="color: #333; font-size: 24px; font-weight: bold; text-align: center; margin-bottom: 10px;">🎉 Benvenuto su Pianofesta!</h1>
-  <hr style="border: 0; border-top: 2px solid #4CAF50; margin: 20px 0;" />
-  <p style="font-size: 16px; color: #333; line-height: 1.5;">Caro ${name},</p>
-  <p style="font-size: 16px; color: #333; margin-top: 15px; line-height: 1.6;">
-    Siamo entusiasti di averti a bordo! 🎊 <br/>
-    La tua registrazione è stata <strong style="color:#4CAF50;">completata con successo</strong>.
-  </p>
-  <p style="font-size: 16px; color: #333; margin-top: 15px; line-height: 1.6;">
-    Ora puoi accedere, esplorare le opportunità e sfruttare al massimo la nostra piattaforma.
-  </p>
-  <div style="margin: 25px 0; text-align: center;">
-    <a href="https://pianofesta.it/login" 
-      style="background-color: #4CAF50; color: white; text-decoration: none; padding: 12px 20px; border-radius: 6px; font-weight: bold; font-size: 16px; display: inline-block;">
-      Inizia Ora
-    </a>
-  </div>
-  <p style="font-size: 14px; color: #666; line-height: 1.8; text-align: center;">
-    Se hai domande, non esitare a contattare il nostro team di supporto in qualsiasi momento.
-  </p>
-  <div style="margin-top: 30px; font-size: 14px; color: #333; text-align: center;">
-    <p style="margin: 0;">Grazie per esserti unito a Pianofesta. Cresciamo insieme! 🚀</p>
-  </div>
-</div>`
+    `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px; background-color: #FAF4FF;">
+
+      <h1 style="color: #333; font-size: 24px; font-weight: bold; text-align: center; margin-bottom: 10px;">
+        🎉 Welcome to Pianofesta!
+      </h1>
+
+      <hr style="border: 0; border-top: 2px solid #6A0DAD; margin: 20px 0;" />
+
+      <p style="font-size: 16px; color: #333; line-height: 1.5;">
+        Dear ${name},
+      </p>
+
+      <p style="font-size: 16px; color: #333; margin-top: 15px; line-height: 1.6;">
+        We’re excited to have you on board! 🎊 <br/>
+        Your registration has been 
+        <strong style="color:#6A0DAD;">successfully completed</strong>.
+      </p>
+
+      <p style="font-size: 16px; color: #333; margin-top: 15px; line-height: 1.6;">
+        Start sharing your referral code and earn credits for both you and your friends.
+      </p>
+
+      <div style="margin: 25px 0; text-align: center;">
+        <div style="background-color: #6A0DAD; color: white; padding: 14px 22px; border-radius: 8px; font-size: 18px; font-weight: bold; display: inline-block;">
+          Your Referral Code: 
+          <span style="letter-spacing: 1.5px;">${referralCode}</span>
+        </div>
+      </div>
+
+      <p style="font-size: 14px; color: #666; line-height: 1.8; text-align: center;">
+        Share your referral code to earn credits for you and your friends.
+      </p>
+
+      <p style="font-size: 14px; color: #666; line-height: 1.8; text-align: center;">
+        If you have any questions, feel free to contact our support team anytime.
+      </p>
+
+      <div style="margin-top: 30px; font-size: 14px; color: #333; text-align: center;">
+        <p style="margin: 0;">
+          Thank you for joining Pianofesta. Let’s grow together! 🚀
+        </p>
+      </div>
+
+    </div>
+    `
   );
 };
 
