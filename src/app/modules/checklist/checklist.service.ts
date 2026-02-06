@@ -1,5 +1,6 @@
+import AppError from '../../error/AppError';
 import Checklist from './checklist.model';
-
+import { Types } from 'mongoose';
 // Service to create checklist
 const createChecklist = async (userId: string, payload : {checklistName: string, image: string}) => {
 
@@ -80,6 +81,84 @@ const updateItemStatus = async (
   return checklist; // Return the updated checklist
 };
 
+const updateChecklistItemName = async (
+  userId: string,
+  checkListId: string,
+  itemId: string,
+  itemName: string
+) => {
+  if (
+    !Types.ObjectId.isValid(userId) ||
+    !Types.ObjectId.isValid(checkListId) ||
+    !Types.ObjectId.isValid(itemId)
+  ) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Invalid id");
+  }
+
+  const checklist = await Checklist.findOne({
+    _id: checkListId,
+    userId,
+    isDeleted: false,
+  });
+
+  if (!checklist) {
+    throw new AppError(httpStatus.NOT_FOUND, "Checklist not found");
+  }
+
+  const item = checklist.items.id(itemId);
+  if (!item) {
+    throw new AppError(httpStatus.NOT_FOUND, "Item not found");
+  }
+
+  if (!itemName || !itemName.trim()) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Item name cannot be empty"
+    );
+  }
+
+  item.itemName = itemName.trim();
+  await checklist.save();
+
+  return checklist;
+};
+
+
+const deleteChecklistItem = async (
+  userId: string,
+  checkListId: string,
+  itemId: string
+) => {
+  if (
+    !Types.ObjectId.isValid(userId) ||
+    !Types.ObjectId.isValid(checkListId) ||
+    !Types.ObjectId.isValid(itemId)
+  ) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Invalid id");
+  }
+
+  const checklist = await Checklist.findOne({
+    _id: checkListId,
+    userId,
+    isDeleted: false,
+  });
+
+  if (!checklist) {
+    throw new AppError(httpStatus.NOT_FOUND, "Checklist not found");
+  }
+
+  const item = checklist.items.id(itemId);
+  if (!item) {
+    throw new AppError(httpStatus.NOT_FOUND, "Item not found");
+  }
+
+  item.deleteOne(); // ✅ correct way to remove subdocument
+  await checklist.save();
+
+  return checklist;
+};
+
+
 // Service to count the number of checked items
 const countCheckedItems = async (userId: string, checklistName: string) => {
   const checklist = await Checklist.findOne({ userId, checklistName });
@@ -157,5 +236,7 @@ export const checklistService = {
   getChecklistsByUser,
   getChecklistByName,
   deleteChecklist,
-  hardDeleteChecklist
+  hardDeleteChecklist,
+  updateChecklistItemName,
+  deleteChecklistItem
 };

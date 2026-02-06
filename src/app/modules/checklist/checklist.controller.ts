@@ -121,6 +121,42 @@ const updateItemStatus = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+
+const updateChecklistItemName = catchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.user;
+  const { checkListId, itemId, itemName } = req.body;
+
+  const result = await checklistService.updateChecklistItemName(
+    userId,
+    checkListId,
+    itemId,
+    itemName
+  );
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Item name updated successfully',
+    data: result,
+  });
+
+})
+
+
+const deleteChecklistItem = catchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.user;
+  const { checkListId, itemId } = req.body;
+
+  const result = await checklistService.deleteChecklistItem(userId, checkListId, itemId);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Item deleted successfully',
+    data: result,
+  });
+});
+
 // Controller to get all checklists for the user
 const getUserChecklists = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user;
@@ -207,5 +243,7 @@ export const checklistController = {
   getChecklistByName,
   countCheckedItems,
   deleteChecklist,
-  hardDeleteChecklist
+  hardDeleteChecklist,
+  updateChecklistItemName,
+  deleteChecklistItem 
 };

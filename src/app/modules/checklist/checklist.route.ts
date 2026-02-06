@@ -40,6 +40,18 @@ router.patch(
   checklistController.updateItemStatus
 );
 
+router.patch(
+  "/update-item-name",
+  auth(USER_ROLE.USER),
+  checklistController.updateChecklistItemName
+)
+
+
+router.patch(
+  "/delete-item",
+  auth(USER_ROLE.USER),
+  checklistController.deleteChecklistItem
+)
 // Route to get all checklists for the user
 router.get(
   '/',
