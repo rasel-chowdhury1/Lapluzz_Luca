@@ -875,8 +875,8 @@ const deleteGoogleAccountWithOtp = async (userId: string, payload:
     throw new AppError(httpStatus.FORBIDDEN, 'This user is already deleted');
   }
 
-  if (user.loginWth !== Login_With.google) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'OTP deletion is only for Google accounts');
+  if (user.loginWth !== Login_With.google && user.loginWth !== Login_With.apple) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'OTP deletion is only for accounts created with Google or Apple.');
   }
 
   // Verify OTP

@@ -283,6 +283,8 @@ const appleLogin = async (
     const lastName =
       nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
 
+    console.log("payload",payload);
+
     user = await User.create({
       appleId: payload.appleId,          // ✅ REQUIRED
       email: payload.email || undefined, // ✅ OPTIONAL

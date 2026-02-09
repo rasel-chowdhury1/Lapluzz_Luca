@@ -167,12 +167,25 @@ userSchema.pre('save', async function (next) {
     Number(config.bcrypt_salt_rounds),
   );
 
-  // Generate customId like "raseldev123"
-  if (!user.customId && user.email) {
-    const emailPrefix = user.email.split('@')[0].toLowerCase();
-    const randomDigits = Math.floor(100 + Math.random() * 900); // random 3-digit number
-    user.customId = `${emailPrefix}${randomDigits}`;
+  // // Generate customId like "raseldev123"
+  // if (!user.customId && user.email) {
+  //   const emailPrefix = user.email.split('@')[0].toLowerCase();
+  //   const randomDigits = Math.floor(100 + Math.random() * 900); // random 3-digit number
+  //   user.customId = `${emailPrefix}${randomDigits}`;
+  // }
+
+
+    // Generate customId safely
+  if (!user.customId) {
+    if (user.email) {
+      const emailPrefix = user.email.split('@')[0].toLowerCase();
+      user.customId = `${emailPrefix}${Math.floor(100 + Math.random() * 900)}`;
+    } else if (user.appleId) {
+      user.customId = `apple_${user.appleId.slice(-6)}`;
+    }
   }
+
+  
 
   next();
 });
