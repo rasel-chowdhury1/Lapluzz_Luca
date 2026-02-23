@@ -38,12 +38,12 @@ export const getAllSubscriptions = catchAsync(async (_req: Request, res: Respons
 
 export const getSubscriptionsByType = catchAsync(async (req: Request, res: Response) => {
   const type = req.params.type;
-  const result = await SubscriptionService.getSubscriptionsByType(type);
+  // const result = await SubscriptionService.getSubscriptionsByType(type);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
     message: `Subscriptions for type '${type}' retrieved successfully`,
-    data: result,
+    data: [],
   });
 });
 

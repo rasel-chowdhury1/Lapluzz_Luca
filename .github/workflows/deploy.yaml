@@ -37,10 +37,10 @@ jobs:
 
             npm run build
 
-            if pm2 describe server > /dev/null 2>&1; then
-                pm2 restart server
+            if pm2 describe Server > /dev/null 2>&1; then
+                pm2 restart Server
             else
-                pm2 start npm --name "server" -- run dev
+                pm2 start npm --name "Server" -- run dev
             fi
 
             pm2 save
