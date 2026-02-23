@@ -46,7 +46,7 @@ const getAllPolls = catchAsync(async (req: Request, res: Response) => {
 
 const getLatestPolls = catchAsync(async (req: Request, res: Response) => {
 
-  const { userId } = req.user;
+  const userId = req.user?.userId;
   const result = await pollCommunityService.getLatestPolls(userId);
 
   sendResponse(res, {
@@ -59,7 +59,16 @@ const getLatestPolls = catchAsync(async (req: Request, res: Response) => {
 
 const getMyLatestPolls = catchAsync(async (req: Request, res: Response) => {
 
-  const { userId } = req.user;
+  const userId = req.user?.userId;
+
+  if(!userId){
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'My latest polls retrieved successfully',
+      data: [],
+    });
+  }
   const result = await pollCommunityService.getMyLatestPolls(userId);
 
   sendResponse(res, {

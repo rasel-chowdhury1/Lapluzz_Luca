@@ -657,15 +657,26 @@ const getMyPosts = async (userId: string) => {
 
 
 // ✅ Get latest posts with total likes/comments (sorted by createdAt DESC)
-const getLatestPosts = async (userId: string, limit: number = 10) => {
+const getLatestPosts = async (userId: string | undefined, limit: number = 10) => {
+    const matchStage: any = {
+    isDeleted: false,
+  };
+
+  // 🟢 Apply user-specific filters ONLY if userId exists
+  if (userId) {
+    matchStage.creator = {
+      $ne: new mongoose.Types.ObjectId(userId),
+    };
+
+    matchStage.blockedUsers = {
+      $ne: new mongoose.Types.ObjectId(userId),
+    };
+  }
+
+  
   const posts = await PostCommunity.aggregate([
-    {
-      $match: {
-      isDeleted: false, 
-      creator: { $ne: new mongoose.Types.ObjectId(userId)}, // Exclude my own posts
-      blockedUsers: { $ne: new mongoose.Types.ObjectId(userId) } 
-    }
-    },
+    // Match (guest-safe)
+    { $match: matchStage },
     { $sort: { createdAt: -1 } },
     { $limit: limit },
     {
@@ -840,17 +851,26 @@ const getLatestPosts = async (userId: string, limit: number = 10) => {
 // };
 
 const getSpecificCategoryOrRegionPosts = async (
-  userId: string,
+  userId: string | undefined,
   limit: number = 10,
   filters?: { category?: string; region?: string }
 ) => {
-  console.log({ userId, limit, filters });
-
+  
   const matchStage: any = {
     isDeleted: false,
-    creator: { $ne: new mongoose.Types.ObjectId(userId) },
-    blockedUsers: { $ne: new mongoose.Types.ObjectId(userId) } 
   };
+
+  // 🟢 Apply user-specific filters ONLY if userId exists
+  if (userId) {
+    matchStage.creator = {
+      $ne: new mongoose.Types.ObjectId(userId),
+    };
+
+    matchStage.blockedUsers = {
+      $ne: new mongoose.Types.ObjectId(userId),
+    };
+  }
+
 
   if (filters?.category) {
     const categoryExists = await PostCommunity.exists({
@@ -948,22 +968,30 @@ const getSpecificCategoryOrRegionPosts = async (
     },
   ]);
 
-  console.log('posts ->>>>> ', posts);
 
   return posts;
 };
 
 
 
-const getMostViewedPosts = async (userId: string, limit: number = 10) => {
+const getMostViewedPosts = async (userId: string | undefined, limit: number = 10) => {
+  const matchStage: any = {
+    isDeleted: false,
+  };
+
+  // 🟢 Apply user-specific filters ONLY if userId exists
+  if (userId) {
+    matchStage.creator = {
+      $ne: new mongoose.Types.ObjectId(userId),
+    };
+
+    matchStage.blockedUsers = {
+      $ne: new mongoose.Types.ObjectId(userId),
+    };
+  }
+
   const posts = await PostCommunity.aggregate([
-    {
-      $match: {
-        isDeleted: false, 
-        creator: { $ne: new mongoose.Types.ObjectId(userId) },
-        blockedUsers: { $ne: new mongoose.Types.ObjectId(userId) } 
-      }
-    },
+    { $match: matchStage },
 
     {
       $lookup: {
@@ -1043,15 +1071,26 @@ const getMostViewedPosts = async (userId: string, limit: number = 10) => {
   return posts;
 };
 
-const getMostCommentedPosts = async (userId: string, limit: number = 10) => {
+const getMostCommentedPosts = async (userId: string | undefined, limit: number = 10) => {
+
+    const matchStage: any = {
+    isDeleted: false,
+  };
+
+  // 🟢 Apply user-specific filters ONLY if userId exists
+  if (userId) {
+    matchStage.creator = {
+      $ne: new mongoose.Types.ObjectId(userId),
+    };
+
+    matchStage.blockedUsers = {
+      $ne: new mongoose.Types.ObjectId(userId),
+    };
+  }
+
   const posts = await PostCommunity.aggregate([
-    {
-      $match: {
-        isDeleted: false, 
-        creator: { $ne: new mongoose.Types.ObjectId(userId)},
-        blockedUsers: { $ne: new mongoose.Types.ObjectId(userId) } 
-      }
-    },
+    //  Match (guest-safe)
+    { $match: matchStage },
 
     // 🔍 Lookup engagement stats
     {

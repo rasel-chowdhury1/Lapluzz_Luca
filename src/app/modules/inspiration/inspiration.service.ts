@@ -12,9 +12,21 @@ const createInspiration = async (payload: IInspiration) => {
 };
 
 
-const getAllInspirations = async (userId: string, query: Record<string, any>) => {
+const getAllInspirations = async (userId: string | undefined, query: Record<string, any>) => {
+
+  const baseFilter: any = {
+    isBlocked: false,
+    isDeleted: false,
+  };
+
+  if (userId) {
+    baseFilter.blockedUsers = {
+      $ne: new mongoose.Types.ObjectId(userId),
+    };
+  }
+
   const inspirationQuery = new QueryBuilder(
-    Inspiration.find({ isBlocked: false, isDeleted: false, blockedUsers: { $ne: new mongoose.Types.ObjectId(userId) } })
+    Inspiration.find(baseFilter)
                .populate('author', 'name profileImage role')
                .populate('category', 'name description'),
     query
@@ -60,7 +72,25 @@ const getMyInspirations = async (userId: string, query: Record<string, any>) => 
 
 
 
-const getAllInspirationsGroupedByCategory = async (userId: string) => {
+const getAllInspirationsGroupedByCategory = async (userId: string | undefined) => {
+    const matchStage: any = {
+    'categoryInfo.name': {
+      $in: [
+        'Getting Started Ideas',
+        'Seasonal Trends',
+        'Real Events That Inspire',
+        'Style & Mood',
+      ],
+    },
+  };
+
+  // 🟢 Apply blockedUsers filter ONLY if userId exists
+  if (userId) {
+    matchStage.blockedUsers = {
+      $ne: new mongoose.Types.ObjectId(userId),
+    };
+  }
+  
   const data = await Inspiration.aggregate([
     // Step 1: Lookup category info
     {
@@ -88,20 +118,8 @@ const getAllInspirationsGroupedByCategory = async (userId: string) => {
       $unwind: '$authorInfo'
     },
 
-    // Step 3: Match only the desired categories
-    {
-      $match: {
-        blockedUsers: { $ne: new mongoose.Types.ObjectId(userId) },
-        'categoryInfo.name': {
-          $in: [
-            'Getting Started Ideas',
-            'Seasonal Trends',
-            'Real Events That Inspire',
-            'Style & Mood'
-          ]
-        }
-      }
-    },
+        // 3️⃣ Match (guest-safe)
+    { $match: matchStage },
 
     // Step 4: Group by category and gather inspirations
     {
@@ -235,17 +253,30 @@ const getAllInspirationsgroupBySubcategory = async () => {
 
 
 const getSpecificCategoryInspiration = async (
-  userId: string,
+  userId: string | undefined,
   categoryId: string,
   query: Record<string, any>
 ) => {
+
+    // Base Mongo filter
+  const baseFilter: any = {
+    category: categoryId,
+  };
+
+  // 🟢 Apply blockedUsers filter ONLY if userId exists
+  if (userId) {
+    baseFilter.blockedUsers = {
+      $ne: new mongoose.Types.ObjectId(userId),
+    };
+  }
+
   const filterQuery = {
     ...query,
     category: categoryId, // ensure proper MongoDB ObjectId
   };
 
   const inspirationQuery = new QueryBuilder(
-    Inspiration.find({ category: categoryId, blockedUsers: { $ne: new mongoose.Types.ObjectId(userId) } })
+    Inspiration.find(baseFilter)
                   .populate('author', 'name profileImage role')
                   .populate('category', 'name description'),
     filterQuery

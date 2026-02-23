@@ -33,14 +33,23 @@ const getAllPolls = async (query: Record<string, any>) => {
   return await PollCommunity.find(filters).populate('creator', 'name profileImage email role');
 };
 
-const getLatestPolls = async (userId: string) => {
+const getLatestPolls = async (userId: string | undefined) => {
+
+    const matchStage: any = {
+    isDeleted: false,
+  };
+
+  // 🟢 Apply user-specific filters ONLY if userId exists
+  if (userId) {
+    matchStage.creator = {
+      $ne: new mongoose.Types.ObjectId(userId),
+    };
+
+  }
+
   const polls = await PollCommunity.aggregate([
-    {
-      $match: {
-        isDeleted: false,
-        creator: { $ne: new mongoose.Types.ObjectId(userId) } 
-      }
-    },
+    //  Match (guest-safe)
+    { $match: matchStage },
     { $sort: { createdAt: -1 } }, // latest first
 
     // Join with creator info

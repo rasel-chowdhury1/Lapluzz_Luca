@@ -23,12 +23,12 @@ router
     
     .get(
         '/latest',
-        auth(USER_ROLE.USER,USER_ROLE.ORGANIZER),
+        auth(USER_ROLE.USER,USER_ROLE.ORGANIZER, USER_ROLE.GUEST),
         pollCommunityController.getLatestPolls
 )
     .get(
         '/myPolls',
-        auth(USER_ROLE.USER,USER_ROLE.ORGANIZER),
+        auth(USER_ROLE.USER,USER_ROLE.ORGANIZER, USER_ROLE.GUEST),
         pollCommunityController.getMyLatestPolls
 )
     

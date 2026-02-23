@@ -3,6 +3,7 @@ export const USER_ROLE = {
   SUPER_ADMIN: 'super_admin',
   USER: 'user',
   ORGANIZER: 'organizer',
+  GUEST: 'guest',
 } as const;
 
 export enum Login_With {

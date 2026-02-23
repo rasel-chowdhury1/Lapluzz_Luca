@@ -97,8 +97,14 @@ const createInspiration = catchAsync(
 
 const getAllInspirations = catchAsync(
   async (req: Request, res: Response) => {
-    const { userId } = req.user;
-    const result = await InspirationService.getAllInspirations(userId,req.query);
+    // user may be undefined for public/guest requests
+    const userId = req.user?.userId;
+
+    const result = await InspirationService.getAllInspirations(
+      userId,
+      req.query
+    );
+
     sendResponse(res, {
       statusCode: httpStatus.OK,
       success: true,
@@ -111,7 +117,16 @@ const getAllInspirations = catchAsync(
 const getMyInspirations = catchAsync(
   async (req: Request, res: Response) => {
     console.log(req.user)
-    const { userId } = req.user;
+    const userId  = req.user?.userId ;
+
+    if(!userId){
+      sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'My inspirations fetched successfully',
+      data: {data: [], meta: {total: 0}},
+    });
+    }
     const result = await InspirationService.getMyInspirations(userId,req.query);
     sendResponse(res, {
       statusCode: httpStatus.OK,
@@ -136,7 +151,7 @@ const getAllInspirationsgroupBySubcategory = catchAsync(
 
 const getAllInspirationsGroupedByCategory = catchAsync(
   async (req: Request, res: Response) => {
-    const { userId } = req.user;
+    const userId = req.user?.userId;
     const result = await InspirationService.getAllInspirationsGroupedByCategory(userId);
     sendResponse(res, {
       statusCode: httpStatus.OK,
@@ -149,7 +164,7 @@ const getAllInspirationsGroupedByCategory = catchAsync(
 
 const getSpecificCategoryInspiration = catchAsync(
   async (req: Request, res: Response) => {
-    const {userId} = req.user;
+    const userId = req.user?.userId;
     const {categoryId} = req.params;
     const result = await InspirationService.getSpecificCategoryInspiration(userId, categoryId, req.query);
     sendResponse(res, {

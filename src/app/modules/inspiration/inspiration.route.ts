@@ -22,12 +22,12 @@ router.post(
   
   .get(
     '/',
-    auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),
+    auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN, USER_ROLE.GUEST),
     inspirationController.getAllInspirations
   )
   .get(
     '/my',
-    auth(USER_ROLE.ORGANIZER, USER_ROLE.USER, USER_ROLE.SUPER_ADMIN,USER_ROLE.ADMIN),
+    auth(USER_ROLE.ORGANIZER, USER_ROLE.USER, USER_ROLE.SUPER_ADMIN,USER_ROLE.ADMIN, USER_ROLE.GUEST),
     inspirationController.getMyInspirations
   )
 
@@ -35,19 +35,19 @@ router.post(
   // ✅ New Route: Grouped by category
   .get(
     '/group-by/category',
-    auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),
+    auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN, USER_ROLE.GUEST),
     inspirationController.getAllInspirationsGroupedByCategory
   )
 
   .get(
     "/group-by/subcategory",
-    auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),
+    auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN, USER_ROLE.GUEST),
     inspirationController.getAllInspirationsgroupBySubcategory
   )
 
   .get(
       '/category/:categoryId', 
-      auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),
+      auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN, USER_ROLE.GUEST),
       inspirationController.getSpecificCategoryInspiration
   )
 

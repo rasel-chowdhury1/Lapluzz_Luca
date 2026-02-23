@@ -44,29 +44,30 @@ router
     
     .get(
         '/myPost',
-        auth(USER_ROLE.USER, USER_ROLE.ORGANIZER),
+        auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.GUEST),
         postCommunityController.getMyPosts
 )
     
     .get(
         '/latest',
-        auth(USER_ROLE.USER, USER_ROLE.ORGANIZER),
+        auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.GUEST),
         postCommunityController.getLatestPosts
 )
     .get(
         '/specific',
-        auth(USER_ROLE.USER, USER_ROLE.ORGANIZER),
+        auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.GUEST),
         postCommunityController.getSpecificCategoryOrRegionPosts
 )
     
     .get(
         '/mostViewed',
-        auth(USER_ROLE.USER, USER_ROLE.ORGANIZER),
+        auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.GUEST),
         postCommunityController.getMostViewedPosts
 )
+
     .get(
         '/mostComment',
-        auth(USER_ROLE.USER, USER_ROLE.ORGANIZER),
+        auth(USER_ROLE.USER, USER_ROLE.ORGANIZER, USER_ROLE.GUEST),
         postCommunityController.getMostCommentedPosts
     )
     

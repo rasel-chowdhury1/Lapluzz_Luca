@@ -177,7 +177,16 @@ const getPostById = catchAsync(async (req: Request, res: Response) => {
 
 // ✅ Get posts by current logged-in user
 const getMyPosts = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user.userId;
+  const userId = req.user?.userId;
+
+  if(!userId){
+    sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'My posts retrieved successfully',
+    data: [],
+  });
+  }
 
   const posts = await postCommunityService.getMyPosts(userId);
 
@@ -191,7 +200,7 @@ const getMyPosts = catchAsync(async (req: Request, res: Response) => {
 
 // ✅ Get latest posts with total likes/comments
 const getLatestPosts = catchAsync(async (req: Request, res: Response) => {
-  const { userId } = req.user;
+  const userId = req.user?.userId;
 
   console.log({userId})
   const limit = parseInt(req.query.limit as string) || 10;
@@ -209,7 +218,7 @@ const getLatestPosts = catchAsync(async (req: Request, res: Response) => {
 
 // ✅ Get latest posts with total likes/comments
 const getSpecificCategoryOrRegionPosts = catchAsync(async (req: Request, res: Response) => {
-  const { userId } = req.user;
+  const  userId = req.user?.userId;
 
   console.log({userId})
   const limit = parseInt(req.query.limit as string) || 10;
@@ -230,7 +239,7 @@ const getSpecificCategoryOrRegionPosts = catchAsync(async (req: Request, res: Re
 
 // ✅ Get most viewed posts with by likes total likes/comments
 const getMostViewedPosts = catchAsync(async (req: Request, res: Response) => {
-  const { userId } = req.user;
+  const userId = req.user?.userId;
 
   console.log({userId})
   const limit = parseInt(req.query.limit as string) || 10;
@@ -247,7 +256,7 @@ const getMostViewedPosts = catchAsync(async (req: Request, res: Response) => {
 
 // ✅ Get most viewed posts with by likes total likes/comments
 const getMostCommentedPosts = catchAsync(async (req: Request, res: Response) => {
-  const { userId } = req.user;
+  const userId = req.user?.userId;
 
   console.log({userId})
   const limit = parseInt(req.query.limit as string) || 10;
