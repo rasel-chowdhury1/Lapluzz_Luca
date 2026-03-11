@@ -244,6 +244,8 @@ const updateMyProfile = catchAsync(async (req: Request, res: Response) => {
 
   const {customId, ...rest} = req.body;
 
+
+
       // Referral logic (transactional): +5 to referrer and +5 to claimant
     if (customId) {
       const session = await mongoose.startSession();

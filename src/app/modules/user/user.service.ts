@@ -475,6 +475,7 @@ const completedBusiness = async (id: string, payload: Partial<TUser>) => {
 
 
 const updateUser = async (id: string, payload: TUserUpdatePayload) => {
+  
   const { role, email, isBlocked, isDeleted, password, dateOfBirth, ...rest } = payload;
 
   const isExist = await User.findById(id);

@@ -2014,7 +2014,7 @@ const getExtraEventDataById = async (
 ) => {
   // 1. Fetch main event with author
   const existingEvent = await Event.findById(eventId).populate("author", "name sureName");
-console.log({existingEvent})
+
   if (!existingEvent || existingEvent.isDeleted) {
     throw new AppError(httpStatus.NOT_FOUND, 'Event not found');
   }
@@ -2028,7 +2028,7 @@ const commentStats = await EventEngagementStats.findOne({ eventId })
     .populate('comments.replies.user', 'name profileImage') // Populate user details for each reply
     || { comments: [] };
 
-  console.log({commentStats})
+
 
   // 3. Fetch all events from the same author (excluding deleted ones)
   const authorEvents = await Event.find({
@@ -2036,10 +2036,9 @@ const commentStats = await EventEngagementStats.findOne({ eventId })
     isDeleted: false,
   });
 
-  console.log({authorEvents})
 
   const currentRaw = authorEvents.filter((e) => e._id.toString() !== eventId && (e as any).startDate < now);
-  console.log({currentRaw})
+ 
   const currentEvents = await Promise.all(currentRaw.map((event) => enrichEvent(event, userId))) || [];
 
   // 4. Related events (same category, different author)
