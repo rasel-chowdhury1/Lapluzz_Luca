@@ -17,6 +17,7 @@ userRoutes
     validateRequest(userValidation?.userValidationSchema),
     userController.createUser,
   )
+  
   .post(
     '/create/admin',
     auth(USER_ROLE.ADMIN),

@@ -12,6 +12,7 @@ import UAParser from 'ua-parser-js';
 import { Login_With, USER_ROLE } from '../user/user.constants';
 import { generateAndReturnTokens } from '../user/user.utils';
 import AppError from '../../error/AppError';
+import { sendNotificationByFcmToken } from '../../utils/sentNotificationByFcmToken';
 import { otpServices } from '../otp/otp.service';
 import { generateOptAndExpireTime } from '../otp/otp.utils';
 import Otp from '../otp/otp.model';
@@ -209,6 +210,7 @@ const appleLogin = async (
     email?: string;
     name?: string;
     role?: string;
+    fcmToken?: string;
   },
   req: Request,
 ) => {
@@ -295,6 +297,7 @@ const appleLogin = async (
       profileImage: '',
       role: payload?.role || USER_ROLE.USER,
       loginWth: Login_With.apple,
+      fcmToken: payload.fcmToken || '',
     });
 
     if(payload.email) {
@@ -306,6 +309,15 @@ const appleLogin = async (
             name: payload?.name || "Cliente", // Customer
             referralCode: user?.customId || ''
           });
+        });
+    } else {
+        // No email — send FCM push notification instead (fire-and-forget)
+        process.nextTick(async () => {
+          await sendNotificationByFcmToken(
+            user?._id,
+            `Benvenuto su Pianofesta, ${payload?.name || 'Cliente'}! 🎉`,
+            'Benvenuto su Pianofesta!',
+          );
         });
     }
 
@@ -340,6 +352,7 @@ const appleLogin = async (
       { device },
       { new: true, upsert: false },
     );
+    
   return generateAndReturnTokens(user);
 };
 
