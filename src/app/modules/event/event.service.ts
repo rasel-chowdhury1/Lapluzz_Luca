@@ -1743,7 +1743,6 @@ const getEventById = async (userId: string, id: string) => {
 };
 
 const getMyEvents = async (userId: string) => {
-  console.log({userId})
   const events = await Event.find({ author: userId, isDeleted: false });
 
   if (!events.length) {
@@ -1930,7 +1929,7 @@ const getSpecificEventStats = async (eventId: string) => {
 };
 
 const getMyEventList = async (userId: string) => {
-  console.log({userId})
+
   const events = await Event.find({ author: userId, isDeleted: false }).select("name");
 
   if (!events.length) {

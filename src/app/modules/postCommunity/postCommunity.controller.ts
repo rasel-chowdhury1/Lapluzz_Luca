@@ -202,7 +202,8 @@ const getMyPosts = catchAsync(async (req: Request, res: Response) => {
 const getLatestPosts = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user?.userId;
 
-  console.log({userId})
+
+
   const limit = parseInt(req.query.limit as string) || 10;
 
 
@@ -220,7 +221,7 @@ const getLatestPosts = catchAsync(async (req: Request, res: Response) => {
 const getSpecificCategoryOrRegionPosts = catchAsync(async (req: Request, res: Response) => {
   const  userId = req.user?.userId;
 
-  console.log({userId})
+
   const limit = parseInt(req.query.limit as string) || 10;
 
   const filters: { category?: string; region?: string } = {};
@@ -241,7 +242,7 @@ const getSpecificCategoryOrRegionPosts = catchAsync(async (req: Request, res: Re
 const getMostViewedPosts = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user?.userId;
 
-  console.log({userId})
+
   const limit = parseInt(req.query.limit as string) || 10;
 
   const posts = await postCommunityService.getMostViewedPosts(userId, limit);
@@ -258,7 +259,6 @@ const getMostViewedPosts = catchAsync(async (req: Request, res: Response) => {
 const getMostCommentedPosts = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user?.userId;
 
-  console.log({userId})
   const limit = parseInt(req.query.limit as string) || 10;
 
   const posts = await postCommunityService.getMostCommentedPosts(userId, limit);

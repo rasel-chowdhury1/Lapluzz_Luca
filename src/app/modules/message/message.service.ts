@@ -124,7 +124,6 @@ const getMessagesForChat = async (chatId: string) => {
 
 const getUnreadMessageCount = async (userId: string) => {
 
-  console.log({userId})
   const count = await Message.countDocuments({
     receiver: userId,
     seen: false 

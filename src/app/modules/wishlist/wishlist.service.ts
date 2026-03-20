@@ -69,7 +69,7 @@ const createOrUpdateFolder = async (
     throw new Error('You must provide a businessId, eventId, or jobId');
   }
 
-  console.log({userId,folderName})
+
 
   const wishlist = await WishList.findOne({ userId });
 

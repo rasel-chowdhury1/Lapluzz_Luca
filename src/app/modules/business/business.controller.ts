@@ -65,6 +65,8 @@ const createBusiness = catchAsync(async (req: Request, res: Response) => {
   }
 
   const result = await businessService.createBusiness(req.body);
+
+
   sendResponse(res, {
     statusCode: 201,
     success: true,
@@ -303,6 +305,9 @@ const getBusinessAndEventsForMap = catchAsync(async (req: Request, res: Response
 });
 
 const getMyBusiness = catchAsync(async (req: Request, res: Response) => {
+
+
+
   const result = await businessService.getMyBusinesses(req.user.userId);
   sendResponse(res, {
     statusCode: 200,
@@ -335,6 +340,7 @@ const getMyParentBusiness = catchAsync(async (req: Request, res: Response) => {
 
 const getMyBusinessList = catchAsync(async (req: Request, res: Response) => {
 
+  console.log("req.user =====>>>>>>>>>>>>>>>> ", req.user);
   const result = await businessService.getMyBusinessesList(req.user.userId);
   sendResponse(res, {
     statusCode: 200,

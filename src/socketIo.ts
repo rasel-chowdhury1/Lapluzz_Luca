@@ -450,7 +450,7 @@ export const emitNotification = async ({
 }: {
   userId: mongoose.Types.ObjectId;
   receiverId: mongoose.Types.ObjectId;
-  userMsg?: { image: string; text: string; photos?: string[] };
+  userMsg?: { image: string; text: string; name?: string; photos?: string[] };
   type?: string;
 }): Promise<void> => {
   if (!io) {

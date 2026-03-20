@@ -14,6 +14,7 @@ const auth = (...userRoles: string[]) => {
   return catchAsync(async (req, res, next) => {
     const token: any = req.headers?.authorization || req?.headers?.token;
 
+
     const allowGuest = userRoles.includes(USER_ROLE.GUEST);
 
     // 🟢 GUEST MODE (no token provided)

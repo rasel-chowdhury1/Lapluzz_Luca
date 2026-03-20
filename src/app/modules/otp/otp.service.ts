@@ -164,8 +164,10 @@ const sendDeleteAccountOtpForGoogleAndApple = async (userId: string) => {
     }
 
   if(!user.email){
-    throw new AppError(httpStatus.BAD_REQUEST, 'Please complete your profile by adding your email address before deleting your account.');
+
+    throw new AppError(httpStatus.BAD_REQUEST, 'Completa il tuo profilo aggiungendo il tuo indirizzo email prima di eliminare il tuo account.'); // Please complete your profile by adding your email address before deleting your account.
   }
+
 
   const { isExist, isExpireOtp } = await otpServices.checkOtpByEmail(user.email, 'delete-account');
 

@@ -4,7 +4,7 @@ import app from './app';
 import colors from 'colors'; // Ensure correct import
 import config from './app/config';
 import createDefaultAdmin from './app/DB/createDefaultAdmin';
-import { emitReminderNotificationToBusinessUser, initSocketIO } from './socketIo';
+import { emitNotification, emitReminderNotificationToBusinessUser, initSocketIO } from './socketIo';
 import { logger } from './app/utils/logger';
 import cron from 'node-cron';
 import { User } from './app/modules/user/user.models';
@@ -445,6 +445,51 @@ cron.schedule("0 4 * * *", async () => {
 //   timezone: "Europe/Rome" // Italy timezone
 // });
 
+
+// Cron job - every 7 days at 10:00 AM Italy time
+// Remind Apple login users who still haven't added their email
+cron.schedule('0 5 */7 * *', async () => {
+  try {
+    const adminData = getAdminData();
+    if (!adminData?._id) {
+      console.error('Admin data not found. Cannot send Apple email reminder notifications.');
+      return;
+    }
+
+    const adminId = new mongoose.Types.ObjectId(adminData._id);
+
+    const appleUsersWithoutEmail = await User.find({
+      loginWth: 'apple',
+      $or: [{ email: { $exists: false } }, { email: null }, { email: '' }],
+      isDeleted: false,
+      isBlocked: false,
+    }).select('_id');
+
+    if (!appleUsersWithoutEmail.length) {
+      console.log('No Apple users without email found.');
+      return;
+    }
+
+    for (const user of appleUsersWithoutEmail) {
+      await emitNotification({
+        userId: adminId,
+        receiverId: new mongoose.Types.ObjectId(user._id),
+        userMsg: {
+          image: '',
+          name: 'Completa il tuo Profilo', // Complete your Profile
+          text: 'Completa il tuo profilo aggiungendo il tuo indirizzo email prima di eliminare il tuo account.', // Please complete your profile by adding your email address.
+        },
+        type: 'adminProvide',
+      });
+    }
+
+    console.log(`✅ Sent profile completion reminders to ${appleUsersWithoutEmail.length} Apple users.`);
+  } catch (error) {
+    console.error('❌ Error in Apple email reminder cron:', error);
+  }
+}, {
+  timezone: 'Europe/Rome',
+});
 
 // Run every hour at minute 0
 

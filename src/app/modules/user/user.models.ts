@@ -177,7 +177,8 @@ userSchema.pre('save', async function (next) {
 
     // Generate customId safely
   const isOldAppleFormat = user.customId && /^apple_/.test(user.customId);
-  if (!user.customId || isOldAppleFormat) {
+  const isOldUserFormat = user.customId && /^user/.test(user.customId);
+  if (!user.customId || isOldAppleFormat || isOldUserFormat) {
     if (user.email) {
       const emailPrefix = user.email.split('@')[0].toLowerCase();
       user.customId = `${emailPrefix}${Math.floor(100 + Math.random() * 900)}`;

@@ -55,7 +55,7 @@ const updatePostCommunityById = async (
 
 const deletePostCommunityById = async (userId: string, postId: string) => {
 
-  console.log({userId,postId})
+
   // Find the post by postId and ensure that the user is the creator and the post is not already deleted
   const deletePost = await PostCommunity.findOneAndUpdate(
     { _id: postId, creator: userId, isDeleted: false }, // query ensures only creator can delete the post and it is not already deleted

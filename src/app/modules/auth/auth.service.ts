@@ -214,6 +214,8 @@ const appleLogin = async (
   },
   req: Request,
 ) => {
+
+  console.log("apple payload =>>>>>> ", payload);
   // 1️⃣ Find user by appleId (PRIMARY KEY)
   let user = await User.findOne({ appleId: payload.appleId });
 
@@ -273,7 +275,9 @@ const appleLogin = async (
       { new: true, upsert: false },
     );
 
-    return generateAndReturnTokens(user);
+    const appleToken = generateAndReturnTokens(user);
+    console.log('appleToken ===>>>>>>> ', appleToken);
+    return appleToken;
   }
 
   // 4️⃣ Create new Apple user (email optional)

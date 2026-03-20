@@ -345,7 +345,6 @@ const getMyEvents = catchAsync(async (req: Request, res: Response) => {
 
   const { userId } = req.user;
   
-  console.log({userId})
   const result = await eventService.getMyEvents(userId);
   sendResponse(res, {
     statusCode: 200,

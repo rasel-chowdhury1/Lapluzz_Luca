@@ -247,7 +247,6 @@ const deleteJob = catchAsync(async (req: Request, res: Response) => {
 const getLatestJobs = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user;
 
-  console.log({userId})
   const limit = parseInt(req.query.limit as string) || 10;
 
 

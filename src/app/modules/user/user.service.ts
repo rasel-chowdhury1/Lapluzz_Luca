@@ -508,6 +508,64 @@ const updateUser = async (id: string, payload: TUserUpdatePayload) => {
     throw new AppError(httpStatus.BAD_REQUEST, 'User updating failed');
   }
 
+  // Fix old-format customId and persist to DB
+  const isOldAppleFormat = user.customId && /^apple_/.test(user.customId);
+  const isOldUserFormat = user.customId && /^user/.test(user.customId);
+  if (!user.customId || isOldAppleFormat || isOldUserFormat) {
+    let newCustomId: string | undefined;
+
+    if (user.email) {
+      const emailPrefix = user.email.split('@')[0].toLowerCase();
+      newCustomId = `${emailPrefix}${Math.floor(100 + Math.random() * 900)}`;
+    } else if (user.appleId) {
+      const namePrefix = (user.name || 'user').replace(/\s+/g, '').toLowerCase().slice(0, 10);
+      newCustomId = `${namePrefix}${Math.floor(100 + Math.random() * 900)}`;
+
+    }
+
+    if (newCustomId) {
+      user.customId = newCustomId;
+      await User.findByIdAndUpdate(id, { customId: newCustomId });
+
+            // Notify user to complete profile
+      const adminId = getAdminId();
+      const notifMsg = {
+        image: '',
+        name: 'Completa il tuo Profilo', // Complete your Profile
+        text: 'Aggiungi la tua email per completare il profilo e avere una migliore esperienza! 📧', // Please complete your profile, add your email for a better experience!
+      };
+      process.nextTick(async () => {
+        await emitNotification({
+          userId: new mongoose.Types.ObjectId(adminId as string),
+          receiverId: new mongoose.Types.ObjectId(user._id),
+          userMsg: notifMsg,
+          type: 'adminProvide',
+        });
+      });
+    }
+    else{
+        // If Apple user still has no email after update, remind to complete profile
+  if (user.appleId && !user.email) {
+    const adminId = getAdminId();
+    const notifMsg = {
+      image: '',
+      name: 'Completa il tuo Profilo', // Complete your Profile
+      text: 'Aggiungi la tua email per completare il profilo e sbloccare tutte le funzionalità! 📧', // Add your email to complete your profile and unlock all features!
+    };
+    process.nextTick(async () => {
+      await emitNotification({
+        userId: new mongoose.Types.ObjectId(adminId as string),
+        receiverId: new mongoose.Types.ObjectId(user._id),
+        userMsg: notifMsg,
+        type: 'adminProvide',
+      });
+    });
+  }
+    }
+  }
+
+
+
   return user;
 };
 
