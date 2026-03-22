@@ -475,7 +475,7 @@ cron.schedule('0 5 */7 * *', async () => {
         userId: adminId,
         receiverId: new mongoose.Types.ObjectId(user._id),
         userMsg: {
-          image: '',
+          image: adminData?.profileImage ?? '',
           name: 'Completa il tuo Profilo', // Complete your Profile
           text: 'Completa il tuo profilo aggiungendo il tuo indirizzo email prima di eliminare il tuo account.', // Please complete your profile by adding your email address.
         },
